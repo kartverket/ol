@@ -420,7 +420,7 @@ ol.format.GML3.prototype.readFlatPosList_ = function(node, objectStack) {
     var proj = ol.proj.get(containerSrs);
     axisOrientation = proj.getAxisOrientation();
   }
-  var coords = s.split(/\s+/);
+  var coords = s.split(/[\s,]+/);
   // The "dimension" attribute is from the GML 3.0.1 spec.
   var dim = 2;
   if (!goog.isNull(node.getAttribute('srsDimension'))) {
