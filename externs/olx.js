@@ -173,6 +173,25 @@ olx.GraticuleOptions.prototype.targetSize;
 
 
 /**
+ * Object literal with config options for interactions.
+ * @typedef {{handleEvent: function(ol.MapBrowserEvent):boolean}}
+ * @api
+ */
+olx.interaction.InteractionOptions;
+
+
+/**
+ * Method called by the map to notify the interaction that a browser event was
+ * dispatched to the map. The function may return `false` to prevent the
+ * propagation of the event to other interactions in the map's interactions
+ * chain. Required.
+ * @type {function(ol.MapBrowserEvent):boolean}
+ * @api
+ */
+olx.interaction.InteractionOptions.prototype.handleEvent;
+
+
+/**
  * Object literal with config options for the map.
  * @typedef {{controls: (ol.Collection.<ol.control.Control>|Array.<ol.control.Control>|undefined),
  *     deviceOptions: (olx.DeviceOptions|undefined),
@@ -797,6 +816,12 @@ olx.control;
 
 /**
  * @typedef {{className: (string|undefined),
+ *     collapsible: (boolean|undefined),
+ *     collapsed: (boolean|undefined),
+ *     tipLabel: (string|undefined),
+ *     label: (string|undefined),
+ *     collapseLabel: (string|undefined),
+ *     render: (function(ol.MapEvent)|undefined),
  *     target: (Element|undefined)}}
  * @api
  */
@@ -860,8 +885,19 @@ olx.control.AttributionOptions.prototype.label;
  */
 olx.control.AttributionOptions.prototype.collapseLabel;
 
+
+/**
+ * Function called when the control should be re-rendered. This is called
+ * in a requestAnimationFrame callback.
+ * @type {function(ol.MapEvent)|undefined}
+ * @api
+ */
+olx.control.AttributionOptions.prototype.render;
+
+
 /**
  * @typedef {{element: (Element|undefined),
+ *     render: (function(ol.MapEvent)|undefined),
  *     target: (Element|string|undefined)}}
  * @api stable
  */
@@ -875,6 +911,15 @@ olx.control.ControlOptions;
  * @api stable
  */
 olx.control.ControlOptions.prototype.element;
+
+
+/**
+ * Function called when the control should be re-rendered. This is called
+ * in a requestAnimationFrame callback.
+ * @type {function(ol.MapEvent)|undefined}
+ * @api
+ */
+olx.control.ControlOptions.prototype.render;
 
 
 /**
@@ -992,6 +1037,7 @@ olx.control.FullScreenOptions.prototype.target;
  * @typedef {{className: (string|undefined),
  *     coordinateFormat: (ol.CoordinateFormatType|undefined),
  *     projection: ol.proj.ProjectionLike,
+ *     render: (function(ol.MapEvent)|undefined),
  *     target: (Element|undefined),
  *     undefinedHTML: (string|undefined)}}
  * @api stable
@@ -1024,6 +1070,15 @@ olx.control.MousePositionOptions.prototype.projection;
 
 
 /**
+ * Function called when the control should be re-rendered. This is called
+ * in a requestAnimationFrame callback.
+ * @type {function(ol.MapEvent)|undefined}
+ * @api
+ */
+olx.control.MousePositionOptions.prototype.render;
+
+
+/**
  * Target.
  * @type {Element|undefined}
  * @api stable
@@ -1046,6 +1101,7 @@ olx.control.MousePositionOptions.prototype.undefinedHTML;
  *     label: (string|undefined),
  *     layers: (Array.<ol.layer.Layer>|ol.Collection|undefined),
  *     projection: (ol.proj.ProjectionLike),
+ *     render: (function(ol.MapEvent)|undefined),
  *     target: (Element|undefined),
  *     tipLabel: (string|undefined)}}
  * @api
@@ -1105,6 +1161,15 @@ olx.control.OverviewMapOptions.prototype.projection;
 
 
 /**
+ * Function called when the control should be re-rendered. This is called
+ * in a requestAnimationFrame callback.
+ * @type {function(ol.MapEvent)|undefined}
+ * @api
+ */
+olx.control.OverviewMapOptions.prototype.render;
+
+
+/**
  * Specify a target if you want the control to be rendered outside of the map's
  * viewport.
  * @type {Element|undefined}
@@ -1124,6 +1189,7 @@ olx.control.OverviewMapOptions.prototype.tipLabel;
 /**
  * @typedef {{className: (string|undefined),
  *     minWidth: (number|undefined),
+ *     render: (function(ol.MapEvent)|undefined),
  *     target: (Element|undefined),
  *     units: (ol.control.ScaleLineUnits|string|undefined)}}
  * @api stable
@@ -1148,6 +1214,15 @@ olx.control.ScaleLineOptions.prototype.minWidth;
 
 
 /**
+ * Function called when the control should be re-rendered. This is called
+ * in a requestAnimationFrame callback.
+ * @type {function(ol.MapEvent)|undefined}
+ * @api
+ */
+olx.control.ScaleLineOptions.prototype.render;
+
+
+/**
  * Target.
  * @type {Element|undefined}
  * @api stable
@@ -1169,6 +1244,7 @@ olx.control.ScaleLineOptions.prototype.units;
  *     label: (string|undefined),
  *     tipLabel: (string|undefined),
  *     target: (Element|undefined),
+ *     render: (function(ol.MapEvent)|undefined),
  *     autoHide: (boolean|undefined)}}
  * @api stable
  */
@@ -1213,6 +1289,15 @@ olx.control.RotateOptions.prototype.duration;
  * @api stable
  */
 olx.control.RotateOptions.prototype.autoHide;
+
+
+/**
+ * Function called when the control should be re-rendered. This is called
+ * in a requestAnimationFrame callback.
+ * @type {function(ol.MapEvent)|undefined}
+ * @api
+ */
+olx.control.RotateOptions.prototype.render;
 
 
 /**
@@ -1304,8 +1389,9 @@ olx.control.ZoomOptions.prototype.target;
 /**
  * @typedef {{className: (string|undefined),
  *     maxResolution: (number|undefined),
- *     minResolution: (number|undefined)}}
- * @api stable
+ *     minResolution: (number|undefined),
+ *     render: (function(ol.MapEvent)|undefined)}}
+ * @api
  */
 olx.control.ZoomSliderOptions;
 
@@ -1332,6 +1418,15 @@ olx.control.ZoomSliderOptions.prototype.maxResolution;
  * @api stable
  */
 olx.control.ZoomSliderOptions.prototype.minResolution;
+
+
+/**
+ * Function called when the control should be re-rendered. This is called
+ * in a requestAnimationFrame callback.
+ * @type {function(ol.MapEvent)|undefined}
+ * @api
+ */
+olx.control.ZoomSliderOptions.prototype.render;
 
 
 /**
@@ -1642,6 +1737,7 @@ olx.format.GPXOptions.prototype.readExtensions;
 /**
  * @typedef {{featureNS: string,
  *     featureType: string,
+ *     gmlFormat: (ol.format.GMLBase|undefined),
  *     schemaLocation: (string|undefined)}}
  * @api
  */
@@ -1662,6 +1758,14 @@ olx.format.WFSOptions.prototype.featureNS;
  * @api stable
  */
 olx.format.WFSOptions.prototype.featureType;
+
+
+/**
+ * The GML format to use to parse the response. Default is `ol.format.GML3`.
+ * @type {ol.format.GMLBase|undefined}
+ * @api
+ */
+olx.format.WFSOptions.prototype.gmlFormat;
 
 
 /**
@@ -1752,12 +1856,6 @@ olx.format.WFSWriteGetFeatureOptions.prototype.maxFeatures;
  */
 olx.format.WFSWriteGetFeatureOptions.prototype.geometryName;
 
-/**
- * GML format to use within the WFS format.
- * @type {ol.format.GMLBase|undefined}
- * @api
- */
-olx.format.WFSWriteGetFeatureOptions.prototype.gmlFormat;
 
 /**
  * Extent to use for the BBOX filter.
@@ -2339,6 +2437,24 @@ olx.interaction.PinchZoomOptions;
  * @api
  */
 olx.interaction.PinchZoomOptions.prototype.duration;
+
+
+/**
+ * @typedef {{handleEvent: function(ol.MapBrowserEvent):boolean}}
+ * @api
+ */
+olx.interaction.PointerOptions;
+
+
+/**
+ * Method called by the map to notify the interaction that a browser event was
+ * dispatched to the map. The function may return `false` to prevent the
+ * propagation of the event to other interactions in the map's interactions
+ * chain.
+ * @type {function(ol.MapBrowserEvent):boolean}
+ * @api
+ */
+olx.interaction.PointerOptions.prototype.handleEvent;
 
 
 /**
@@ -3549,6 +3665,34 @@ olx.source.GPXOptions.prototype.url;
  * @api
  */
 olx.source.GPXOptions.prototype.urls;
+
+
+/**
+ * @typedef {{preemptive: (boolean|undefined),
+ *            url: string}}
+ * @api
+ */
+olx.source.TileUTFGridOptions;
+
+
+/**
+ * If `true` the TileUTFGrid source loads the tiles based on their "visibility".
+ * This improves the speed of response, but increases traffic.
+ * Note that if set to `false`, you need to pass `true` as `opt_request`
+ * to the `forDataAtCoordinateAndResolution` method otherwise no data
+ * will ever be loaded.
+ * Default is `true`.
+ * @type {boolean|undefined}
+ * @api
+ */
+olx.source.TileUTFGridOptions.prototype.preemptive;
+
+
+/**
+ * @type {string}
+ * @api
+ */
+olx.source.TileUTFGridOptions.prototype.url;
 
 
 /**
@@ -5448,7 +5592,8 @@ olx.style;
  * @typedef {{fill: (ol.style.Fill|undefined),
  *     radius: number,
  *     snapToPixel: (boolean|undefined),
- *     stroke: (ol.style.Stroke|undefined)}}
+ *     stroke: (ol.style.Stroke|undefined),
+ *     atlasManager: (ol.style.AtlasManager|undefined)}}
  * @api
  */
 olx.style.CircleOptions;
@@ -5490,6 +5635,16 @@ olx.style.CircleOptions.prototype.snapToPixel;
  * @api
  */
 olx.style.CircleOptions.prototype.stroke;
+
+
+/**
+ * The atlas manager to use for this circle. When using WebGL it is
+ * recommended to use an atlas manager to avoid texture switching.
+ * If an atlas manager is given, the circle is added to an atlas.
+ * By default no atlas manager is used.
+ * @type {ol.style.AtlasManager|undefined}
+ */
+olx.style.CircleOptions.prototype.atlasManager;
 
 
 /**
@@ -5663,13 +5818,17 @@ olx.style.IconOptions.prototype.src;
 
 
 /**
+ * Specify radius for regular polygons, or radius1 and radius2 for stars.
  * @typedef {{fill: (ol.style.Fill|undefined),
  *     points: number,
- *     radius: number,
- *     radius2: number,
- *     angle: number,
+ *     radius: (number|undefined),
+ *     radius1: (number|undefined),
+ *     radius2: (number|undefined),
+ *     angle: (number|undefined),
  *     snapToPixel: (boolean|undefined),
- *     stroke: (ol.style.Stroke|undefined)}}
+ *     stroke: (ol.style.Stroke|undefined),
+ *     rotation: (number|undefined),
+ *     atlasManager: (ol.style.AtlasManager|undefined)}}
  * @api
  */
 olx.style.RegularShapeOptions;
@@ -5693,28 +5852,34 @@ olx.style.RegularShapeOptions.prototype.points;
 
 
 /**
- * Shape radius.
- * @type {number}
+ * Radius of a regular polygon.
+ * @type {number|undefined}
  * @api
  */
 olx.style.RegularShapeOptions.prototype.radius;
 
 
 /**
- * Shape secondary radius for drawing stars. If radius 2 is equal to radius,
- * the regular shape will be a regular polygon instead of a star.
- * Default value is equal to radius.
- * @type {number}
+* Inner radius of a star.
+* @type {number|undefined}
+* @api
+*/
+olx.style.RegularShapeOptions.prototype.radius1;
+
+
+/**
+ * Outer radius of a star.
+ * @type {number|undefined}
  * @api
  */
 olx.style.RegularShapeOptions.prototype.radius2;
 
 
 /**
- * Shape's rotation in radians. A value of 0 will have one of the shape's point
+ * Shape's angle in radians. A value of 0 will have one of the shape's point
  * facing up.
  * Default value is 0.
- * @type {number}
+ * @type {number|undefined}
  * @api
  */
 olx.style.RegularShapeOptions.prototype.angle;
@@ -5740,6 +5905,24 @@ olx.style.RegularShapeOptions.prototype.snapToPixel;
  * @api
  */
 olx.style.RegularShapeOptions.prototype.stroke;
+
+
+/**
+ * Rotation in radians (positive rotation clockwise). Default is `0`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.style.RegularShapeOptions.prototype.rotation;
+
+
+/**
+ * The atlas manager to use for this symbol. When using WebGL it is
+ * recommended to use an atlas manager to avoid texture switching.
+ * If an atlas manager is given, the symbol is added to an atlas.
+ * By default no atlas manager is used.
+ * @type {ol.style.AtlasManager|undefined}
+ */
+olx.style.RegularShapeOptions.prototype.atlasManager;
 
 
 /**
@@ -6131,7 +6314,6 @@ olx.tilegrid.XYZOptions.prototype.tileSize;
 /**
  * @typedef {{resolutions: !Array.<number>}}
  * @api
- * @api
  */
 olx.tilegrid.ZoomifyOptions;
 
@@ -6155,6 +6337,7 @@ olx.view;
  * @typedef {{padding: !Array.<number>,
  *     constrainResolution: (boolean|undefined),
  *     nearest: (boolean|undefined),
+ *     maxZoom: (number|undefined),
  *     minResolution: (number|undefined)}}
  * @api
  */
@@ -6282,3 +6465,41 @@ olx.ViewState.prototype.resolution;
  * @api
  */
 olx.ViewState.prototype.rotation;
+
+
+/**
+ * @typedef {{initialSize: (number|undefined),
+ *     maxSize: (number|undefined),
+ *     space: (number|undefined)}}
+ * @api
+ */
+olx.style.AtlasManagerOptions;
+
+
+/**
+ * The size in pixels of the first atlas image. If no value is given the
+ * `ol.INITIAL_ATLAS_SIZE` compile-time constant will be used.
+ * @type {number|undefined}
+ * @api
+ */
+olx.style.AtlasManagerOptions.prototype.initialSize;
+
+
+/**
+ * The maximum size in pixels of atlas images. If no value is given then
+ * the `ol.MAX_ATLAS_SIZE` compile-time constant will be used. And if
+ * `ol.MAX_ATLAS_SIZE` is set to `-1` (the default) then
+ * `ol.WEBGL_MAX_TEXTURE_SIZE` will used if WebGL is supported. Otherwise
+ * 2048 is used.
+ * @type {number|undefined}
+ * @api
+ */
+olx.style.AtlasManagerOptions.prototype.maxSize;
+
+
+/**
+ * The space in pixels between images (default: 1).
+ * @type {number|undefined}
+ * @api
+ */
+olx.style.AtlasManagerOptions.prototype.space;
