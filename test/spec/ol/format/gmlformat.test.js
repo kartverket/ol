@@ -134,6 +134,17 @@ describe('ol.format.GML3', function() {
         expect(serialized.firstElementChild).to.xmleql(ol.xml.parse(text));
       });
 
+      it('supports namespace opengis.net/gml/3.2', function() {
+        var text =
+            '<gml:Point xmlns:gml="http://www.opengis.net/gml/3.2" ' +
+            '    srsName="CRS:84">' +
+            '  <gml:pos>1 2</gml:pos>' +
+            '</gml:Point>';
+        var g = readGeometry(format, text);
+        expect(g).to.be.an(ol.geom.Point);
+        expect(g.getCoordinates()).to.eql([1, 2, 0]);
+      });
+
       it('can read a point geometry with scientific notation', function() {
         var text =
             '<gml:Point xmlns:gml="http://www.opengis.net/gml" ' +
@@ -1064,6 +1075,73 @@ describe('ol.format.GML3', function() {
       expect(feature.get('zoning')).to.equal('I-L');
     });
 
+  });
+
+  describe('when creating a feature with nested values', function() {
+    it ('returs these values correctly', function() {
+      var feature = new ol.Feature({
+        'foo':'bar',
+        'baz':{ 
+          'faz':'boo'
+        }
+      });
+
+      expect(feature.get('foo')).to.equal('bar');
+      expect(feature.get('baz')['faz']).to.equal('boo');
+    });
+  });
+
+  describe('when parsing a nested structure of attributes', function() {
+    it ('creates a feature with nested values', function() {
+      var text = 
+          '<gml:featureMember xmlns:gml="http://www.opengis.net/gml">' +
+          '  <elf-lod1au:AdministrativeUnit ' +
+          '    xmlns:elf-lod1au="http://www.locationframework.eu/schemas/AdministrativeUnits/MasterLoD1/1.0"' +
+          '    gml:id="ELF-LOD1AU_ADMINISTRATIVEUNIT_705516">' +
+          '    <au:beginLifespanVersion xsi:nil="true" nilReason="missing"/>' +
+          // nested attribute before geometry 
+          '    <au:country xmlns:au="urn:x-inspire:specification:gmlas:AdministrativeUnits:3.0">' +
+          '      <gmd:Country xmlns:gmd="http://www.isotc211.org/2005/gmd" codeListValue="NO" ' + 
+          '                   codeList="https://www.iso.org/obp/ui/#iso:code:3166:NO">NO</gmd:Country> ' +
+          '    </au:country>' +
+
+          '    <au:geometry xmlns:au="urn:x-inspire:specification:gmlas:AdministrativeUnits:3.0"> ' +
+          '      <gml:MultiSurface gml:id="ELF-LOD1AU_ADMINISTRATIVEUNIT_705516_AU_GEOMETRY" srsName="urn:ogc:def:crs:EPSG::4258"> ' +
+          '      <gml:surfaceMember>' +
+          '      <gml:Polygon gml:id="GEOMETRY_9e74b5a6-79a9-416e-8bde-824019c0ac01" srsName="urn:ogc:def:crs:EPSG::4258"> ' +
+          '      <gml:exterior> ' +
+          '      <gml:LinearRing> ' +
+          '      <gml:posList> ' +
+          '        59.962667 10.623571 59.962512 10.624341 59.962667 10.623571' +
+          '      </gml:posList>' +
+          '      </gml:LinearRing>' +
+          '      </gml:exterior>' +
+          '      </gml:Polygon>' +
+          '      </gml:surfaceMember>' +
+          '      </gml:MultiSurface>' +
+          '    </au:geometry>' +
+          //nested attribute after geometry
+          '    <au:inspireId xmlns:au="urn:x-inspire:specification:gmlas:AdministrativeUnits:3.0">' + 
+          '      <base:Identifier xmlns:base="http://inspire.ec.europa.eu/schemas/base/3.3rc3/"> ' + 
+          '      <base:localId>173018</base:localId>' +
+          '      <base:namespace>NO.KARTVERKET.AdmEnheterNorge</base:namespace>' +
+          '      <base:versionId xsi:nil="true" nilReason="missing"/>'+
+          '      </base:Identifier> '+
+          '    </au:inspireId>'+
+          '  </elf-lod1au:AdministrativeUnit/>'+
+          '</gml:featureMember>';
+      gmlFormat = new ol.format.GML({
+        featureNS: "http://www.locationframework.eu/schemas/AdministrativeUnits/MasterLoD1/1.0",
+        featureType: "AdministrativeUnit"
+      });
+      features = gmlFormat.readFeatures(text);
+
+      expect(features).to.have.length(1);
+      expect(features[0].getId()).to.equal('ELF-LOD1AU_ADMINISTRATIVEUNIT_705516');
+      expect(features[0].getGeometryName()).to.equal('geometry');
+      expect(features[0].get('country')['Country']).to.equal('NO');
+      expect(features[0].get('inspireId')['localId']).to.equal('173018');
+    });
   });
 
   describe('when parsing only a boundedBy element and no geometry', function() {
