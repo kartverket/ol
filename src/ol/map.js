@@ -338,13 +338,17 @@ ol.Map = function(options) {
   this.registerDisposable(this.renderer_);
 
   /**
+   * @type {goog.dom.ViewportSizeMonitor}
    * @private
    */
   this.viewportSizeMonitor_ = new goog.dom.ViewportSizeMonitor();
   this.registerDisposable(this.viewportSizeMonitor_);
 
-  goog.events.listen(this.viewportSizeMonitor_, goog.events.EventType.RESIZE,
-      this.updateSize, false, this);
+  /**
+   * @type {goog.events.Key}
+   * @private
+   */
+  this.viewportResizeListenerKey_ = null;
 
   /**
    * @private
@@ -705,10 +709,6 @@ ol.Map.prototype.getTarget = function() {
   return /** @type {Element|string|undefined} */ (
       this.get(ol.MapProperty.TARGET));
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'getTarget',
-    ol.Map.prototype.getTarget);
 
 
 /**
@@ -725,8 +725,10 @@ ol.Map.prototype.getTargetElement = function() {
 
 
 /**
- * @param {ol.Pixel} pixel Pixel.
- * @return {ol.Coordinate} Coordinate.
+ * Get the coordinate for a given pixel.  This returns a coordinate in the
+ * map view projection.
+ * @param {ol.Pixel} pixel Pixel position in the map viewport.
+ * @return {ol.Coordinate} The coordinate for the pixel position.
  * @api stable
  */
 ol.Map.prototype.getCoordinateFromPixel = function(pixel) {
@@ -741,6 +743,8 @@ ol.Map.prototype.getCoordinateFromPixel = function(pixel) {
 
 
 /**
+ * Get the map controls. Modifying this collection changes the controls
+ * associated with the map.
  * @return {ol.Collection.<ol.control.Control>} Controls.
  * @api stable
  */
@@ -750,6 +754,8 @@ ol.Map.prototype.getControls = function() {
 
 
 /**
+ * Get the map overlays. Modifying this collection changes the overlays
+ * associated with the map.
  * @return {ol.Collection.<ol.Overlay>} Overlays.
  * @api stable
  */
@@ -759,8 +765,7 @@ ol.Map.prototype.getOverlays = function() {
 
 
 /**
- * Gets the collection of {@link ol.interaction.Interaction} instances
- * associated with this map. Modifying this collection changes the interactions
+ * Get the map interactions. Modifying this collection changes the interactions
  * associated with the map.
  *
  * Interactions are used for e.g. pan, zoom and rotate.
@@ -781,10 +786,6 @@ ol.Map.prototype.getInteractions = function() {
 ol.Map.prototype.getLayerGroup = function() {
   return /** @type {ol.layer.Group} */ (this.get(ol.MapProperty.LAYERGROUP));
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'getLayerGroup',
-    ol.Map.prototype.getLayerGroup);
 
 
 /**
@@ -799,8 +800,10 @@ ol.Map.prototype.getLayers = function() {
 
 
 /**
- * @param {ol.Coordinate} coordinate Coordinate.
- * @return {ol.Pixel} Pixel.
+ * Get the pixel for a coordinate.  This takes a coordinate in the map view
+ * projection and returns the corresponding pixel.
+ * @param {ol.Coordinate} coordinate A map coordinate.
+ * @return {ol.Pixel} A pixel position in the map viewport.
  * @api stable
  */
 ol.Map.prototype.getPixelFromCoordinate = function(coordinate) {
@@ -832,10 +835,6 @@ ol.Map.prototype.getRenderer = function() {
 ol.Map.prototype.getSize = function() {
   return /** @type {ol.Size|undefined} */ (this.get(ol.MapProperty.SIZE));
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'getSize',
-    ol.Map.prototype.getSize);
 
 
 /**
@@ -848,13 +847,10 @@ goog.exportProperty(
 ol.Map.prototype.getView = function() {
   return /** @type {ol.View} */ (this.get(ol.MapProperty.VIEW));
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'getView',
-    ol.Map.prototype.getView);
 
 
 /**
+ * Get the element that serves as the map viewport.
  * @return {Element} Viewport.
  * @api stable
  */
@@ -864,10 +860,11 @@ ol.Map.prototype.getViewport = function() {
 
 
 /**
- * @return {Element} The map's overlay container. Elements added to this
- * container will let mousedown and touchstart events through to the map, so
- * clicks and gestures on an overlay will trigger {@link ol.MapBrowserEvent}
+ * Get the element that serves as the container for overlays.  Elements added to
+ * this container will let mousedown and touchstart events through to the map,
+ * so clicks and gestures on an overlay will trigger {@link ol.MapBrowserEvent}
  * events.
+ * @return {Element} The map's overlay container.
  */
 ol.Map.prototype.getOverlayContainer = function() {
   return this.overlayContainer_;
@@ -875,10 +872,11 @@ ol.Map.prototype.getOverlayContainer = function() {
 
 
 /**
- * @return {Element} The map's overlay container. Elements added to this
- * container won't let mousedown and touchstart events through to the map, so
- * clicks and gestures on an overlay don't trigger any
- * {@link ol.MapBrowserEvent}.
+ * Get the element that serves as a container for overlays that don't allow
+ * event propagation. Elements added to this container won't let mousedown and
+ * touchstart events through to the map, so clicks and gestures on an overlay
+ * don't trigger any {@link ol.MapBrowserEvent}.
+ * @return {Element} The map's overlay container that stops events.
  */
 ol.Map.prototype.getOverlayContainerStopEvent = function() {
   return this.overlayContainerStopEvent_;
@@ -1032,12 +1030,22 @@ ol.Map.prototype.handleTargetChanged_ = function() {
 
   if (goog.isNull(targetElement)) {
     goog.dom.removeNode(this.viewport_);
+    if (!goog.isNull(this.viewportResizeListenerKey_)) {
+      goog.events.unlistenByKey(this.viewportResizeListenerKey_);
+      this.viewportResizeListenerKey_ = null;
+    }
   } else {
     goog.dom.appendChild(targetElement, this.viewport_);
 
     var keyboardEventTarget = goog.isNull(this.keyboardEventTarget_) ?
         targetElement : this.keyboardEventTarget_;
     this.keyHandler_.attach(keyboardEventTarget);
+
+    if (goog.isNull(this.viewportResizeListenerKey_)) {
+      this.viewportResizeListenerKey_ = goog.events.listen(
+          this.viewportSizeMonitor_, goog.events.EventType.RESIZE,
+          this.updateSize, false, this);
+    }
   }
 
   this.updateSize();
@@ -1171,8 +1179,7 @@ ol.Map.prototype.renderSync = function() {
 
 
 /**
- * Requests a render frame; rendering will effectively occur at the next browser
- * animation frame.
+ * Request a map rendering (at the next animation frame).
  * @api stable
  */
 ol.Map.prototype.render = function() {
@@ -1362,10 +1369,6 @@ ol.Map.prototype.renderFrame_ = function(time) {
 ol.Map.prototype.setLayerGroup = function(layerGroup) {
   this.set(ol.MapProperty.LAYERGROUP, layerGroup);
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'setLayerGroup',
-    ol.Map.prototype.setLayerGroup);
 
 
 /**
@@ -1377,10 +1380,6 @@ goog.exportProperty(
 ol.Map.prototype.setSize = function(size) {
   this.set(ol.MapProperty.SIZE, size);
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'setSize',
-    ol.Map.prototype.setSize);
 
 
 /**
@@ -1393,10 +1392,6 @@ goog.exportProperty(
 ol.Map.prototype.setTarget = function(target) {
   this.set(ol.MapProperty.TARGET, target);
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'setTarget',
-    ol.Map.prototype.setTarget);
 
 
 /**
@@ -1408,10 +1403,6 @@ goog.exportProperty(
 ol.Map.prototype.setView = function(view) {
   this.set(ol.MapProperty.VIEW, view);
 };
-goog.exportProperty(
-    ol.Map.prototype,
-    'setView',
-    ol.Map.prototype.setView);
 
 
 /**

@@ -3,6 +3,7 @@ goog.provide('ol.geom.MultiPolygon');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('ol.extent');
+goog.require('ol.geom.GeometryLayout');
 goog.require('ol.geom.GeometryType');
 goog.require('ol.geom.MultiPoint');
 goog.require('ol.geom.Polygon');
@@ -338,7 +339,7 @@ ol.geom.MultiPolygon.prototype.getType = function() {
 
 /**
  * @inheritDoc
- * @api
+ * @api stable
  */
 ol.geom.MultiPolygon.prototype.intersectsExtent = function(extent) {
   return ol.geom.flat.intersectsextent.linearRingss(

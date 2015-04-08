@@ -1606,7 +1606,7 @@ olx.format.WriteOptions.prototype.featureProjection;
  * geometries.
  *
  * @type {boolean|undefined}
- * @api
+ * @api stable
  */
 olx.format.WriteOptions.prototype.rightHanded;
 
@@ -3397,6 +3397,7 @@ olx.layer.TileOptions.prototype.useInterimTilesOnError;
  *     source: (ol.source.Vector|undefined),
  *     style: (ol.style.Style|Array.<ol.style.Style>|ol.style.StyleFunction|undefined),
  *     updateWhileAnimating: (boolean|undefined),
+ *     updateWhileInteracting: (boolean|undefined),
  *     visible: (boolean|undefined)}}
  * @api
  */
@@ -3514,6 +3515,15 @@ olx.layer.VectorOptions.prototype.style;
  * @api
  */
 olx.layer.VectorOptions.prototype.updateWhileAnimating;
+
+
+/**
+ * When set to `true`, feature batches will be recreated during interactions.
+ * See also `updateWhileInteracting`. Default is `false`.
+ * @type {boolean|undefined}
+ * @api
+ */
+olx.layer.VectorOptions.prototype.updateWhileInteracting;
 
 
 /**
@@ -5658,23 +5668,23 @@ olx.source.WMTSOptions.prototype.projection;
 /**
  * Request encoding. Default is `KVP`.
  * @type {ol.source.WMTSRequestEncoding|string|undefined}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.requestEncoding;
 
 
 /**
- * Layer.
+ * Layer name as advertised in the WMTS capabilities.
  * @type {string}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.layer;
 
 
 /**
- * Style.
+ * Style name as advertised in the WMTS capabilities.
  * @type {string}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.style;
 
@@ -5703,7 +5713,7 @@ olx.source.WMTSOptions.prototype.tilePixelRatio;
 /**
  * WMTS version. Default is `1.0.0`.
  * @type {string|undefined}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.version;
 
@@ -5711,7 +5721,7 @@ olx.source.WMTSOptions.prototype.version;
 /**
  * Image format. Default is `image/jpeg`.
  * @type {string|undefined}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.format;
 
@@ -5719,23 +5729,25 @@ olx.source.WMTSOptions.prototype.format;
 /**
  * Matrix set.
  * @type {string}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.matrixSet;
 
 
 /**
- * Dimensions.
+ * Additional "dimensions" for tile requests.  This is an object with properties
+ * named like the advertised WMTS dimensions.
  * @type {Object|undefined}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.dimensions;
 
 
 /**
- * URL.
+ * A URL for the service.  For the RESTful request encoding, this is a URL
+ * template.  For KVP encoding, it is normal URL.
  * @type {string|undefined}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.url;
 
@@ -5757,9 +5769,9 @@ olx.source.WMTSOptions.prototype.tileLoadFunction;
 
 
 /**
- * Urls.
+ * An array of URLs.  Requests will be distributed among the URLs in this array.
  * @type {Array.<string>|undefined}
- * @api
+ * @api stable
  */
 olx.source.WMTSOptions.prototype.urls;
 
@@ -6064,6 +6076,7 @@ olx.style.FillOptions.prototype.color;
  *     rotateWithView: (boolean|undefined),
  *     rotation: (number|undefined),
  *     size: (ol.Size|undefined),
+ *     imgSize: (ol.Size|undefined),
  *     src: (string|undefined)}}
  * @api
  */
@@ -6122,7 +6135,7 @@ olx.style.IconOptions.prototype.crossOrigin;
 /**
  * Image object for the icon. If the `src` option is not provided then the
  * provided image must already be loaded. And in that case, it is required
- * to provide the size of the image, with the `size` option.
+ * to provide the size of the image, with the `imgSize` option.
  * @type {Image|undefined}
  * @api
  */
@@ -6196,12 +6209,19 @@ olx.style.IconOptions.prototype.rotation;
 
 /**
  * Icon size in pixel. Can be used together with `offset` to define the
- * sub-rectangle to use from the origin (sprite) icon image. Also, setting
- * the `size` is required if `img` is set and `src` is not.
+ * sub-rectangle to use from the origin (sprite) icon image.
  * @type {ol.Size|undefined}
  * @api
  */
 olx.style.IconOptions.prototype.size;
+
+
+/**
+ * Image size in pixel. Only required if `img` is set and `src` is not.
+ * @type {ol.Size|undefined}
+ * @api
+ */
+olx.style.IconOptions.prototype.imgSize;
 
 
 /**
@@ -6830,7 +6850,7 @@ olx.view.FitGeometryOptions.prototype.maxZoom;
 /**
  * @typedef {{animate: boolean,
  *     attributions: Object.<string, ol.Attribution>,
- *     coordinateToPixelMatrix: goog.vec.Mat4.Number,
+ *     coordinateToPixelMatrix: ol.vec.Mat4.Number,
  *     extent: (null|ol.Extent),
  *     focus: ol.Coordinate,
  *     index: number,
@@ -6838,7 +6858,7 @@ olx.view.FitGeometryOptions.prototype.maxZoom;
  *     layerStatesArray: Array.<ol.layer.LayerState>,
  *     logos: Object.<string, string>,
  *     pixelRatio: number,
- *     pixelToCoordinateMatrix: goog.vec.Mat4.Number,
+ *     pixelToCoordinateMatrix: ol.vec.Mat4.Number,
  *     postRenderFunctions: Array.<ol.PostRenderFunction>,
  *     size: ol.Size,
  *     skippedFeatureUids: Object.<string, boolean>,

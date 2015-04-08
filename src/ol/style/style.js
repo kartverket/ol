@@ -1,4 +1,6 @@
+goog.provide('ol.style.GeometryFunction');
 goog.provide('ol.style.Style');
+goog.provide('ol.style.StyleFunction');
 goog.provide('ol.style.defaultGeometryFunction');
 
 goog.require('goog.asserts');
@@ -76,6 +78,7 @@ ol.style.Style = function(opt_options) {
 
 
 /**
+ * Get the geometry to be rendered.
  * @return {string|ol.geom.Geometry|ol.style.GeometryFunction}
  * Feature property or geometry or function that returns the geometry that will
  * be rendered with this style.
@@ -87,6 +90,7 @@ ol.style.Style.prototype.getGeometry = function() {
 
 
 /**
+ * Get the function used to generate a geometry for rendering.
  * @return {!ol.style.GeometryFunction} Function that is called with a feature
  * and returns the geometry to render instead of the feature's geometry.
  * @api
@@ -97,6 +101,7 @@ ol.style.Style.prototype.getGeometryFunction = function() {
 
 
 /**
+ * Get the fill style.
  * @return {ol.style.Fill} Fill style.
  * @api
  */
@@ -106,6 +111,7 @@ ol.style.Style.prototype.getFill = function() {
 
 
 /**
+ * Get the image style.
  * @return {ol.style.Image} Image style.
  * @api
  */
@@ -115,6 +121,7 @@ ol.style.Style.prototype.getImage = function() {
 
 
 /**
+ * Get the stroke style.
  * @return {ol.style.Stroke} Stroke style.
  * @api
  */
@@ -124,6 +131,7 @@ ol.style.Style.prototype.getStroke = function() {
 
 
 /**
+ * Get the text style.
  * @return {ol.style.Text} Text style.
  * @api
  */
@@ -133,6 +141,7 @@ ol.style.Style.prototype.getText = function() {
 
 
 /**
+ * Get the z-index for the style.
  * @return {number|undefined} ZIndex.
  * @api
  */
@@ -175,7 +184,7 @@ ol.style.Style.prototype.setGeometry = function(geometry) {
 
 
 /**
- * Set the zIndex.
+ * Set the z-index.
  *
  * @param {number|undefined} zIndex ZIndex.
  * @api
