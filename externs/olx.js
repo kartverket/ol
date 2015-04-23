@@ -1435,6 +1435,7 @@ olx.control.ZoomOptions.prototype.target;
 
 /**
  * @typedef {{className: (string|undefined),
+ *     duration: (number|undefined),
  *     maxResolution: (number|undefined),
  *     minResolution: (number|undefined),
  *     render: (function(ol.MapEvent)|undefined)}}
@@ -1449,6 +1450,14 @@ olx.control.ZoomSliderOptions;
  * @api stable
  */
 olx.control.ZoomSliderOptions.prototype.className;
+
+
+/**
+ * Animation duration in milliseconds. Default is `200`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.control.ZoomSliderOptions.prototype.duration;
 
 
 /**
@@ -1633,6 +1642,21 @@ olx.format.GeoJSONOptions.prototype.defaultDataProjection;
  * @api stable
  */
 olx.format.GeoJSONOptions.prototype.geometryName;
+
+
+/**
+ * @typedef {{geometryName: (string|undefined)}}
+ * @api
+ */
+olx.format.EsriJSONOptions;
+
+
+/**
+ * Geometry name to use when creating features.
+ * @type {string|undefined}
+ * @api
+ */
+olx.format.EsriJSONOptions.prototype.geometryName;
 
 
 /**
@@ -2242,7 +2266,8 @@ olx.interaction.DragPanOptions.prototype.kinetic;
 
 
 /**
- * @typedef {{condition: (ol.events.ConditionType|undefined)}}
+ * @typedef {{condition: (ol.events.ConditionType|undefined),
+ *     duration: (number|undefined)}}
  * @api
  */
 olx.interaction.DragRotateAndZoomOptions;
@@ -2259,7 +2284,16 @@ olx.interaction.DragRotateAndZoomOptions.prototype.condition;
 
 
 /**
- * @typedef {{condition: (ol.events.ConditionType|undefined)}}
+ * Animation duration in milliseconds. Default is `400`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.interaction.DragRotateAndZoomOptions.prototype.duration;
+
+
+/**
+ * @typedef {{condition: (ol.events.ConditionType|undefined),
+ *     duration: (number|undefined)}}
  * @api
  */
 olx.interaction.DragRotateOptions;
@@ -2276,7 +2310,16 @@ olx.interaction.DragRotateOptions.prototype.condition;
 
 
 /**
+ * Animation duration in milliseconds. Default is `250`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.interaction.DragRotateOptions.prototype.duration;
+
+
+/**
  * @typedef {{condition: (ol.events.ConditionType|undefined),
+ *     duration: (number|undefined),
  *     style: ol.style.Style}}
  * @api
  */
@@ -2291,6 +2334,14 @@ olx.interaction.DragZoomOptions;
  * @api
  */
 olx.interaction.DragZoomOptions.prototype.condition;
+
+
+/**
+ * Animation duration in milliseconds. Default is `200`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.interaction.DragZoomOptions.prototype.duration;
 
 
 /**
@@ -2385,6 +2436,7 @@ olx.interaction.DrawOptions.prototype.condition;
 
 /**
  * @typedef {{condition: (ol.events.ConditionType|undefined),
+ *     duration: (number|undefined),
  *     pixelDelta: (number|undefined)}}
  * @api
  */
@@ -2400,6 +2452,14 @@ olx.interaction.KeyboardPanOptions;
  * @api
  */
 olx.interaction.KeyboardPanOptions.prototype.condition;
+
+
+/**
+ * Animation duration in milliseconds. Default is `100`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.interaction.KeyboardPanOptions.prototype.duration;
 
 
 /**
@@ -2507,10 +2567,19 @@ olx.interaction.MouseWheelZoomOptions.prototype.duration;
 
 
 /**
- * @typedef {{threshold: (number|undefined)}}
+ * @typedef {{threshold: (number|undefined),
+ *     duration: (number|undefined)}}
  * @api
  */
 olx.interaction.PinchRotateOptions;
+
+
+/**
+ * The duration of the animation in milliseconds. Default is `250`.
+ * @type {number|undefined}
+ * @api
+ */
+olx.interaction.PinchRotateOptions.prototype.duration;
 
 
 /**
@@ -4877,7 +4946,8 @@ olx.source.TileWMSOptions.prototype.wrapX;
  *     loader: (ol.FeatureLoader|undefined),
  *     logo: (string|olx.LogoOptions|undefined),
  *     strategy: (ol.LoadingStrategy|undefined),
- *     url: (string|undefined)}}
+ *     url: (string|undefined),
+ *     wrapX: (boolean|undefined)}}
  * @api
  */
 olx.source.VectorOptions;
@@ -4900,9 +4970,8 @@ olx.source.VectorOptions.prototype.features;
 
 
 /**
- * The feature format used by the XHR loader when `url` is set. Required
- * if `url` is set, otherwise ignored. Default is `undefined`.
- * `url`
+ * The feature format used by the XHR feature loader when `url` is set.
+ * Required if `url` is set, otherwise ignored. Default is `undefined`.
  * @type {ol.format.Feature|undefined}
  * @api
  */
@@ -4911,7 +4980,8 @@ olx.source.VectorOptions.prototype.format;
 
 /**
  * The loader function used to load features, from a remote source for example.
- * Note that the source will create and use an XHR loader when `src` is set.
+ * Note that the source will create and use an XHR feature loader when `url` is
+ * set.
  * @type {ol.FeatureLoader|undefined}
  * @api
  */
@@ -4928,8 +4998,7 @@ olx.source.VectorOptions.prototype.logo;
 
 /**
  * The loading strategy to use. By default an {@link ol.loadingstrategy.all}
- * strategy is used, which means that features at loaded all at once, and
- * once.
+ * strategy is used, a one-off strategy which loads all features at once.
  * @type {ol.LoadingStrategy|undefined}
  * @api
  */
@@ -4937,13 +5006,24 @@ olx.source.VectorOptions.prototype.strategy;
 
 
 /**
- * Set this option if you want the source to download features all at once
- * and once for good. Internally the source uses an XHR feature loader (see
- * {@link ol.featureloader.xhr}). Requires `format` to be set as well.
+ * Setting this option instructs the source to use an XHR loader (see
+ * {@link ol.featureloader.xhr}) and an {@link ol.loadingstrategy.all} for a
+ * one-off download of all features from that URL.
+ * Requires `format` to be set as well.
  * @type {string|undefined}
  * @api
  */
 olx.source.VectorOptions.prototype.url;
+
+
+/**
+ * Wrap the world horizontally. Default is `true`. For vector editing across the
+ * -180° and 180° meridians to work properly, this should be set to `false`. The
+ * resulting geometry coordinates will then exceed the world bounds.
+ * @type {boolean|undefined}
+ * @api
+ */
+olx.source.VectorOptions.prototype.wrapX;
 
 
 /**
@@ -5145,7 +5225,7 @@ olx.source.WMTSOptions.prototype.wrapX;
  *     minZoom: (number|undefined),
  *     tileLoadFunction: (ol.TileLoadFunctionType|undefined),
  *     tilePixelRatio: (number|undefined),
- *     tileSize: (number|undefined),
+ *     tileSize: (number|ol.Size|undefined),
  *     tileUrlFunction: (ol.TileUrlFunctionType|undefined),
  *     url: (string|undefined),
  *     urls: (Array.<string>|undefined),
@@ -5227,8 +5307,8 @@ olx.source.XYZOptions.prototype.tilePixelRatio;
 
 
 /**
- * The tile size used by the tile service. Default is `256` pixels.
- * @type {number|undefined}
+ * The tile size used by the tile service. Default is `[256, 256]` pixels.
+ * @type {number|ol.Size|undefined}
  * @api
  */
 olx.source.XYZOptions.prototype.tileSize;
@@ -5924,8 +6004,8 @@ olx.tilegrid;
  *     origin: (ol.Coordinate|undefined),
  *     origins: (Array.<ol.Coordinate>|undefined),
  *     resolutions: !Array.<number>,
- *     tileSize: (number|undefined),
- *     tileSizes: (Array.<number>|undefined),
+ *     tileSize: (number|ol.Size|undefined),
+ *     tileSizes: (Array.<number|ol.Size>|undefined),
  *     widths: (Array.<number>|undefined)}}
  * @api
  */
@@ -5968,8 +6048,8 @@ olx.tilegrid.TileGridOptions.prototype.resolutions;
 
 
 /**
- * Tile size. Default is 256. (Only square tiles are supported.)
- * @type {number|undefined}
+ * Tile size. Default is `[256, 256]`.
+ * @type {number|ol.Size|undefined}
  * @api stable
  */
 olx.tilegrid.TileGridOptions.prototype.tileSize;
@@ -5978,7 +6058,7 @@ olx.tilegrid.TileGridOptions.prototype.tileSize;
 /**
  * Tile sizes. If given, the array length should match the length of the
  * `resolutions` array, i.e. each resolution can have a different tile size.
- * @type {Array.<number>|undefined}
+ * @type {Array.<number|ol.Size>|undefined}
  * @api stable
  */
 olx.tilegrid.TileGridOptions.prototype.tileSizes;
@@ -6001,8 +6081,8 @@ olx.tilegrid.TileGridOptions.prototype.widths;
  *     origins: (Array.<ol.Coordinate>|undefined),
  *     resolutions: !Array.<number>,
  *     matrixIds: !Array.<string>,
- *     tileSize: (number|undefined),
- *     tileSizes: (Array.<number>|undefined),
+ *     tileSize: (number|ol.Size|undefined),
+ *     tileSizes: (Array.<number|ol.Size>|undefined),
  *     widths: (Array.<number>|undefined)}}
  * @api
  */
@@ -6047,7 +6127,7 @@ olx.tilegrid.WMTSOptions.prototype.matrixIds;
 
 /**
  * Tile size.
- * @type {number|undefined}
+ * @type {number|ol.Size|undefined}
  * @api
  */
 olx.tilegrid.WMTSOptions.prototype.tileSize;
@@ -6056,7 +6136,7 @@ olx.tilegrid.WMTSOptions.prototype.tileSize;
 /**
  * Tile sizes. The length of this array needs to match the length of the
  * `resolutions` array.
- * @type {Array.<number>|undefined}
+ * @type {Array.<number|ol.Size>|undefined}
  * @api
  */
 olx.tilegrid.WMTSOptions.prototype.tileSizes;
@@ -6078,7 +6158,7 @@ olx.tilegrid.WMTSOptions.prototype.widths;
  * @typedef {{extent: (ol.Extent|undefined),
  *     maxZoom: (number|undefined),
  *     minZoom: (number|undefined),
- *     tileSize: (number|undefined)}}
+ *     tileSize: (number|ol.Size|undefined)}}
  * @api
  */
 olx.tilegrid.XYZOptions;
@@ -6114,8 +6194,8 @@ olx.tilegrid.XYZOptions.prototype.minZoom;
 
 
 /**
- * Tile size in pixels. Default is 256. (Only square tiles are supported.)
- * @type {number|undefined}
+ * Tile size in pixels. Default is `[256, 256]`.
+ * @type {number|ol.Size|undefined}
  * @api
  */
 olx.tilegrid.XYZOptions.prototype.tileSize;
