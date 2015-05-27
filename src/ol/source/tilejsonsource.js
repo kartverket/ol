@@ -17,7 +17,6 @@ goog.require('ol.extent');
 goog.require('ol.proj');
 goog.require('ol.source.State');
 goog.require('ol.source.TileImage');
-goog.require('ol.tilegrid.XYZ');
 
 
 
@@ -69,7 +68,7 @@ ol.source.TileJSON.prototype.handleTileJSONResponse = function(tileJSON) {
   }
   var minZoom = tileJSON.minzoom || 0;
   var maxZoom = tileJSON.maxzoom || 22;
-  var tileGrid = new ol.tilegrid.XYZ({
+  var tileGrid = ol.tilegrid.createXYZ({
     extent: ol.tilegrid.extentFromProjection(sourceProjection),
     maxZoom: maxZoom,
     minZoom: minZoom
@@ -77,7 +76,7 @@ ol.source.TileJSON.prototype.handleTileJSONResponse = function(tileJSON) {
   this.tileGrid = tileGrid;
 
   this.tileUrlFunction = ol.TileUrlFunction.withTileCoordTransform(
-      tileGrid.createTileCoordTransform({extent: extent}),
+      ol.tilegrid.createOriginTopLeftTileCoordTransform(tileGrid),
       ol.TileUrlFunction.createFromTemplates(tileJSON.tiles));
 
   if (goog.isDef(tileJSON.attribution) &&

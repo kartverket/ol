@@ -226,7 +226,10 @@ olx.MapOptions.prototype.keyboardEventTarget;
 
 
 /**
- * Layers. If this is not defined, a map with no layers will be rendered.
+ * Layers. If this is not defined, a map with no layers will be rendered. Note
+ * that layers are rendered in the order supplied, so if you want, for example,
+ * a vector layer to appear on top of a tile layer, it must come after the tile
+ * layer.
  * @type {Array.<ol.layer.Base>|ol.Collection.<ol.layer.Base>|undefined}
  * @api stable
  */
@@ -2357,10 +2360,13 @@ olx.interaction.DragZoomOptions.prototype.style;
  *     source: (ol.source.Vector|undefined),
  *     snapTolerance: (number|undefined),
  *     type: ol.geom.GeometryType,
- *     minPointsPerRing: (number|undefined),
+ *     maxPoints: (number|undefined),
+ *     minPoints: (number|undefined),
  *     style: (ol.style.Style|Array.<ol.style.Style>|ol.style.StyleFunction|undefined),
+ *     geometryFunction: (ol.interaction.DrawGeometryFunctionType|undefined),
  *     geometryName: (string|undefined),
- *     condition: (ol.events.ConditionType|undefined)}}
+ *     condition: (ol.events.ConditionType|undefined),
+ *     freehandCondition: (ol.events.ConditionType|undefined)}}
  * @api
  */
 olx.interaction.DrawOptions;
@@ -2392,7 +2398,7 @@ olx.interaction.DrawOptions.prototype.snapTolerance;
 
 /**
  * Drawing type ('Point', 'LineString', 'Polygon', 'MultiPoint',
- * 'MultiLineString', or 'MultiPolygon').
+ * 'MultiLineString', 'MultiPolygon' or 'Circle').
  * @type {ol.geom.GeometryType}
  * @api
  */
@@ -2400,12 +2406,21 @@ olx.interaction.DrawOptions.prototype.type;
 
 
 /**
- * The number of points that must be drawn before a polygon ring can be finished.
- * Default is `3`.
+ * The number of points that can be drawn before a polygon ring or line string
+ * is finished. The default is no restriction.
  * @type {number|undefined}
  * @api
  */
-olx.interaction.DrawOptions.prototype.minPointsPerRing;
+olx.interaction.DrawOptions.prototype.maxPoints;
+
+
+/**
+ * The number of points that must be drawn before a polygon ring or line string
+ * can be finished. Default is `3` for polygon rings and `2` for line strings.
+ * @type {number|undefined}
+ * @api
+ */
+olx.interaction.DrawOptions.prototype.minPoints;
 
 
 /**
@@ -2414,6 +2429,14 @@ olx.interaction.DrawOptions.prototype.minPointsPerRing;
  * @api
  */
 olx.interaction.DrawOptions.prototype.style;
+
+
+/**
+ * Function that is called when a geometry's coordinates are updated.
+ * @type {ol.interaction.DrawGeometryFunctionType|undefined}
+ * @api
+ */
+olx.interaction.DrawOptions.prototype.geometryFunction;
 
 
 /**
@@ -2427,11 +2450,24 @@ olx.interaction.DrawOptions.prototype.geometryName;
 /**
  * A function that takes an {@link ol.MapBrowserEvent} and returns a boolean
  * to indicate whether that event should be handled.
- * By default {@link ol.events.condition.noModifierKeys} adds a vertex.
+ * By default {@link ol.events.condition.noModifierKeys}, i.e. a click, adds a
+ * vertex or deactivates freehand drawing.
  * @type {ol.events.ConditionType|undefined}
  * @api
  */
 olx.interaction.DrawOptions.prototype.condition;
+
+
+/**
+ * Condition that activates freehand drawing for lines and polygons. This
+ * function takes an {@link ol.MapBrowserEvent} and returns a boolean to
+ * indicate whether that event should be handled. The default is
+ * {@link ol.events.condition.shiftKeyOnly}, meaning that the Shift key
+ * activates freehand drawing.
+ * @type {ol.events.ConditionType|undefined}
+ * @api
+ */
+olx.interaction.DrawOptions.prototype.freehandCondition;
 
 
 /**
@@ -2528,7 +2564,7 @@ olx.interaction.ModifyOptions.prototype.deleteCondition;
 
 /**
  * Pixel tolerance for considering the pointer close enough to a segment or
- * vertex for editing.
+ * vertex for editing. Default is `10`.
  * @type {number|undefined}
  * @api
  */
@@ -3542,8 +3578,9 @@ olx.layer.VectorOptions.prototype.opacity;
 
 /**
  * The buffer around the viewport extent used by the renderer when getting
- * features from the vector source. Recommended value: the size of the
- * largest symbol or line width. Default is 100 pixels.
+ * features from the vector source for the rendering or hit-detection.
+ * Recommended value: the size of the largest symbol, line width or label.
+ * Default is 100 pixels.
  * @type {number|undefined}
  * @api
  */
@@ -4928,11 +4965,10 @@ olx.source.TileWMSOptions.prototype.urls;
 
 
 /**
- * Whether to wrap the world horizontally. The default, `undefined`, is to
- * request out-of-bounds tiles from the server. This works well in e.g.
- * GeoServer. When set to `false`, only one world will be rendered. When set to
- * `true`, tiles will be requested for one world only, but they will be wrapped
- * horizontally to render multiple worlds.
+ * Whether to wrap the world horizontally. When set to `false`, only one world
+ * will be rendered. When `true`, tiles will be requested for one world only,
+ * but they will be wrapped horizontally to render multiple worlds. The default
+ * is `true`.
  * @type {boolean|undefined}
  * @api
  */
@@ -6000,16 +6036,28 @@ olx.tilegrid;
 
 
 /**
- * @typedef {{minZoom: (number|undefined),
+ * @typedef {{extent: (ol.Extent|undefined),
+ *     minZoom: (number|undefined),
  *     origin: (ol.Coordinate|undefined),
  *     origins: (Array.<ol.Coordinate>|undefined),
  *     resolutions: !Array.<number>,
+ *     sizes: (Array.<ol.Size>|undefined),
  *     tileSize: (number|ol.Size|undefined),
- *     tileSizes: (Array.<number|ol.Size>|undefined),
- *     widths: (Array.<number>|undefined)}}
+ *     tileSizes: (Array.<number|ol.Size>|undefined)}}
  * @api
  */
 olx.tilegrid.TileGridOptions;
+
+
+/**
+ * Extent for the tile grid. No tiles outside this extent will be requested by
+ * {@link ol.source.Tile} sources. When no `origin` or `origins` are
+ * configured, the `origin` will be set to the bottom-left corner of the extent.
+ * When no `sizes` are configured, they will be calculated from the extent.
+ * @type {ol.Extent|undefined}
+ * @api
+ */
+olx.tilegrid.TileGridOptions.prototype.extent;
 
 
 /**
@@ -6021,7 +6069,7 @@ olx.tilegrid.TileGridOptions.prototype.minZoom;
 
 
 /**
- * Origin. Default is null.
+ * Origin, i.e. the bottom-left corner of the grid. Default is null.
  * @type {ol.Coordinate|undefined}
  * @api stable
  */
@@ -6029,8 +6077,9 @@ olx.tilegrid.TileGridOptions.prototype.origin;
 
 
 /**
- * Origins. If given, the array length should match the length of the
- * `resolutions` array, i.e. each resolution can have a different origin.
+ * Origins, i.e. the bottom-left corners of the grid for each zoom level. If
+ * given, the array length should match the length of the `resolutions` array,
+ * i.e. each resolution can have a different origin.
  * @type {Array.<ol.Coordinate>|undefined}
  * @api stable
  */
@@ -6045,6 +6094,17 @@ olx.tilegrid.TileGridOptions.prototype.origins;
  * @api stable
  */
 olx.tilegrid.TileGridOptions.prototype.resolutions;
+
+
+/**
+ * Number of tile rows and columns of the grid for each zoom level. This setting
+ * is only needed for tile coordinate transforms that need to work with origins
+ * other than the bottom-left corner of the grid. No tiles outside this range
+ * will be requested by sources. If an `extent` is also configured, it takes
+ * precedence.
+ * @type {Array.<ol.Size>|undefined}
+ */
+olx.tilegrid.TileGridOptions.prototype.sizes;
 
 
 /**
@@ -6065,32 +6125,32 @@ olx.tilegrid.TileGridOptions.prototype.tileSizes;
 
 
 /**
- * Number of tile columns that cover the grid's extent for each zoom level. Only
- * required when used with a source that has `wrapX` set to `true`, and only
- * when the grid's origin differs from the one of the projection's extent. The
- * array length has to match the length of the `resolutions` array, i.e. each
- * resolution will have a matching entry here.
- * @type {Array.<number>|undefined}
- * @api
- */
-olx.tilegrid.TileGridOptions.prototype.widths;
-
-
-/**
- * @typedef {{origin: (ol.Coordinate|undefined),
+ * @typedef {{extent: (ol.Extent|undefined),
+ *     origin: (ol.Coordinate|undefined),
  *     origins: (Array.<ol.Coordinate>|undefined),
  *     resolutions: !Array.<number>,
  *     matrixIds: !Array.<string>,
+ *     sizes: (Array.<ol.Size>|undefined),
  *     tileSize: (number|ol.Size|undefined),
- *     tileSizes: (Array.<number|ol.Size>|undefined),
- *     widths: (Array.<number>|undefined)}}
+ *     tileSizes: (Array.<number|ol.Size>|undefined)}}
  * @api
  */
 olx.tilegrid.WMTSOptions;
 
 
 /**
- * Origin.
+ * Extent for the tile grid. No tiles outside this extent will be requested by
+ * {@link ol.source.WMTS} sources. When no `origin` or `origins` are
+ * configured, the `origin` will be calculated from the extent.
+ * When no `sizes` are configured, they will be calculated from the extent.
+ * @type {ol.Extent|undefined}
+ * @api
+ */
+olx.tilegrid.WMTSOptions.prototype.extent;
+
+
+/**
+ * Origin, i.e. the top-left corner of the grid.
  * @type {ol.Coordinate|undefined}
  * @api
  */
@@ -6098,7 +6158,8 @@ olx.tilegrid.WMTSOptions.prototype.origin;
 
 
 /**
- * Origins. The length of this array needs to match the length of the
+ * Origins, i.e. the top-left corners of the grid for each zoom level. The
+ * length of this array needs to match the length of the
  * `resolutions` array.
  * @type {Array.<ol.Coordinate>|undefined}
  * @api
@@ -6123,6 +6184,18 @@ olx.tilegrid.WMTSOptions.prototype.resolutions;
  * @api
  */
 olx.tilegrid.WMTSOptions.prototype.matrixIds;
+
+
+/**
+ * Number of tile rows and columns of the grid for each zoom level. The values
+ * here are the `TileMatrixWidth` and `TileMatrixHeight` advertised in the
+ * GetCapabilities response of the WMTS, and define the grid's extent together
+ * with the `origin`. An `extent` can be configured in addition, and will
+ * further limit the extent for which tile requests are made by sources.
+ * @type {Array.<ol.Size>|undefined}
+ * @api
+ */
+olx.tilegrid.WMTSOptions.prototype.sizes;
 
 
 /**

@@ -151,6 +151,15 @@ ol.MapProperty = {
  * a further element within the viewport, either DOM or Canvas, depending on the
  * renderer.
  *
+ * Layers are stored as a `ol.Collection` in layerGroups. A top-level group is
+ * provided by the library. This is what is accessed by `getLayerGroup` and
+ * `setLayerGroup`. Layers entered in the options are added to this group, and
+ * `addLayer` and `removeLayer` change the layer collection in the group.
+ * `getLayers` is a convenience function for `getLayerGroup().getLayers()`.
+ * Note that `ol.layer.Group` is a subclass of `ol.layer.Base`, so layers
+ * entered in the options or added with `addLayer` can be groups, which can
+ * contain further groups, and so on.
+ *
  * @constructor
  * @extends {ol.Object}
  * @param {olx.MapOptions} options Map options.
@@ -503,7 +512,9 @@ ol.Map.prototype.addInteraction = function(interaction) {
 
 
 /**
- * Adds the given layer to the top of this map.
+ * Adds the given layer to the top of this map. If you want to add a layer
+ * elsewhere in the stack, use `getLayers()` and the methods available on
+ * {@link ol.Collection}.
  * @param {ol.layer.Base} layer Layer.
  * @api stable
  */
