@@ -5,12 +5,11 @@ goog.provide('ol.interaction.DrawGeometryFunctionType');
 goog.provide('ol.interaction.DrawMode');
 
 goog.require('goog.asserts');
-goog.require('goog.events');
-goog.require('goog.events.Event');
+goog.require('ol.events');
+goog.require('ol.events.Event');
 goog.require('ol.Collection');
 goog.require('ol.Coordinate');
 goog.require('ol.Feature');
-goog.require('ol.FeatureOverlay');
 goog.require('ol.MapBrowserEvent');
 goog.require('ol.MapBrowserEvent.EventType');
 goog.require('ol.Object');
@@ -27,8 +26,8 @@ goog.require('ol.geom.Polygon');
 goog.require('ol.geom.SimpleGeometry');
 goog.require('ol.interaction.InteractionProperty');
 goog.require('ol.interaction.Pointer');
+goog.require('ol.layer.Vector');
 goog.require('ol.source.Vector');
-goog.require('ol.style.Style');
 
 
 /**
@@ -50,14 +49,13 @@ ol.interaction.DrawEventType = {
 };
 
 
-
 /**
  * @classdesc
  * Events emitted by {@link ol.interaction.Draw} instances are instances of
  * this type.
  *
  * @constructor
- * @extends {goog.events.Event}
+ * @extends {ol.events.Event}
  * @implements {oli.DrawEvent}
  * @param {ol.interaction.DrawEventType} type Type.
  * @param {ol.Feature} feature The feature drawn.
@@ -74,13 +72,12 @@ ol.interaction.DrawEvent = function(type, feature) {
   this.feature = feature;
 
 };
-goog.inherits(ol.interaction.DrawEvent, goog.events.Event);
-
+goog.inherits(ol.interaction.DrawEvent, ol.events.Event);
 
 
 /**
  * @classdesc
- * Interaction that allows drawing geometries.
+ * Interaction for drawing feature geometries.
  *
  * @constructor
  * @extends {ol.interaction.Pointer}
@@ -113,22 +110,21 @@ ol.interaction.Draw = function(options) {
    * @type {ol.source.Vector}
    * @private
    */
-  this.source_ = goog.isDef(options.source) ? options.source : null;
+  this.source_ = options.source ? options.source : null;
 
   /**
    * Target collection for drawn features.
    * @type {ol.Collection.<ol.Feature>}
    * @private
    */
-  this.features_ = goog.isDef(options.features) ? options.features : null;
+  this.features_ = options.features ? options.features : null;
 
   /**
    * Pixel distance for snapping.
    * @type {number}
    * @private
    */
-  this.snapTolerance_ = goog.isDef(options.snapTolerance) ?
-      options.snapTolerance : 12;
+  this.snapTolerance_ = options.snapTolerance ? options.snapTolerance : 12;
 
   /**
    * Geometry type.
@@ -151,7 +147,7 @@ ol.interaction.Draw = function(options) {
    * @type {number}
    * @private
    */
-  this.minPoints_ = goog.isDef(options.minPoints) ?
+  this.minPoints_ = options.minPoints ?
       options.minPoints :
       (this.mode_ === ol.interaction.DrawMode.POLYGON ? 3 : 2);
 
@@ -161,19 +157,19 @@ ol.interaction.Draw = function(options) {
    * @type {number}
    * @private
    */
-  this.maxPoints_ = goog.isDef(options.maxPoints) ?
-      options.maxPoints : Infinity;
+  this.maxPoints_ = options.maxPoints ? options.maxPoints : Infinity;
 
   var geometryFunction = options.geometryFunction;
-  if (!goog.isDef(geometryFunction)) {
+  if (!geometryFunction) {
     if (this.type_ === ol.geom.GeometryType.CIRCLE) {
       /**
        * @param {ol.Coordinate|Array.<ol.Coordinate>|Array.<Array.<ol.Coordinate>>} coordinates
-       * @param {ol.geom.SimpleGeometry=} opt_geometry
-       * @return {ol.geom.SimpleGeometry}
+       *     The coordinates.
+       * @param {ol.geom.SimpleGeometry=} opt_geometry Optional geometry.
+       * @return {ol.geom.SimpleGeometry} A geometry.
        */
       geometryFunction = function(coordinates, opt_geometry) {
-        var circle = goog.isDef(opt_geometry) ? opt_geometry :
+        var circle = opt_geometry ? opt_geometry :
             new ol.geom.Circle([NaN, NaN]);
         goog.asserts.assertInstanceof(circle, ol.geom.Circle,
             'geometry must be an ol.geom.Circle');
@@ -194,12 +190,13 @@ ol.interaction.Draw = function(options) {
       }
       /**
        * @param {ol.Coordinate|Array.<ol.Coordinate>|Array.<Array.<ol.Coordinate>>} coordinates
-       * @param {ol.geom.SimpleGeometry=} opt_geometry
-       * @return {ol.geom.SimpleGeometry}
+       *     The coordinates.
+       * @param {ol.geom.SimpleGeometry=} opt_geometry Optional geometry.
+       * @return {ol.geom.SimpleGeometry} A geometry.
        */
       geometryFunction = function(coordinates, opt_geometry) {
         var geometry = opt_geometry;
-        if (goog.isDef(geometry)) {
+        if (geometry) {
           geometry.setCoordinates(coordinates);
         } else {
           geometry = new Constructor(coordinates);
@@ -265,16 +262,21 @@ ol.interaction.Draw = function(options) {
    * @type {number}
    * @private
    */
-  this.squaredClickTolerance_ = 4;
+  this.squaredClickTolerance_ = options.clickTolerance ?
+      options.clickTolerance * options.clickTolerance : 36;
 
   /**
    * Draw overlay where our sketch features are drawn.
-   * @type {ol.FeatureOverlay}
+   * @type {ol.layer.Vector}
    * @private
    */
-  this.overlay_ = new ol.FeatureOverlay({
-    style: goog.isDef(options.style) ?
-        options.style : ol.interaction.Draw.getDefaultStyleFunction()
+  this.overlay_ = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      useSpatialIndex: false,
+      wrapX: options.wrapX ? options.wrapX : false
+    }),
+    style: options.style ? options.style :
+        ol.interaction.Draw.getDefaultStyleFunction()
   });
 
   /**
@@ -288,19 +290,19 @@ ol.interaction.Draw = function(options) {
    * @private
    * @type {ol.events.ConditionType}
    */
-  this.condition_ = goog.isDef(options.condition) ?
+  this.condition_ = options.condition ?
       options.condition : ol.events.condition.noModifierKeys;
 
   /**
    * @private
    * @type {ol.events.ConditionType}
    */
-  this.freehandCondition_ = goog.isDef(options.freehandCondition) ?
+  this.freehandCondition_ = options.freehandCondition ?
       options.freehandCondition : ol.events.condition.shiftKeyOnly;
 
-  goog.events.listen(this,
+  ol.events.listen(this,
       ol.Object.getChangeEventType(ol.interaction.InteractionProperty.ACTIVE),
-      this.updateState_, false, this);
+      this.updateState_, this);
 
 };
 goog.inherits(ol.interaction.Draw, ol.interaction.Pointer);
@@ -335,6 +337,11 @@ ol.interaction.Draw.prototype.setMap = function(map) {
  * @api
  */
 ol.interaction.Draw.handleEvent = function(mapBrowserEvent) {
+  if ((this.mode_ === ol.interaction.DrawMode.LINE_STRING ||
+    this.mode_ === ol.interaction.DrawMode.POLYGON) &&
+    this.freehandCondition_(mapBrowserEvent)) {
+    this.freehand_ = true;
+  }
   var pass = !this.freehand_;
   if (this.freehand_ &&
       mapBrowserEvent.type === ol.MapBrowserEvent.EventType.POINTERDRAG) {
@@ -360,12 +367,9 @@ ol.interaction.Draw.handleDownEvent_ = function(event) {
   if (this.condition_(event)) {
     this.downPx_ = event.pixel;
     return true;
-  } else if ((this.mode_ === ol.interaction.DrawMode.LINE_STRING ||
-      this.mode_ === ol.interaction.DrawMode.POLYGON) &&
-      this.freehandCondition_(event)) {
+  } else if (this.freehand_) {
     this.downPx_ = event.pixel;
-    this.freehand_ = true;
-    if (goog.isNull(this.finishCoordinate_)) {
+    if (!this.finishCoordinate_) {
       this.startDrawing_(event);
     }
     return true;
@@ -391,12 +395,14 @@ ol.interaction.Draw.handleUpEvent_ = function(event) {
   var pass = true;
   if (squaredDistance <= this.squaredClickTolerance_) {
     this.handlePointerMove_(event);
-    if (goog.isNull(this.finishCoordinate_)) {
+    if (!this.finishCoordinate_) {
       this.startDrawing_(event);
-    } else if ((this.mode_ === ol.interaction.DrawMode.POINT ||
-        this.mode_ === ol.interaction.DrawMode.CIRCLE) &&
-            !goog.isNull(this.finishCoordinate_) ||
-        this.atFinish_(event)) {
+      if (this.mode_ === ol.interaction.DrawMode.POINT) {
+        this.finishDrawing();
+      }
+    } else if (this.mode_ === ol.interaction.DrawMode.CIRCLE) {
+      this.finishDrawing();
+    } else if (this.atFinish_(event)) {
       this.finishDrawing();
     } else {
       this.addToDrawing_(event);
@@ -414,10 +420,7 @@ ol.interaction.Draw.handleUpEvent_ = function(event) {
  * @private
  */
 ol.interaction.Draw.prototype.handlePointerMove_ = function(event) {
-  if (this.mode_ === ol.interaction.DrawMode.POINT &&
-      goog.isNull(this.finishCoordinate_)) {
-    this.startDrawing_(event);
-  } else if (!goog.isNull(this.finishCoordinate_)) {
+  if (this.finishCoordinate_) {
     this.modifyDrawing_(event);
   } else {
     this.createOrUpdateSketchPoint_(event);
@@ -434,7 +437,7 @@ ol.interaction.Draw.prototype.handlePointerMove_ = function(event) {
  */
 ol.interaction.Draw.prototype.atFinish_ = function(event) {
   var at = false;
-  if (!goog.isNull(this.sketchFeature_)) {
+  if (this.sketchFeature_) {
     var potentiallyDone = false;
     var potentiallyFinishCoordinates = [this.finishCoordinate_];
     if (this.mode_ === ol.interaction.DrawMode.LINE_STRING) {
@@ -473,7 +476,7 @@ ol.interaction.Draw.prototype.atFinish_ = function(event) {
  */
 ol.interaction.Draw.prototype.createOrUpdateSketchPoint_ = function(event) {
   var coordinates = event.coordinate.slice();
-  if (goog.isNull(this.sketchPoint_)) {
+  if (!this.sketchPoint_) {
     this.sketchPoint_ = new ol.Feature(new ol.geom.Point(coordinates));
     this.updateSketchFeatures_();
   } else {
@@ -504,14 +507,14 @@ ol.interaction.Draw.prototype.startDrawing_ = function(event) {
       this.sketchLineCoords_ = this.sketchCoords_;
     }
   }
-  if (!goog.isNull(this.sketchLineCoords_)) {
+  if (this.sketchLineCoords_) {
     this.sketchLine_ = new ol.Feature(
         new ol.geom.LineString(this.sketchLineCoords_));
   }
   var geometry = this.geometryFunction_(this.sketchCoords_);
-  goog.asserts.assert(goog.isDef(geometry), 'geometry should be defined');
+  goog.asserts.assert(geometry !== undefined, 'geometry should be defined');
   this.sketchFeature_ = new ol.Feature();
-  if (goog.isDef(this.geometryName_)) {
+  if (this.geometryName_) {
     this.sketchFeature_.setGeometryName(this.geometryName_);
   }
   this.sketchFeature_.setGeometry(geometry);
@@ -547,10 +550,9 @@ ol.interaction.Draw.prototype.modifyDrawing_ = function(event) {
   }
   last[0] = coordinate[0];
   last[1] = coordinate[1];
-  goog.asserts.assert(!goog.isNull(this.sketchCoords_),
-      'sketchCoords_ must not be null');
+  goog.asserts.assert(this.sketchCoords_, 'sketchCoords_ expected');
   this.geometryFunction_(this.sketchCoords_, geometry);
-  if (!goog.isNull(this.sketchPoint_)) {
+  if (this.sketchPoint_) {
     var sketchPointGeom = this.sketchPoint_.getGeometry();
     goog.asserts.assertInstanceof(sketchPointGeom, ol.geom.Point,
         'sketchPointGeom should be an ol.geom.Point');
@@ -559,7 +561,7 @@ ol.interaction.Draw.prototype.modifyDrawing_ = function(event) {
   var sketchLineGeom;
   if (geometry instanceof ol.geom.Polygon &&
       this.mode_ !== ol.interaction.DrawMode.POLYGON) {
-    if (goog.isNull(this.sketchLine_)) {
+    if (!this.sketchLine_) {
       this.sketchLine_ = new ol.Feature(new ol.geom.LineString(null));
     }
     var ring = geometry.getLinearRing(0);
@@ -568,7 +570,7 @@ ol.interaction.Draw.prototype.modifyDrawing_ = function(event) {
         'sketchLineGeom must be an ol.geom.LineString');
     sketchLineGeom.setFlatCoordinates(
         ring.getLayout(), ring.getFlatCoordinates());
-  } else if (!goog.isNull(this.sketchLineCoords_)) {
+  } else if (this.sketchLineCoords_) {
     sketchLineGeom = this.sketchLine_.getGeometry();
     goog.asserts.assertInstanceof(sketchLineGeom, ol.geom.LineString,
         'sketchLineGeom must be an ol.geom.LineString');
@@ -613,6 +615,37 @@ ol.interaction.Draw.prototype.addToDrawing_ = function(event) {
 
 
 /**
+ * Remove last point of the feature currently being drawn.
+ * @api
+ */
+ol.interaction.Draw.prototype.removeLastPoint = function() {
+  var geometry = this.sketchFeature_.getGeometry();
+  goog.asserts.assertInstanceof(geometry, ol.geom.SimpleGeometry,
+      'geometry must be an ol.geom.SimpleGeometry');
+  var coordinates, sketchLineGeom;
+  if (this.mode_ === ol.interaction.DrawMode.LINE_STRING) {
+    coordinates = this.sketchCoords_;
+    coordinates.splice(-2, 1);
+    this.geometryFunction_(coordinates, geometry);
+  } else if (this.mode_ === ol.interaction.DrawMode.POLYGON) {
+    coordinates = this.sketchCoords_[0];
+    coordinates.splice(-2, 1);
+    sketchLineGeom = this.sketchLine_.getGeometry();
+    goog.asserts.assertInstanceof(sketchLineGeom, ol.geom.LineString,
+        'sketchLineGeom must be an ol.geom.LineString');
+    sketchLineGeom.setCoordinates(coordinates);
+    this.geometryFunction_(this.sketchCoords_, geometry);
+  }
+
+  if (coordinates.length === 0) {
+    this.finishCoordinate_ = null;
+  }
+
+  this.updateSketchFeatures_();
+};
+
+
+/**
  * Stop drawing and add the sketch feature to the target layer.
  * The {@link ol.interaction.DrawEventType.DRAWEND} event is dispatched before
  * inserting the feature.
@@ -620,8 +653,7 @@ ol.interaction.Draw.prototype.addToDrawing_ = function(event) {
  */
 ol.interaction.Draw.prototype.finishDrawing = function() {
   var sketchFeature = this.abortDrawing_();
-  goog.asserts.assert(!goog.isNull(sketchFeature),
-      'sketchFeature should not be null');
+  goog.asserts.assert(sketchFeature, 'sketchFeature expected to be truthy');
   var coordinates = this.sketchCoords_;
   var geometry = sketchFeature.getGeometry();
   goog.asserts.assertInstanceof(geometry, ol.geom.SimpleGeometry,
@@ -653,10 +685,10 @@ ol.interaction.Draw.prototype.finishDrawing = function() {
       ol.interaction.DrawEventType.DRAWEND, sketchFeature));
 
   // Then insert feature
-  if (!goog.isNull(this.features_)) {
+  if (this.features_) {
     this.features_.push(sketchFeature);
   }
-  if (!goog.isNull(this.source_)) {
+  if (this.source_) {
     this.source_.addFeature(sketchFeature);
   }
 };
@@ -670,13 +702,39 @@ ol.interaction.Draw.prototype.finishDrawing = function() {
 ol.interaction.Draw.prototype.abortDrawing_ = function() {
   this.finishCoordinate_ = null;
   var sketchFeature = this.sketchFeature_;
-  if (!goog.isNull(sketchFeature)) {
+  if (sketchFeature) {
     this.sketchFeature_ = null;
     this.sketchPoint_ = null;
     this.sketchLine_ = null;
-    this.overlay_.getFeatures().clear();
+    this.overlay_.getSource().clear(true);
   }
   return sketchFeature;
+};
+
+
+/**
+ * Extend an existing geometry by adding additional points. This only works
+ * on features with `LineString` geometries, where the interaction will
+ * extend lines by adding points to the end of the coordinates array.
+ * @param {!ol.Feature} feature Feature to be extended.
+ * @api
+ */
+ol.interaction.Draw.prototype.extend = function(feature) {
+  var geometry = feature.getGeometry();
+  goog.asserts.assert(this.mode_ == ol.interaction.DrawMode.LINE_STRING,
+      'interaction mode must be "line"');
+  goog.asserts.assert(geometry, 'feature must have a geometry');
+  goog.asserts.assert(geometry.getType() == ol.geom.GeometryType.LINE_STRING,
+      'feature geometry must be a line string');
+  var lineString = /** @type {ol.geom.LineString} */ (geometry);
+  this.sketchFeature_ = feature;
+  this.sketchCoords_ = lineString.getCoordinates();
+  var last = this.sketchCoords_[this.sketchCoords_.length - 1];
+  this.finishCoordinate_ = last.slice();
+  this.sketchCoords_.push(last.slice());
+  this.updateSketchFeatures_();
+  this.dispatchEvent(new ol.interaction.DrawEvent(
+      ol.interaction.DrawEventType.DRAWSTART, this.sketchFeature_));
 };
 
 
@@ -692,16 +750,18 @@ ol.interaction.Draw.prototype.shouldStopEvent = goog.functions.FALSE;
  */
 ol.interaction.Draw.prototype.updateSketchFeatures_ = function() {
   var sketchFeatures = [];
-  if (!goog.isNull(this.sketchFeature_)) {
+  if (this.sketchFeature_) {
     sketchFeatures.push(this.sketchFeature_);
   }
-  if (!goog.isNull(this.sketchLine_)) {
+  if (this.sketchLine_) {
     sketchFeatures.push(this.sketchLine_);
   }
-  if (!goog.isNull(this.sketchPoint_)) {
+  if (this.sketchPoint_) {
     sketchFeatures.push(this.sketchPoint_);
   }
-  this.overlay_.setFeatures(new ol.Collection(sketchFeatures));
+  var overlaySource = this.overlay_.getSource();
+  overlaySource.clear(true);
+  overlaySource.addFeatures(sketchFeatures);
 };
 
 
@@ -711,7 +771,7 @@ ol.interaction.Draw.prototype.updateSketchFeatures_ = function() {
 ol.interaction.Draw.prototype.updateState_ = function() {
   var map = this.getMap();
   var active = this.getActive();
-  if (goog.isNull(map) || !active) {
+  if (!map || !active) {
     this.abortDrawing_();
   }
   this.overlay_.setMap(active ? map : null);
@@ -743,11 +803,11 @@ ol.interaction.Draw.createRegularPolygon = function(opt_sides, opt_angle) {
         var end = coordinates[1];
         var radius = Math.sqrt(
             ol.coordinate.squaredDistance(center, end));
-        var geometry = goog.isDef(opt_geometry) ? opt_geometry :
+        var geometry = opt_geometry ? opt_geometry :
             ol.geom.Polygon.fromCircle(new ol.geom.Circle(center), opt_sides);
         goog.asserts.assertInstanceof(geometry, ol.geom.Polygon,
             'geometry must be a polygon');
-        var angle = goog.isDef(opt_angle) ? opt_angle :
+        var angle = opt_angle ? opt_angle :
             Math.atan((end[1] - center[1]) / (end[0] - center[0]));
         ol.geom.Polygon.makeRegular(geometry, center, radius, angle);
         return geometry;
@@ -777,7 +837,7 @@ ol.interaction.Draw.getMode_ = function(type) {
   } else if (type === ol.geom.GeometryType.CIRCLE) {
     mode = ol.interaction.DrawMode.CIRCLE;
   }
-  goog.asserts.assert(goog.isDef(mode), 'mode should be defined');
+  goog.asserts.assert(mode !== undefined, 'mode should be defined');
   return mode;
 };
 

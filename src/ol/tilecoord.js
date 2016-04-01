@@ -1,7 +1,6 @@
 goog.provide('ol.TileCoord');
 goog.provide('ol.tilecoord');
 
-goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('ol.extent');
 
@@ -27,33 +26,6 @@ ol.QuadKeyCharCode = {
 
 
 /**
- * @param {string} quadKey Quad key.
- * @return {ol.TileCoord} Tile coordinate.
- */
-ol.tilecoord.createFromQuadKey = function(quadKey) {
-  var z = quadKey.length, x = 0, y = 0;
-  var mask = 1 << (z - 1);
-  var i;
-  for (i = 0; i < z; ++i) {
-    switch (quadKey.charCodeAt(i)) {
-      case ol.QuadKeyCharCode.ONE:
-        x += mask;
-        break;
-      case ol.QuadKeyCharCode.TWO:
-        y += mask;
-        break;
-      case ol.QuadKeyCharCode.THREE:
-        x += mask;
-        y += mask;
-        break;
-    }
-    mask >>= 1;
-  }
-  return [z, x, y];
-};
-
-
-/**
  * @param {string} str String that follows pattern “z/x/y” where x, y and z are
  *   numbers.
  * @return {ol.TileCoord} Tile coord.
@@ -62,10 +34,9 @@ ol.tilecoord.createFromString = function(str) {
   var v = str.split('/');
   goog.asserts.assert(v.length === 3,
       'must provide a string in "z/x/y" format, got "%s"', str);
-  v = goog.array.map(v, function(e, i, a) {
+  return v.map(function(e) {
     return parseInt(e, 10);
   });
-  return v;
 };
 
 
@@ -77,7 +48,7 @@ ol.tilecoord.createFromString = function(str) {
  * @return {ol.TileCoord} Tile coordinate.
  */
 ol.tilecoord.createOrUpdate = function(z, x, y, opt_tileCoord) {
-  if (goog.isDef(opt_tileCoord)) {
+  if (opt_tileCoord !== undefined) {
     opt_tileCoord[0] = z;
     opt_tileCoord[1] = x;
     opt_tileCoord[2] = y;
@@ -133,15 +104,6 @@ ol.tilecoord.quadKey = function(tileCoord) {
 
 
 /**
- * @param {ol.TileCoord} tileCoord Tile coord.
- * @return {string} String.
- */
-ol.tilecoord.toString = function(tileCoord) {
-  return ol.tilecoord.getKeyZXY(tileCoord[0], tileCoord[1], tileCoord[2]);
-};
-
-
-/**
  * @param {ol.TileCoord} tileCoord Tile coordinate.
  * @param {ol.tilegrid.TileGrid} tileGrid Tile grid.
  * @param {ol.proj.Projection} projection Projection.
@@ -165,26 +127,26 @@ ol.tilecoord.wrapX = function(tileCoord, tileGrid, projection) {
 /**
  * @param {ol.TileCoord} tileCoord Tile coordinate.
  * @param {!ol.tilegrid.TileGrid} tileGrid Tile grid.
- * @return {ol.TileCoord} Tile coordinate.
+ * @return {boolean} Tile coordinate is within extent and zoom level range.
  */
-ol.tilecoord.restrictByExtentAndZ = function(tileCoord, tileGrid) {
+ol.tilecoord.withinExtentAndZ = function(tileCoord, tileGrid) {
   var z = tileCoord[0];
   var x = tileCoord[1];
   var y = tileCoord[2];
 
   if (tileGrid.getMinZoom() > z || z > tileGrid.getMaxZoom()) {
-    return null;
+    return false;
   }
   var extent = tileGrid.getExtent();
   var tileRange;
-  if (goog.isNull(extent)) {
+  if (!extent) {
     tileRange = tileGrid.getFullTileRange(z);
   } else {
     tileRange = tileGrid.getTileRangeForExtentAndZ(extent, z);
   }
-  if (goog.isNull(tileRange)) {
-    return tileCoord;
+  if (!tileRange) {
+    return true;
   } else {
-    return tileRange.containsXY(x, y) ? tileCoord : null;
+    return tileRange.containsXY(x, y);
   }
 };

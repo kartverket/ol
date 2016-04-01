@@ -5,8 +5,7 @@ describe('ol.geom.Polygon', function() {
 
   it('can be constructed with a null geometry', function() {
     expect(function() {
-      var polygon = new ol.geom.Polygon(null);
-      polygon = polygon; // suppress gjslint warning
+      return new ol.geom.Polygon(null);
     }).not.to.throwException();
   });
 
@@ -215,6 +214,33 @@ describe('ol.geom.Polygon', function() {
       expect(polygon.containsCoordinate(insideInner)).to.be(false);
     });
 
+    describe('#intersectsExtent', function() {
+
+      it('does not intersect outside extent', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([outsideOuter]))).to.be(false);
+      });
+
+      it('does intersect inside extent', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([inside]))).to.be(true);
+      });
+
+      it('does intersect boundary extent', function() {
+        var firstMidX = (outerRing[0][0] + outerRing[1][0]) / 2;
+        var firstMidY = (outerRing[0][1] + outerRing[1][1]) / 2;
+
+        expect(polygon.intersectsExtent(ol.extent.boundingExtent([[firstMidX,
+          firstMidY]]))).to.be(true);
+      });
+
+      it('does not intersect extent fully contained by inner ring', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([insideInner]))).to.be(false);
+      });
+
+    });
+
     describe('#getOrientedFlatCoordinates', function() {
 
       it('reverses the outer ring if necessary', function() {
@@ -285,6 +311,33 @@ describe('ol.geom.Polygon', function() {
 
     it('does not contain inside inner coordinates', function() {
       expect(polygon.containsCoordinate(insideInner)).to.be(false);
+    });
+
+    describe('#intersectsExtent', function() {
+
+      it('does not intersect outside extent', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([outsideOuter]))).to.be(false);
+      });
+
+      it('does intersect inside extent', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([inside]))).to.be(true);
+      });
+
+      it('does intersect boundary extent', function() {
+        var firstMidX = (outerRing[0][0] + outerRing[1][0]) / 2;
+        var firstMidY = (outerRing[0][1] + outerRing[1][1]) / 2;
+
+        expect(polygon.intersectsExtent(ol.extent.boundingExtent([[firstMidX,
+          firstMidY]]))).to.be(true);
+      });
+
+      it('does not intersect extent fully contained by inner ring', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([insideInner]))).to.be(false);
+      });
+
     });
 
     describe('#getOrientedFlatCoordinates', function() {
@@ -365,6 +418,35 @@ describe('ol.geom.Polygon', function() {
     it('does not contain inside inner coordinates', function() {
       expect(polygon.containsCoordinate(insideInner1)).to.be(false);
       expect(polygon.containsCoordinate(insideInner2)).to.be(false);
+    });
+
+    describe('#intersectsExtent', function() {
+
+      it('does not intersect outside extent', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([outsideOuter]))).to.be(false);
+      });
+
+      it('does intersect inside extent', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([inside]))).to.be(true);
+      });
+
+      it('does intersect boundary extent', function() {
+        var firstMidX = (outerRing[0][0] + outerRing[1][0]) / 2;
+        var firstMidY = (outerRing[0][1] + outerRing[1][1]) / 2;
+
+        expect(polygon.intersectsExtent(ol.extent.boundingExtent([[firstMidX,
+          firstMidY]]))).to.be(true);
+      });
+
+      it('does not intersect extent fully contained by inner ring', function() {
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([insideInner1]))).to.be(false);
+        expect(polygon.intersectsExtent(
+            ol.extent.boundingExtent([insideInner2]))).to.be(false);
+      });
+
     });
 
     describe('#getOrientedFlatCoordinates', function() {

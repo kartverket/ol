@@ -1,8 +1,7 @@
 goog.provide('ol.renderer.dom.VectorLayer');
 
-goog.require('goog.array');
 goog.require('goog.asserts');
-goog.require('goog.events');
+goog.require('ol.events');
 goog.require('goog.vec.Mat4');
 goog.require('ol.ViewHint');
 goog.require('ol.dom');
@@ -15,7 +14,6 @@ goog.require('ol.render.canvas.ReplayGroup');
 goog.require('ol.renderer.dom.Layer');
 goog.require('ol.renderer.vector');
 goog.require('ol.vec.Mat4');
-
 
 
 /**
@@ -95,8 +93,18 @@ goog.inherits(ol.renderer.dom.VectorLayer, ol.renderer.dom.Layer);
 /**
  * @inheritDoc
  */
-ol.renderer.dom.VectorLayer.prototype.composeFrame =
-    function(frameState, layerState) {
+ol.renderer.dom.VectorLayer.prototype.clearFrame = function() {
+  // Clear the canvas
+  var canvas = this.context_.canvas;
+  canvas.width = canvas.width;
+  this.renderedRevision_ = 0;
+};
+
+
+/**
+ * @inheritDoc
+ */
+ol.renderer.dom.VectorLayer.prototype.composeFrame = function(frameState, layerState) {
 
   var vectorLayer = /** @type {ol.layer.Vector} */ (this.getLayer());
   goog.asserts.assertInstanceof(vectorLayer, ol.layer.Vector,
@@ -138,11 +146,11 @@ ol.renderer.dom.VectorLayer.prototype.composeFrame =
 
   var replayGroup = this.replayGroup_;
 
-  if (!goog.isNull(replayGroup) && !replayGroup.isEmpty()) {
+  if (replayGroup && !replayGroup.isEmpty()) {
 
     context.globalAlpha = layerState.opacity;
     replayGroup.replay(context, pixelRatio, transform, viewRotation,
-        frameState.skippedFeatureUids);
+        layerState.managed ? frameState.skippedFeatureUids : {});
 
     this.dispatchEvent_(ol.render.EventType.RENDER, frameState, transform);
   }
@@ -157,18 +165,16 @@ ol.renderer.dom.VectorLayer.prototype.composeFrame =
  * @param {goog.vec.Mat4.Number} transform Transform.
  * @private
  */
-ol.renderer.dom.VectorLayer.prototype.dispatchEvent_ =
-    function(type, frameState, transform) {
+ol.renderer.dom.VectorLayer.prototype.dispatchEvent_ = function(type, frameState, transform) {
   var context = this.context_;
   var layer = this.getLayer();
   if (layer.hasListener(type)) {
     var render = new ol.render.canvas.Immediate(
         context, frameState.pixelRatio, frameState.extent, transform,
         frameState.viewState.rotation);
-    var event = new ol.render.Event(type, layer, render, null,
-        frameState, context, null);
+    var event = new ol.render.Event(type, layer, render, frameState,
+        context, null);
     layer.dispatchEvent(event);
-    render.flush();
   }
 };
 
@@ -176,9 +182,8 @@ ol.renderer.dom.VectorLayer.prototype.dispatchEvent_ =
 /**
  * @inheritDoc
  */
-ol.renderer.dom.VectorLayer.prototype.forEachFeatureAtCoordinate =
-    function(coordinate, frameState, callback, thisArg) {
-  if (goog.isNull(this.replayGroup_)) {
+ol.renderer.dom.VectorLayer.prototype.forEachFeatureAtCoordinate = function(coordinate, frameState, callback, thisArg) {
+  if (!this.replayGroup_) {
     return undefined;
   } else {
     var resolution = frameState.viewState.resolution;
@@ -186,14 +191,14 @@ ol.renderer.dom.VectorLayer.prototype.forEachFeatureAtCoordinate =
     var layer = this.getLayer();
     /** @type {Object.<string, boolean>} */
     var features = {};
-    return this.replayGroup_.forEachFeatureAtCoordinate(coordinate,
-        resolution, rotation, frameState.skippedFeatureUids,
+    return this.replayGroup_.forEachFeatureAtCoordinate(coordinate, resolution,
+        rotation, {},
         /**
-         * @param {ol.Feature} feature Feature.
+         * @param {ol.Feature|ol.render.Feature} feature Feature.
          * @return {?} Callback result.
          */
         function(feature) {
-          goog.asserts.assert(goog.isDef(feature), 'received a feature');
+          goog.asserts.assert(feature !== undefined, 'received a feature');
           var key = goog.getUid(feature).toString();
           if (!(key in features)) {
             features[key] = true;
@@ -206,11 +211,10 @@ ol.renderer.dom.VectorLayer.prototype.forEachFeatureAtCoordinate =
 
 /**
  * Handle changes in image style state.
- * @param {goog.events.Event} event Image style change event.
+ * @param {ol.events.Event} event Image style change event.
  * @private
  */
-ol.renderer.dom.VectorLayer.prototype.handleStyleImageChange_ =
-    function(event) {
+ol.renderer.dom.VectorLayer.prototype.handleStyleImageChange_ = function(event) {
   this.renderIfReadyAndVisible();
 };
 
@@ -218,8 +222,7 @@ ol.renderer.dom.VectorLayer.prototype.handleStyleImageChange_ =
 /**
  * @inheritDoc
  */
-ol.renderer.dom.VectorLayer.prototype.prepareFrame =
-    function(frameState, layerState) {
+ol.renderer.dom.VectorLayer.prototype.prepareFrame = function(frameState, layerState) {
 
   var vectorLayer = /** @type {ol.layer.Vector} */ (this.getLayer());
   goog.asserts.assertInstanceof(vectorLayer, ol.layer.Vector,
@@ -249,7 +252,7 @@ ol.renderer.dom.VectorLayer.prototype.prepareFrame =
   var vectorLayerRenderBuffer = vectorLayer.getRenderBuffer();
   var vectorLayerRenderOrder = vectorLayer.getRenderOrder();
 
-  if (!goog.isDef(vectorLayerRenderOrder)) {
+  if (vectorLayerRenderOrder === undefined) {
     vectorLayerRenderOrder = ol.renderer.vector.defaultOrder;
   }
 
@@ -264,8 +267,6 @@ ol.renderer.dom.VectorLayer.prototype.prepareFrame =
     return true;
   }
 
-  // FIXME dispose of old replayGroup in post render
-  goog.dispose(this.replayGroup_);
   this.replayGroup_ = null;
 
   this.dirty_ = false;
@@ -275,39 +276,41 @@ ol.renderer.dom.VectorLayer.prototype.prepareFrame =
           ol.renderer.vector.getTolerance(resolution, pixelRatio), extent,
           resolution, vectorLayer.getRenderBuffer());
   vectorSource.loadFeatures(extent, resolution, projection);
-  var renderFeature =
-      /**
-       * @param {ol.Feature} feature Feature.
-       * @this {ol.renderer.dom.VectorLayer}
-       */
-      function(feature) {
+  /**
+   * @param {ol.Feature} feature Feature.
+   * @this {ol.renderer.dom.VectorLayer}
+   */
+  var renderFeature = function(feature) {
     var styles;
-    if (goog.isDef(feature.getStyleFunction())) {
-      styles = feature.getStyleFunction().call(feature, resolution);
-    } else if (goog.isDef(vectorLayer.getStyleFunction())) {
-      styles = vectorLayer.getStyleFunction()(feature, resolution);
+    var styleFunction = feature.getStyleFunction();
+    if (styleFunction) {
+      styles = styleFunction.call(feature, resolution);
+    } else {
+      styleFunction = vectorLayer.getStyleFunction();
+      if (styleFunction) {
+        styles = styleFunction(feature, resolution);
+      }
     }
-    if (goog.isDefAndNotNull(styles)) {
+    if (styles) {
       var dirty = this.renderFeature(
           feature, resolution, pixelRatio, styles, replayGroup);
       this.dirty_ = this.dirty_ || dirty;
     }
   };
-  if (!goog.isNull(vectorLayerRenderOrder)) {
+  if (vectorLayerRenderOrder) {
     /** @type {Array.<ol.Feature>} */
     var features = [];
-    vectorSource.forEachFeatureInExtentAtResolution(extent, resolution,
+    vectorSource.forEachFeatureInExtent(extent,
         /**
          * @param {ol.Feature} feature Feature.
          */
         function(feature) {
           features.push(feature);
         }, this);
-    goog.array.sort(features, vectorLayerRenderOrder);
-    goog.array.forEach(features, renderFeature, this);
+    features.sort(vectorLayerRenderOrder);
+    features.forEach(renderFeature, this);
   } else {
-    vectorSource.forEachFeatureInExtentAtResolution(
-        extent, resolution, renderFeature, this);
+    vectorSource.forEachFeatureInExtent(extent, renderFeature, this);
   }
   replayGroup.finish();
 
@@ -325,19 +328,26 @@ ol.renderer.dom.VectorLayer.prototype.prepareFrame =
  * @param {ol.Feature} feature Feature.
  * @param {number} resolution Resolution.
  * @param {number} pixelRatio Pixel ratio.
- * @param {Array.<ol.style.Style>} styles Array of styles
+ * @param {(ol.style.Style|Array.<ol.style.Style>)} styles The style or array of
+ *     styles.
  * @param {ol.render.canvas.ReplayGroup} replayGroup Replay group.
  * @return {boolean} `true` if an image is loading.
  */
-ol.renderer.dom.VectorLayer.prototype.renderFeature =
-    function(feature, resolution, pixelRatio, styles, replayGroup) {
-  if (!goog.isDefAndNotNull(styles)) {
+ol.renderer.dom.VectorLayer.prototype.renderFeature = function(feature, resolution, pixelRatio, styles, replayGroup) {
+  if (!styles) {
     return false;
   }
-  var i, ii, loading = false;
-  for (i = 0, ii = styles.length; i < ii; ++i) {
+  var loading = false;
+  if (goog.isArray(styles)) {
+    for (var i = 0, ii = styles.length; i < ii; ++i) {
+      loading = ol.renderer.vector.renderFeature(
+          replayGroup, feature, styles[i],
+          ol.renderer.vector.getSquaredTolerance(resolution, pixelRatio),
+          this.handleStyleImageChange_, this) || loading;
+    }
+  } else {
     loading = ol.renderer.vector.renderFeature(
-        replayGroup, feature, styles[i],
+        replayGroup, feature, styles,
         ol.renderer.vector.getSquaredTolerance(resolution, pixelRatio),
         this.handleStyleImageChange_, this) || loading;
   }

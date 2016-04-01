@@ -5,8 +5,7 @@ describe('ol.geom.MultiPolygon', function() {
 
   it('can be constructed with a null geometry', function() {
     expect(function() {
-      var multiPolygon = new ol.geom.MultiPolygon(null);
-      multiPolygon = multiPolygon; // suppress gjslint warning
+      return new ol.geom.MultiPolygon(null);
     }).not.to.throwException();
   });
 
@@ -89,6 +88,15 @@ describe('ol.geom.MultiPolygon', function() {
           [[[3, 0], [4, 1], [5, 2], [5, 0]]]);
     });
 
+    describe('#clone()', function() {
+
+      it('has the expected endss_', function() {
+        var clone = multiPolygon.clone();
+        expect(multiPolygon.endss_).to.eql(clone.endss_);
+      });
+
+    });
+
     describe('#getCoordinates()', function() {
 
       var cw = [[-180, -90], [-180, 90], [180, 90], [180, -90], [-180, -90]];
@@ -115,6 +123,14 @@ describe('ol.geom.MultiPolygon', function() {
 
     });
 
+    describe('#getExtent()', function() {
+
+      it('returns expected result', function() {
+        expect(multiPolygon.getExtent()).to.eql([0, 0, 5, 2]);
+      });
+
+    });
+
     describe('#getSimplifiedGeometry', function() {
 
       it('returns the expected result', function() {
@@ -125,6 +141,22 @@ describe('ol.geom.MultiPolygon', function() {
           [[[3, 0], [5, 2], [5, 0]]]
         ]);
       });
+    });
+
+    describe('#intersectsExtent()', function() {
+
+      it('returns true for extent of of each polygon', function() {
+        var polygons = multiPolygon.getPolygons();
+        for (var i = 0; i < polygons.length; i++) {
+          expect(multiPolygon.intersectsExtent(
+              polygons[i].getExtent())).to.be(true);
+        }
+      });
+
+      it('returns false for non-matching extent within own extent', function() {
+        expect(multiPolygon.intersectsExtent([2.1, 0, 2.9, 2])).to.be(false);
+      });
+
     });
 
   });
