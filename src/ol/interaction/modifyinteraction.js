@@ -83,16 +83,6 @@ goog.inherits(ol.interaction.ModifyEvent, ol.events.Event);
 
 
 /**
- * @typedef {{depth: (Array.<number>|undefined),
- *            feature: ol.Feature,
- *            geometry: ol.geom.SimpleGeometry,
- *            index: (number|undefined),
- *            segment: Array.<ol.Extent>}}
- */
-ol.interaction.SegmentDataType;
-
-
-/**
  * @classdesc
  * Interaction for modifying feature geometries.
  *
@@ -110,6 +100,14 @@ ol.interaction.Modify = function(options) {
     handleEvent: ol.interaction.Modify.handleEvent,
     handleUpEvent: ol.interaction.Modify.handleUpEvent_
   });
+
+  /**
+   * @private
+   * @type {ol.events.ConditionType}
+   */
+  this.condition_ = options.condition ?
+      options.condition : ol.events.condition.primaryAction;
+
 
   /**
    * @private
@@ -552,6 +550,9 @@ ol.interaction.Modify.compareIndexes_ = function(a, b) {
  * @private
  */
 ol.interaction.Modify.handleDownEvent_ = function(evt) {
+  if (!this.condition_(evt)) {
+    return false;
+  }
   this.handlePointerAtPixel_(evt.pixel, evt.map);
   this.dragSegments_.length = 0;
   this.modified_ = false;

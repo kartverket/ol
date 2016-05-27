@@ -175,7 +175,7 @@ olx.interaction.InteractionOptions.prototype.handleEvent;
  *     layers: (Array.<ol.layer.Base>|ol.Collection.<ol.layer.Base>|undefined),
  *     loadTilesWhileAnimating: (boolean|undefined),
  *     loadTilesWhileInteracting: (boolean|undefined),
- *     logo: (boolean|string|olx.LogoOptions|undefined),
+ *     logo: (boolean|string|olx.LogoOptions|Element|undefined),
  *     overlays: (ol.Collection.<ol.Overlay>|Array.<ol.Overlay>|undefined),
  *     renderer: (ol.RendererType|Array.<ol.RendererType|string>|string|undefined),
  *     target: (Element|string|undefined),
@@ -261,9 +261,10 @@ olx.MapOptions.prototype.loadTilesWhileInteracting;
  * The map logo. A logo to be displayed on the map at all times. If a string is
  * provided, it will be set as the image source of the logo. If an object is
  * provided, the `src` property should be the URL for an image and the `href`
- * property should be a URL for creating a link. To disable the map logo, set
- * the option to `false`. By default, the OpenLayers 3 logo is shown.
- * @type {boolean|string|olx.LogoOptions|undefined}
+ * property should be a URL for creating a link. If an element is provided,
+ * the element will be used. To disable the map logo, set the option to
+ * `false`. By default, the OpenLayers 3 logo is shown.
+ * @type {boolean|string|olx.LogoOptions|Element|undefined}
  * @api stable
  */
 olx.MapOptions.prototype.logo;
@@ -2836,7 +2837,8 @@ olx.interaction.KeyboardZoomOptions.prototype.delta;
 
 
 /**
- * @typedef {{deleteCondition: (ol.events.ConditionType|undefined),
+ * @typedef {{condition: (ol.events.ConditionType|undefined),
+ *     deleteCondition: (ol.events.ConditionType|undefined),
  *     pixelTolerance: (number|undefined),
  *     style: (ol.style.Style|Array.<ol.style.Style>|ol.style.StyleFunction|undefined),
  *     features: ol.Collection.<ol.Feature>,
@@ -2844,6 +2846,17 @@ olx.interaction.KeyboardZoomOptions.prototype.delta;
  * @api
  */
 olx.interaction.ModifyOptions;
+
+
+/**
+ * A function that takes an {@link ol.MapBrowserEvent} and returns a boolean
+ * to indicate whether that event will be considered to add or move a vertex
+ * to the sketch.
+ * Default is {@link ol.events.condition.primaryAction}.
+ * @type {ol.events.ConditionType|undefined}
+ * @api
+ */
+olx.interaction.ModifyOptions.prototype.condition;
 
 
 /**
@@ -4180,11 +4193,21 @@ olx.source.ClusterOptions.prototype.wrapX;
 
 /**
  * @typedef {{preemptive: (boolean|undefined),
+ *     jsonp: (boolean|undefined),
  *     tileJSON: (TileJSON|undefined),
  *     url: (string|undefined)}}
  * @api
  */
 olx.source.TileUTFGridOptions;
+
+
+/**
+ * Use JSONP with callback to load the TileJSON. Useful when the server
+ * does not support CORS. Default is `false`.
+ * @type {boolean|undefined}
+ * @api
+ */
+olx.source.TileUTFGridOptions.prototype.jsonp;
 
 
 /**
@@ -7467,9 +7490,9 @@ olx.view.FitOptions.prototype.maxZoom;
  *     extent: (null|ol.Extent),
  *     focus: ol.Coordinate,
  *     index: number,
- *     layerStates: Object.<number, ol.layer.LayerState>,
- *     layerStatesArray: Array.<ol.layer.LayerState>,
- *     logos: Object.<string, string>,
+ *     layerStates: Object.<number, ol.LayerState>,
+ *     layerStatesArray: Array.<ol.LayerState>,
+ *     logos: Object.<string, (string|Element)>,
  *     pixelRatio: number,
  *     pixelToCoordinateMatrix: ol.vec.Mat4.Number,
  *     postRenderFunctions: Array.<ol.PostRenderFunction>,

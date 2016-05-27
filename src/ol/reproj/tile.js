@@ -1,5 +1,4 @@
 goog.provide('ol.reproj.Tile');
-goog.provide('ol.reproj.TileFunctionType');
 
 goog.require('goog.asserts');
 goog.require('ol.Tile');
@@ -12,12 +11,6 @@ goog.require('ol.object');
 goog.require('ol.proj');
 goog.require('ol.reproj');
 goog.require('ol.reproj.Triangulation');
-
-
-/**
- * @typedef {function(number, number, number, number) : ol.Tile}
- */
-ol.reproj.TileFunctionType;
 
 
 /**
@@ -35,7 +28,7 @@ ol.reproj.TileFunctionType;
  * @param {ol.TileCoord} wrappedTileCoord Coordinate of the tile wrapped in X.
  * @param {number} pixelRatio Pixel ratio.
  * @param {number} gutter Gutter of the source tiles.
- * @param {ol.reproj.TileFunctionType} getTileFunction
+ * @param {ol.ReprojTileFunctionType} getTileFunction
  *     Function returning source tiles (z, x, y, pixelRatio).
  * @param {number=} opt_errorThreshold Acceptable reprojection error (in px).
  * @param {boolean=} opt_renderEdges Render reprojection edges.

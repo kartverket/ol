@@ -1,6 +1,5 @@
 goog.provide('ol.layer.Base');
 goog.provide('ol.layer.LayerProperty');
-goog.provide('ol.layer.LayerState');
 
 goog.require('ol');
 goog.require('ol.Object');
@@ -21,20 +20,6 @@ ol.layer.LayerProperty = {
   MIN_RESOLUTION: 'minResolution',
   SOURCE: 'source'
 };
-
-
-/**
- * @typedef {{layer: ol.layer.Layer,
- *            opacity: number,
- *            sourceState: ol.source.State,
- *            visible: boolean,
- *            managed: boolean,
- *            extent: (ol.Extent|undefined),
- *            zIndex: number,
- *            maxResolution: number,
- *            minResolution: number}}
- */
-ol.layer.LayerState;
 
 
 /**
@@ -75,7 +60,7 @@ goog.inherits(ol.layer.Base, ol.Object);
 
 
 /**
- * @return {ol.layer.LayerState} Layer state.
+ * @return {ol.LayerState} Layer state.
  */
 ol.layer.Base.prototype.getLayerState = function() {
   var opacity = this.getOpacity();
@@ -108,9 +93,9 @@ ol.layer.Base.prototype.getLayersArray = goog.abstractMethod;
 
 
 /**
- * @param {Array.<ol.layer.LayerState>=} opt_states Optional list of layer
+ * @param {Array.<ol.LayerState>=} opt_states Optional list of layer
  *     states (to be modified in place).
- * @return {Array.<ol.layer.LayerState>} List of layer states.
+ * @return {Array.<ol.LayerState>} List of layer states.
  */
 ol.layer.Base.prototype.getLayerStatesArray = goog.abstractMethod;
 

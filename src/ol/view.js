@@ -9,8 +9,6 @@ goog.require('ol.Constraints');
 goog.require('ol.Object');
 goog.require('ol.ResolutionConstraint');
 goog.require('ol.RotationConstraint');
-goog.require('ol.RotationConstraintType');
-goog.require('ol.Size');
 goog.require('ol.coordinate');
 goog.require('ol.extent');
 goog.require('ol.geom.Polygon');
@@ -135,6 +133,12 @@ ol.View = function(opt_options) {
    * @type {number}
    */
   this.minResolution_ = resolutionConstraintInfo.minResolution;
+
+  /**
+   * @private
+   * @type {Array.<number>|undefined}
+   */
+  this.resolutions_ = options.resolutions;
 
   /**
    * @private
@@ -312,6 +316,17 @@ ol.View.prototype.getProjection = function() {
 ol.View.prototype.getResolution = function() {
   return /** @type {number|undefined} */ (
       this.get(ol.ViewProperty.RESOLUTION));
+};
+
+
+/**
+ * Get the resolutions for the view. This returns the array of resolutions
+ * passed to the constructor of the {ol.View}, or undefined if none were given.
+ * @return {Array.<number>|undefined} The resolutions of the view.
+ * @api stable
+ */
+ol.View.prototype.getResolutions = function() {
+  return this.resolutions_;
 };
 
 
