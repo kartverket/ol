@@ -1,5 +1,4 @@
 goog.provide('ol.DeviceOrientation');
-goog.provide('ol.DeviceOrientationProperty');
 
 goog.require('ol.events');
 goog.require('ol');
@@ -77,13 +76,13 @@ ol.DeviceOrientationProperty = {
  */
 ol.DeviceOrientation = function(opt_options) {
 
-  goog.base(this);
+  ol.Object.call(this);
 
   var options = opt_options ? opt_options : {};
 
   /**
    * @private
-   * @type {?ol.events.Key}
+   * @type {?ol.EventsKey}
    */
   this.listenerKey_ = null;
 
@@ -94,7 +93,7 @@ ol.DeviceOrientation = function(opt_options) {
   this.setTracking(options.tracking !== undefined ? options.tracking : false);
 
 };
-goog.inherits(ol.DeviceOrientation, ol.Object);
+ol.inherits(ol.DeviceOrientation, ol.Object);
 
 
 /**
@@ -102,7 +101,7 @@ goog.inherits(ol.DeviceOrientation, ol.Object);
  */
 ol.DeviceOrientation.prototype.disposeInternal = function() {
   this.setTracking(false);
-  goog.base(this, 'disposeInternal');
+  ol.Object.prototype.disposeInternal.call(this);
 };
 
 
@@ -118,7 +117,7 @@ ol.DeviceOrientation.prototype.orientationChange_ = function(originalEvent) {
     // event.absolute is undefined in iOS.
     if (typeof event.absolute === 'boolean' && event.absolute) {
       this.set(ol.DeviceOrientationProperty.HEADING, alpha);
-    } else if (goog.isNumber(event.webkitCompassHeading) &&
+    } else if (typeof event.webkitCompassHeading === 'number' &&
                event.webkitCompassAccuracy != -1) {
       var heading = ol.math.toRadians(event.webkitCompassHeading);
       this.set(ol.DeviceOrientationProperty.HEADING, heading);

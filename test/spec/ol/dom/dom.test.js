@@ -1,6 +1,9 @@
 /*global Modernizr*/
 goog.provide('ol.test.dom');
 
+goog.require('goog.userAgent');
+goog.require('ol.transform');
+goog.require('ol.dom');
 
 /*! modernizr 3.3.1 (Custom Build) | MIT
  *
@@ -127,7 +130,7 @@ describe('ol.dom', function() {
 
       // revert mock-ups
       goog.userAgent.IE = originalIsIE;
-      goog.userAgent.isVersionOrHigher = originalIsVersionOrHigher
+      goog.userAgent.isVersionOrHigher = originalIsVersionOrHigher;
     });
 
     it('sets transform origin *only* for IE 9', function() {
@@ -147,8 +150,8 @@ describe('ol.dom', function() {
 
   describe('ol.dom.transformElement2D', function() {
     var element = null;
-    var transform = goog.vec.Mat4.createNumber();
-    var transformFloat = goog.vec.Mat4.createNumber();
+    var transform = ol.transform.create();
+    var transformFloat = ol.transform.create();
     transformFloat[0] = 0.12345;
     beforeEach(function() {
       element = document.createElement('div');
@@ -201,7 +204,7 @@ describe('ol.dom', function() {
       };
       ol.dom.canUseCssTransform = function() {
         return true;
-      }
+      };
 
       // test
       ol.dom.transformElement2D(element, transform);
@@ -224,7 +227,7 @@ describe('ol.dom', function() {
       };
       ol.dom.canUseCssTransform = function() {
         return true;
-      }
+      };
 
       // test
       ol.dom.transformElement2D(element, transformFloat, 2);
@@ -245,7 +248,7 @@ describe('ol.dom', function() {
       };
       ol.dom.canUseCssTransform = function() {
         return false;
-      }
+      };
 
       // test
       ol.dom.transformElement2D(element, transform);
@@ -562,7 +565,3 @@ describe('ol.dom', function() {
   });
 
 });
-
-goog.require('goog.userAgent');
-goog.require('goog.vec.Mat4');
-goog.require('ol.dom');

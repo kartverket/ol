@@ -1,6 +1,5 @@
 goog.provide('ol.geom.LineString');
 
-goog.require('goog.asserts');
 goog.require('ol');
 goog.require('ol.array');
 goog.require('ol.extent');
@@ -29,7 +28,7 @@ goog.require('ol.geom.flat.simplify');
  */
 ol.geom.LineString = function(coordinates, opt_layout) {
 
-  goog.base(this);
+  ol.geom.SimpleGeometry.call(this);
 
   /**
    * @private
@@ -58,7 +57,7 @@ ol.geom.LineString = function(coordinates, opt_layout) {
   this.setCoordinates(coordinates, opt_layout);
 
 };
-goog.inherits(ol.geom.LineString, ol.geom.SimpleGeometry);
+ol.inherits(ol.geom.LineString, ol.geom.SimpleGeometry);
 
 
 /**
@@ -67,7 +66,7 @@ goog.inherits(ol.geom.LineString, ol.geom.SimpleGeometry);
  * @api stable
  */
 ol.geom.LineString.prototype.appendCoordinate = function(coordinate) {
-  goog.asserts.assert(coordinate.length == this.stride,
+  goog.DEBUG && console.assert(coordinate.length == this.stride,
       'length of coordinate array should match stride');
   if (!this.flatCoordinates) {
     this.flatCoordinates = coordinate.slice();

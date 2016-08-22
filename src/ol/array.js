@@ -1,7 +1,5 @@
 goog.provide('ol.array');
 
-goog.require('goog.asserts');
-
 
 /**
  * Performs a binary search on the provided sorted list and returns the index of the item if found. If it can't be found it'll return -1.
@@ -36,7 +34,7 @@ ol.array.binarySearch = function(haystack, needle, opt_comparator) {
 
   /* Key not found. */
   return found ? low : ~low;
-}
+};
 
 /**
  * @param {Array.<number>} arr Array.
@@ -135,9 +133,6 @@ ol.array.linearFindNearest = function(arr, target, direction) {
         }
       }
     }
-    // We should never get here, but the compiler complains
-    // if it finds a path for which no number is returned.
-    goog.asserts.fail();
     return n - 1;
   }
 };
@@ -149,9 +144,9 @@ ol.array.linearFindNearest = function(arr, target, direction) {
  * @param {number} end End index.
  */
 ol.array.reverseSubArray = function(arr, begin, end) {
-  goog.asserts.assert(begin >= 0,
+  goog.DEBUG && console.assert(begin >= 0,
       'Array begin index should be equal to or greater than 0');
-  goog.asserts.assert(end < arr.length,
+  goog.DEBUG && console.assert(end < arr.length,
       'Array end index should be less than the array length');
   while (begin < end) {
     var tmp = arr[begin];
@@ -187,12 +182,12 @@ ol.array.flatten = function(arr) {
  */
 ol.array.extend = function(arr, data) {
   var i;
-  var extension = goog.isArrayLike(data) ? data : [data];
-  var length = extension.length
+  var extension = Array.isArray(data) ? data : [data];
+  var length = extension.length;
   for (i = 0; i < length; i++) {
     arr[arr.length] = extension[i];
   }
-}
+};
 
 
 /**
@@ -208,7 +203,7 @@ ol.array.remove = function(arr, obj) {
     arr.splice(i, 1);
   }
   return found;
-}
+};
 
 
 /**
@@ -228,7 +223,7 @@ ol.array.find = function(arr, func) {
     }
   }
   return null;
-}
+};
 
 
 /**
@@ -247,7 +242,7 @@ ol.array.equals = function(arr1, arr2) {
     }
   }
   return true;
-}
+};
 
 
 /**
@@ -267,7 +262,7 @@ ol.array.stableSort = function(arr, compareFnc) {
   for (i = 0; i < arr.length; i++) {
     arr[i] = tmp[i].value;
   }
-}
+};
 
 
 /**
@@ -282,7 +277,7 @@ ol.array.findIndex = function(arr, func) {
     return !func(el, idx, arr);
   });
   return found ? index : -1;
-}
+};
 
 
 /**
@@ -300,4 +295,4 @@ ol.array.isSorted = function(arr, opt_func, opt_strict) {
     var res = compare(arr[index - 1], currentVal);
     return !(res > 0 || opt_strict && res === 0);
   });
-}
+};

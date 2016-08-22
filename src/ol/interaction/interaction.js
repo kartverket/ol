@@ -4,7 +4,6 @@ goog.provide('ol.interaction.Interaction');
 goog.provide('ol.interaction.InteractionProperty');
 
 goog.require('ol');
-goog.require('ol.MapBrowserEvent');
 goog.require('ol.Object');
 goog.require('ol.animation');
 goog.require('ol.easing');
@@ -37,7 +36,7 @@ ol.interaction.InteractionProperty = {
  */
 ol.interaction.Interaction = function(options) {
 
-  goog.base(this);
+  ol.Object.call(this);
 
   /**
    * @private
@@ -53,7 +52,7 @@ ol.interaction.Interaction = function(options) {
   this.handleEvent = options.handleEvent;
 
 };
-goog.inherits(ol.interaction.Interaction, ol.Object);
+ol.inherits(ol.interaction.Interaction, ol.Object);
 
 
 /**

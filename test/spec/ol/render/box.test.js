@@ -1,5 +1,12 @@
 goog.provide('ol.test.render.Box');
 
+goog.require('ol.Disposable');
+goog.require('ol.Map');
+goog.require('ol.View');
+goog.require('ol.geom.Polygon');
+goog.require('ol.render.Box');
+
+
 describe('ol.render.Box', function() {
 
   var box, map, target;
@@ -32,7 +39,7 @@ describe('ol.render.Box', function() {
       expect(obj).to.be.a(ol.render.Box);
       expect(obj).to.be.a(ol.Disposable);
       obj.dispose();
-    })
+    });
     it('creates an absolutely positioned DIV with a className', function() {
       expect(box.element_).to.be.a(HTMLDivElement);
       expect(box.element_.style.position).to.be('absolute');
@@ -67,9 +74,3 @@ describe('ol.render.Box', function() {
   });
 
 });
-
-goog.require('ol.Disposable');
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.geom.Polygon');
-goog.require('ol.render.Box');

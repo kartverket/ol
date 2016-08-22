@@ -1,5 +1,8 @@
 goog.provide('ol.test.events');
 
+goog.require('ol.events');
+goog.require('ol.events.EventTarget');
+
 
 describe('ol.events', function() {
   var add, remove, target;
@@ -46,7 +49,7 @@ describe('ol.events', function() {
       listenerObj.listener = function() {
         expect(this).to.equal(bindTo);
         expect(unlistenSpy.firstCall.args[0]).to.eql(listenerObj);
-      }
+      };
       var boundListener = ol.events.bindListener_(listenerObj);
       expect(listenerObj.boundListener).to.equal(boundListener);
       boundListener();
@@ -192,7 +195,7 @@ describe('ol.events', function() {
       ol.events.unlistenAll(target);
       expect(ol.events.getListeners(target, 'foo')).to.be(undefined);
       expect(ol.events.getListeners(target, 'bar')).to.be(undefined);
-      expect(ol.events.LISTENER_MAP_PROP_ in target).to.be(false);
+      expect('ol_lm' in target).to.be(false);
       expect(keys).to.eql([{}, {}]);
     });
   });
@@ -219,7 +222,3 @@ describe('ol.events', function() {
   });
 
 });
-
-
-goog.require('ol.events');
-goog.require('ol.events.EventTarget');

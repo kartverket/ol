@@ -1,25 +1,23 @@
 goog.provide('ol.ImageTile');
 
-goog.require('goog.asserts');
 goog.require('ol.Tile');
-goog.require('ol.TileState');
 goog.require('ol.events');
 goog.require('ol.events.EventType');
-goog.require('ol.object');
+goog.require('ol.obj');
 
 
 /**
  * @constructor
  * @extends {ol.Tile}
  * @param {ol.TileCoord} tileCoord Tile coordinate.
- * @param {ol.TileState} state State.
+ * @param {ol.Tile.State} state State.
  * @param {string} src Image source URI.
  * @param {?string} crossOrigin Cross origin.
  * @param {ol.TileLoadFunctionType} tileLoadFunction Tile load function.
  */
 ol.ImageTile = function(tileCoord, state, src, crossOrigin, tileLoadFunction) {
 
-  goog.base(this, tileCoord, state);
+  ol.Tile.call(this, tileCoord, state);
 
   /**
    * Image URI
@@ -46,7 +44,7 @@ ol.ImageTile = function(tileCoord, state, src, crossOrigin, tileLoadFunction) {
 
   /**
    * @private
-   * @type {Array.<ol.events.Key>}
+   * @type {Array.<ol.EventsKey>}
    */
   this.imageListenerKeys_ = null;
 
@@ -57,22 +55,22 @@ ol.ImageTile = function(tileCoord, state, src, crossOrigin, tileLoadFunction) {
   this.tileLoadFunction_ = tileLoadFunction;
 
 };
-goog.inherits(ol.ImageTile, ol.Tile);
+ol.inherits(ol.ImageTile, ol.Tile);
 
 
 /**
  * @inheritDoc
  */
 ol.ImageTile.prototype.disposeInternal = function() {
-  if (this.state == ol.TileState.LOADING) {
+  if (this.state == ol.Tile.State.LOADING) {
     this.unlistenImage_();
   }
   if (this.interimTile) {
     this.interimTile.dispose();
   }
-  this.state = ol.TileState.ABORT;
+  this.state = ol.Tile.State.ABORT;
   this.changed();
-  goog.base(this, 'disposeInternal');
+  ol.Tile.prototype.disposeInternal.call(this);
 };
 
 
@@ -84,10 +82,10 @@ ol.ImageTile.prototype.disposeInternal = function() {
 ol.ImageTile.prototype.getImage = function(opt_context) {
   if (opt_context !== undefined) {
     var image;
-    var key = goog.getUid(opt_context);
+    var key = ol.getUid(opt_context);
     if (key in this.imageByContext_) {
       return this.imageByContext_[key];
-    } else if (ol.object.isEmpty(this.imageByContext_)) {
+    } else if (ol.obj.isEmpty(this.imageByContext_)) {
       image = this.image_;
     } else {
       image = /** @type {Image} */ (this.image_.cloneNode(false));
@@ -114,7 +112,7 @@ ol.ImageTile.prototype.getKey = function() {
  * @private
  */
 ol.ImageTile.prototype.handleImageError_ = function() {
-  this.state = ol.TileState.ERROR;
+  this.state = ol.Tile.State.ERROR;
   this.unlistenImage_();
   this.changed();
 };
@@ -127,9 +125,9 @@ ol.ImageTile.prototype.handleImageError_ = function() {
  */
 ol.ImageTile.prototype.handleImageLoad_ = function() {
   if (this.image_.naturalWidth && this.image_.naturalHeight) {
-    this.state = ol.TileState.LOADED;
+    this.state = ol.Tile.State.LOADED;
   } else {
-    this.state = ol.TileState.EMPTY;
+    this.state = ol.Tile.State.EMPTY;
   }
   this.unlistenImage_();
   this.changed();
@@ -137,13 +135,16 @@ ol.ImageTile.prototype.handleImageLoad_ = function() {
 
 
 /**
- * Load not yet loaded URI.
+ * Load the image or retry if loading previously failed.
+ * Loading is taken care of by the tile queue, and calling this method is
+ * only needed for preloading or for reloading in case of an error.
+ * @api
  */
 ol.ImageTile.prototype.load = function() {
-  if (this.state == ol.TileState.IDLE) {
-    this.state = ol.TileState.LOADING;
+  if (this.state == ol.Tile.State.IDLE || this.state == ol.Tile.State.ERROR) {
+    this.state = ol.Tile.State.LOADING;
     this.changed();
-    goog.asserts.assert(!this.imageListenerKeys_,
+    goog.DEBUG && console.assert(!this.imageListenerKeys_,
         'this.imageListenerKeys_ should be null');
     this.imageListenerKeys_ = [
       ol.events.listenOnce(this.image_, ol.events.EventType.ERROR,
@@ -162,8 +163,6 @@ ol.ImageTile.prototype.load = function() {
  * @private
  */
 ol.ImageTile.prototype.unlistenImage_ = function() {
-  goog.asserts.assert(this.imageListenerKeys_,
-      'this.imageListenerKeys_ should not be null');
   this.imageListenerKeys_.forEach(ol.events.unlistenByKey);
   this.imageListenerKeys_ = null;
 };

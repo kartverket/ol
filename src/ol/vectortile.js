@@ -1,23 +1,22 @@
 goog.provide('ol.VectorTile');
 
+goog.require('ol');
 goog.require('ol.Tile');
-goog.require('ol.TileState');
 goog.require('ol.dom');
-goog.require('ol.proj.Projection');
 
 
 /**
  * @constructor
  * @extends {ol.Tile}
  * @param {ol.TileCoord} tileCoord Tile coordinate.
- * @param {ol.TileState} state State.
+ * @param {ol.Tile.State} state State.
  * @param {string} src Data source url.
  * @param {ol.format.Feature} format Feature format.
  * @param {ol.TileLoadFunctionType} tileLoadFunction Tile load function.
  */
 ol.VectorTile = function(tileCoord, state, src, format, tileLoadFunction) {
 
-  goog.base(this, tileCoord, state);
+  ol.Tile.call(this, tileCoord, state);
 
   /**
    * @private
@@ -76,7 +75,7 @@ ol.VectorTile = function(tileCoord, state, src, format, tileLoadFunction) {
   this.url_ = src;
 
 };
-goog.inherits(ol.VectorTile, ol.Tile);
+ol.inherits(ol.VectorTile, ol.Tile);
 
 
 /**
@@ -142,8 +141,8 @@ ol.VectorTile.prototype.getProjection = function() {
  * Load the tile.
  */
 ol.VectorTile.prototype.load = function() {
-  if (this.state == ol.TileState.IDLE) {
-    this.setState(ol.TileState.LOADING);
+  if (this.state == ol.Tile.State.IDLE) {
+    this.setState(ol.Tile.State.LOADING);
     this.tileLoadFunction_(this, this.url_);
     this.loader_(null, NaN, null);
   }
@@ -156,7 +155,7 @@ ol.VectorTile.prototype.load = function() {
  */
 ol.VectorTile.prototype.setFeatures = function(features) {
   this.features_ = features;
-  this.setState(ol.TileState.LOADED);
+  this.setState(ol.Tile.State.LOADED);
 };
 
 
@@ -171,7 +170,7 @@ ol.VectorTile.prototype.setProjection = function(projection) {
 
 
 /**
- * @param {ol.TileState} tileState Tile state.
+ * @param {ol.Tile.State} tileState Tile state.
  */
 ol.VectorTile.prototype.setState = function(tileState) {
   this.state = tileState;

@@ -1,5 +1,17 @@
 goog.provide('ol.test.rendering.layer.Vector');
 
+goog.require('ol.Feature');
+goog.require('ol.Map');
+goog.require('ol.View');
+goog.require('ol.geom.Circle');
+goog.require('ol.geom.LineString');
+goog.require('ol.geom.Polygon');
+goog.require('ol.layer.Vector');
+goog.require('ol.source.Vector');
+goog.require('ol.style.Stroke');
+goog.require('ol.style.Style');
+
+
 describe('ol.rendering.layer.Vector', function() {
 
   var center, target, map;
@@ -34,7 +46,7 @@ describe('ol.rendering.layer.Vector', function() {
         [center[0] - r, center[1] + r],
         [center[0] - r, center[1] - r]
       ]
-    ])))
+    ])));
   }
 
   describe('vector layer', function() {
@@ -49,6 +61,15 @@ describe('ol.rendering.layer.Vector', function() {
 
     it('renders correctly with the canvas renderer', function(done) {
       map = createMap('canvas');
+      var smallLine = new ol.Feature(new ol.geom.LineString([
+        [center[0], center[1] - 1],
+        [center[0], center[1] + 1]
+      ]));
+      smallLine.setStyle(new ol.style.Style({
+        zIndex: -99,
+        stroke: new ol.style.Stroke({width: 75, color: 'red'})
+      }));
+      source.addFeature(smallLine);
       addPolygon(100);
       addCircle(200);
       addPolygon(250);
@@ -61,17 +82,9 @@ describe('ol.rendering.layer.Vector', function() {
       map.once('postrender', function() {
         expectResemble(map, 'spec/ol/layer/expected/vector-canvas.png',
             17, done);
-      })
+      });
     });
 
   });
 
 });
-
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.Feature');
-goog.require('ol.geom.Circle');
-goog.require('ol.geom.Polygon');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.Vector');

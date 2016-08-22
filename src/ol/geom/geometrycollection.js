@@ -5,7 +5,7 @@ goog.require('ol.events.EventType');
 goog.require('ol.extent');
 goog.require('ol.geom.Geometry');
 goog.require('ol.geom.GeometryType');
-goog.require('ol.object');
+goog.require('ol.obj');
 
 
 /**
@@ -19,7 +19,7 @@ goog.require('ol.object');
  */
 ol.geom.GeometryCollection = function(opt_geometries) {
 
-  goog.base(this);
+  ol.geom.Geometry.call(this);
 
   /**
    * @private
@@ -29,7 +29,7 @@ ol.geom.GeometryCollection = function(opt_geometries) {
 
   this.listenGeometriesChange_();
 };
-goog.inherits(ol.geom.GeometryCollection, ol.geom.Geometry);
+ol.inherits(ol.geom.GeometryCollection, ol.geom.Geometry);
 
 
 /**
@@ -160,7 +160,7 @@ ol.geom.GeometryCollection.prototype.getGeometriesArray = function() {
  */
 ol.geom.GeometryCollection.prototype.getSimplifiedGeometry = function(squaredTolerance) {
   if (this.simplifiedGeometryRevision != this.getRevision()) {
-    ol.object.clear(this.simplifiedGeometryCache);
+    ol.obj.clear(this.simplifiedGeometryCache);
     this.simplifiedGeometryMaxMinSquaredTolerance = 0;
     this.simplifiedGeometryRevision = this.getRevision();
   }
@@ -245,6 +245,23 @@ ol.geom.GeometryCollection.prototype.rotate = function(angle, anchor) {
 
 
 /**
+ * @inheritDoc
+ * @api
+ */
+ol.geom.GeometryCollection.prototype.scale = function(sx, opt_sy, opt_anchor) {
+  var anchor = opt_anchor;
+  if (!anchor) {
+    anchor = ol.extent.getCenter(this.getExtent());
+  }
+  var geometries = this.geometries_;
+  for (var i = 0, ii = geometries.length; i < ii; ++i) {
+    geometries[i].scale(sx, opt_sy, anchor);
+  }
+  this.changed();
+};
+
+
+/**
  * Set the geometries that make up this geometry collection.
  * @param {Array.<ol.geom.Geometry>} geometries Geometries.
  * @api stable
@@ -301,5 +318,5 @@ ol.geom.GeometryCollection.prototype.translate = function(deltaX, deltaY) {
  */
 ol.geom.GeometryCollection.prototype.disposeInternal = function() {
   this.unlistenGeometriesChange_();
-  goog.base(this, 'disposeInternal');
+  ol.geom.Geometry.prototype.disposeInternal.call(this);
 };
