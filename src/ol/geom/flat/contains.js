@@ -1,5 +1,6 @@
 goog.provide('ol.geom.flat.contains');
 
+goog.require('ol');
 goog.require('ol.extent');
 
 
@@ -64,7 +65,7 @@ ol.geom.flat.contains.linearRingContainsXY = function(flatCoordinates, offset, e
  * @return {boolean} Contains (x, y).
  */
 ol.geom.flat.contains.linearRingsContainsXY = function(flatCoordinates, offset, ends, stride, x, y) {
-  goog.DEBUG && console.assert(ends.length > 0, 'ends should not be an empty array');
+  ol.DEBUG && console.assert(ends.length > 0, 'ends should not be an empty array');
   if (ends.length === 0) {
     return false;
   }
@@ -93,7 +94,7 @@ ol.geom.flat.contains.linearRingsContainsXY = function(flatCoordinates, offset, 
  * @return {boolean} Contains (x, y).
  */
 ol.geom.flat.contains.linearRingssContainsXY = function(flatCoordinates, offset, endss, stride, x, y) {
-  goog.DEBUG && console.assert(endss.length > 0, 'endss should not be an empty array');
+  ol.DEBUG && console.assert(endss.length > 0, 'endss should not be an empty array');
   if (endss.length === 0) {
     return false;
   }

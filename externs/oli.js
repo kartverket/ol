@@ -347,22 +347,22 @@ oli.source.RasterEvent.prototype.data;
 /**
  * @interface
  */
-oli.source.TileEvent = function() {};
+oli.source.Tile.Event = function() {};
 
 
 /**
  * @type {ol.Tile}
  */
-oli.source.TileEvent.prototype.tile;
+oli.source.Tile.Event.prototype.tile;
 
 
 /**
  * @interface
  */
-oli.source.VectorEvent = function() {};
+oli.source.Vector.Event = function() {};
 
 
 /**
  * @type {ol.Feature|undefined}
  */
-oli.source.VectorEvent.prototype.feature;
+oli.source.Vector.Event.prototype.feature;

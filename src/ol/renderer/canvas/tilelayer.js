@@ -2,15 +2,16 @@
 
 goog.provide('ol.renderer.canvas.TileLayer');
 
+goog.require('ol');
 goog.require('ol.transform');
 goog.require('ol.TileRange');
 goog.require('ol.Tile');
 goog.require('ol.array');
 goog.require('ol.dom');
 goog.require('ol.extent');
+goog.require('ol.render.canvas');
 goog.require('ol.render.EventType');
 goog.require('ol.renderer.canvas.Layer');
-goog.require('ol.size');
 
 
 /**
@@ -138,8 +139,8 @@ ol.renderer.canvas.TileLayer.prototype.prepareFrame = function(
   for (x = tileRange.minX; x <= tileRange.maxX; ++x) {
     for (y = tileRange.minY; y <= tileRange.maxY; ++y) {
       tile = tileSource.getTile(z, x, y, pixelRatio, projection);
-      if (!drawableTile(tile) && tile.interimTile) {
-        tile = tile.interimTile;
+      if (!drawableTile(tile)) {
+        tile = tile.getInterimTile();
       }
       if (drawableTile(tile)) {
         tilesToDrawByZ[z][tile.tileCoord.toString()] = tile;
@@ -188,7 +189,7 @@ ol.renderer.canvas.TileLayer.prototype.prepareFrame = function(
 /**
  * @param {ol.Pixel} pixel Pixel.
  * @param {olx.FrameState} frameState FrameState.
- * @param {function(this: S, ol.layer.Layer, ol.Color): T} callback Layer
+ * @param {function(this: S, ol.layer.Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer
  *     callback.
  * @param {S} thisArg Value to use as `this` when executing `callback`.
  * @return {T|undefined} Callback result.
@@ -233,19 +234,17 @@ ol.renderer.canvas.TileLayer.prototype.renderTileImages = function(context, fram
   var pixelScale = pixelRatio / resolution;
   var layer = this.getLayer();
   var source = /** @type {ol.source.Tile} */ (layer.getSource());
-  var tileGutter = source.getGutter(projection);
+  var tileGutter = pixelRatio * source.getGutter(projection);
   var tileGrid = source.getTileGridForProjection(projection);
 
   var hasRenderListeners = layer.hasListener(ol.render.EventType.RENDER);
   var renderContext = context;
-  var drawOffsetX, drawOffsetY, drawScale, drawSize;
+  var drawScale = 1;
+  var drawOffsetX, drawOffsetY, drawSize;
   if (rotation || hasRenderListeners) {
     renderContext = this.context;
     var renderCanvas = renderContext.canvas;
-    var drawZ = tileGrid.getZForResolution(resolution);
-    var drawTileSize = source.getTilePixelSize(drawZ, pixelRatio, projection);
-    var tileSize = ol.size.toSize(tileGrid.getTileSize(drawZ));
-    drawScale = drawTileSize[0] / tileSize[0];
+    drawScale = source.getTilePixelRatio(pixelRatio) / pixelRatio;
     var width = context.canvas.width * drawScale;
     var height = context.canvas.height * drawScale;
     // Make sure the canvas is big enough for all possible rotation angles
@@ -292,14 +291,18 @@ ol.renderer.canvas.TileLayer.prototype.renderTileImages = function(context, fram
     var ox = drawOffsetX || 0;
     var oy = drawOffsetY || 0;
     renderContext.save();
-    var cx = (renderContext.canvas.width * pixelRatio) / 2;
-    var cy = (renderContext.canvas.height * pixelRatio) / 2;
+    var cx = (renderContext.canvas.width) / 2;
+    var cy = (renderContext.canvas.height) / 2;
     ol.render.canvas.rotateAtOffset(renderContext, -rotation, cx, cy);
     renderContext.beginPath();
-    renderContext.moveTo(topLeft[0] * pixelRatio + ox, topLeft[1] * pixelRatio + oy);
-    renderContext.lineTo(topRight[0] * pixelRatio + ox, topRight[1] * pixelRatio + oy);
-    renderContext.lineTo(bottomRight[0] * pixelRatio + ox, bottomRight[1] * pixelRatio + oy);
-    renderContext.lineTo(bottomLeft[0] * pixelRatio + ox, bottomLeft[1] * pixelRatio + oy);
+    renderContext.moveTo(drawScale * (topLeft[0] * pixelRatio + ox),
+        drawScale * (topLeft[1] * pixelRatio + oy));
+    renderContext.lineTo(drawScale * (topRight[0] * pixelRatio + ox),
+        drawScale * (topRight[1] * pixelRatio + oy));
+    renderContext.lineTo(drawScale * (bottomRight[0] * pixelRatio + ox),
+        drawScale * (bottomRight[1] * pixelRatio + oy));
+    renderContext.lineTo(drawScale * (bottomLeft[0] * pixelRatio + ox),
+        drawScale * (bottomLeft[1] * pixelRatio + oy));
     renderContext.clip();
     ol.render.canvas.rotateAtOffset(renderContext, rotation, cx, cy);
   }

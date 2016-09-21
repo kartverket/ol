@@ -3,21 +3,19 @@
 // FIXME add tilt and height?
 
 goog.provide('ol.Map');
-goog.provide('ol.MapProperty');
 
-goog.require('goog.async.nextTick');
+goog.require('ol');
 goog.require('ol.Collection');
 goog.require('ol.MapBrowserEvent');
 goog.require('ol.MapBrowserEvent.EventType');
 goog.require('ol.MapBrowserEventHandler');
 goog.require('ol.MapEvent');
-goog.require('ol.MapEventType');
 goog.require('ol.Object');
 goog.require('ol.ObjectEventType');
-goog.require('ol.RendererType');
 goog.require('ol.TileQueue');
 goog.require('ol.View');
 goog.require('ol.array');
+goog.require('ol.asserts');
 goog.require('ol.control');
 goog.require('ol.dom');
 goog.require('ol.events');
@@ -30,9 +28,9 @@ goog.require('ol.interaction');
 goog.require('ol.layer.Group');
 goog.require('ol.obj');
 goog.require('ol.proj.common');
+goog.require('ol.renderer.Type');
 goog.require('ol.renderer.Map');
 goog.require('ol.renderer.canvas.Map');
-goog.require('ol.renderer.dom.Map');
 goog.require('ol.renderer.webgl.Map');
 goog.require('ol.size');
 goog.require('ol.structs.PriorityQueue');
@@ -75,25 +73,13 @@ ol.OL3_LOGO_URL = 'data:image/png;base64,' +
 
 
 /**
- * @type {Array.<ol.RendererType>}
+ * @type {Array.<ol.renderer.Type>}
  * @const
  */
 ol.DEFAULT_RENDERER_TYPES = [
-  ol.RendererType.CANVAS,
-  ol.RendererType.WEBGL,
-  ol.RendererType.DOM
+  ol.renderer.Type.CANVAS,
+  ol.renderer.Type.WEBGL
 ];
-
-
-/**
- * @enum {string}
- */
-ol.MapProperty = {
-  LAYERGROUP: 'layergroup',
-  SIZE: 'size',
-  TARGET: 'target',
-  VIEW: 'view'
-};
 
 
 /**
@@ -124,8 +110,7 @@ ol.MapProperty = {
  * `ol-overlaycontainer-stopevent` for controls and some overlays, and one with
  * CSS class name `ol-overlaycontainer` for other overlays (see the `stopEvent`
  * option of {@link ol.Overlay} for the difference). The map itself is placed in
- * a further element within the viewport, either DOM or Canvas, depending on the
- * renderer.
+ * a further element within the viewport.
  *
  * Layers are stored as a `ol.Collection` in layerGroups. A top-level group is
  * provided by the library. This is what is accessed by `getLayerGroup` and
@@ -379,13 +364,13 @@ ol.Map = function(options) {
   this.skippedFeatureUids_ = {};
 
   ol.events.listen(
-      this, ol.Object.getChangeEventType(ol.MapProperty.LAYERGROUP),
+      this, ol.Object.getChangeEventType(ol.Map.Property.LAYERGROUP),
       this.handleLayerGroupChanged_, this);
-  ol.events.listen(this, ol.Object.getChangeEventType(ol.MapProperty.VIEW),
+  ol.events.listen(this, ol.Object.getChangeEventType(ol.Map.Property.VIEW),
       this.handleViewChanged_, this);
-  ol.events.listen(this, ol.Object.getChangeEventType(ol.MapProperty.SIZE),
+  ol.events.listen(this, ol.Object.getChangeEventType(ol.Map.Property.SIZE),
       this.handleSizeChanged_, this);
-  ol.events.listen(this, ol.Object.getChangeEventType(ol.MapProperty.TARGET),
+  ol.events.listen(this, ol.Object.getChangeEventType(ol.Map.Property.TARGET),
       this.handleTargetChanged_, this);
 
   // setProperties will trigger the rendering of the map if the map
@@ -559,12 +544,12 @@ ol.Map.prototype.disposeInternal = function() {
   ol.events.unlisten(this.viewport_, ol.events.EventType.MOUSEWHEEL,
       this.handleBrowserEvent, this);
   if (this.handleResize_ !== undefined) {
-    ol.global.removeEventListener(ol.events.EventType.RESIZE,
+    window.removeEventListener(ol.events.EventType.RESIZE,
         this.handleResize_, false);
     this.handleResize_ = undefined;
   }
   if (this.animationDelayKey_) {
-    ol.global.cancelAnimationFrame(this.animationDelayKey_);
+    cancelAnimationFrame(this.animationDelayKey_);
     this.animationDelayKey_ = undefined;
   }
   this.setTarget(null);
@@ -618,11 +603,12 @@ ol.Map.prototype.forEachFeatureAtPixel = function(pixel, callback, opt_this, opt
  * execute a callback with each matching layer. Layers included in the
  * detection can be configured through `opt_layerFilter`.
  * @param {ol.Pixel} pixel Pixel.
- * @param {function(this: S, ol.layer.Layer, ol.Color): T} callback Layer
- *     callback. This callback will recieve two arguments: first is the
- *     {@link ol.layer.Layer layer}, second argument is {@link ol.Color}
- *     and will be null for layer types that do not currently support this
- *     argument. To stop detection callback functions can return a truthy value.
+ * @param {function(this: S, ol.layer.Layer, (Uint8ClampedArray|Uint8Array)): T} callback
+ *     Layer callback. This callback will recieve two arguments: first is the
+ *     {@link ol.layer.Layer layer}, second argument is an array representing
+ *     [R, G, B, A] pixel values (0 - 255) and will be `null` for layer types
+ *     that do not currently support this argument. To stop detection, callback
+ *     functions can return a truthy value.
  * @param {S=} opt_this Value to use as `this` when executing `callback`.
  * @param {(function(this: U, ol.layer.Layer): boolean)=} opt_layerFilter Layer
  *     filter function. The filter function will receive one argument, the
@@ -716,7 +702,7 @@ ol.Map.prototype.getEventPixel = function(event) {
  */
 ol.Map.prototype.getTarget = function() {
   return /** @type {Element|string|undefined} */ (
-      this.get(ol.MapProperty.TARGET));
+      this.get(ol.Map.Property.TARGET));
 };
 
 
@@ -812,7 +798,7 @@ ol.Map.prototype.getInteractions = function() {
  * @api stable
  */
 ol.Map.prototype.getLayerGroup = function() {
-  return /** @type {ol.layer.Group} */ (this.get(ol.MapProperty.LAYERGROUP));
+  return /** @type {ol.layer.Group} */ (this.get(ol.Map.Property.LAYERGROUP));
 };
 
 
@@ -861,7 +847,7 @@ ol.Map.prototype.getRenderer = function() {
  * @api stable
  */
 ol.Map.prototype.getSize = function() {
-  return /** @type {ol.Size|undefined} */ (this.get(ol.MapProperty.SIZE));
+  return /** @type {ol.Size|undefined} */ (this.get(ol.Map.Property.SIZE));
 };
 
 
@@ -873,7 +859,7 @@ ol.Map.prototype.getSize = function() {
  * @api stable
  */
 ol.Map.prototype.getView = function() {
-  return /** @type {ol.View} */ (this.get(ol.MapProperty.VIEW));
+  return /** @type {ol.View} */ (this.get(ol.Map.Property.VIEW));
 };
 
 
@@ -1046,7 +1032,7 @@ ol.Map.prototype.handleTargetChanged_ = function() {
   var targetElement;
   if (this.getTarget()) {
     targetElement = this.getTargetElement();
-    goog.DEBUG && console.assert(targetElement !== null,
+    ol.DEBUG && console.assert(targetElement !== null,
         'expects a non-null value for targetElement');
   }
 
@@ -1060,7 +1046,7 @@ ol.Map.prototype.handleTargetChanged_ = function() {
   if (!targetElement) {
     ol.dom.removeNode(this.viewport_);
     if (this.handleResize_ !== undefined) {
-      ol.global.removeEventListener(ol.events.EventType.RESIZE,
+      window.removeEventListener(ol.events.EventType.RESIZE,
           this.handleResize_, false);
       this.handleResize_ = undefined;
     }
@@ -1078,7 +1064,7 @@ ol.Map.prototype.handleTargetChanged_ = function() {
 
     if (!this.handleResize_) {
       this.handleResize_ = this.updateSize.bind(this);
-      ol.global.addEventListener(ol.events.EventType.RESIZE,
+      window.addEventListener(ol.events.EventType.RESIZE,
           this.handleResize_, false);
     }
   }
@@ -1160,7 +1146,7 @@ ol.Map.prototype.isRendered = function() {
  */
 ol.Map.prototype.renderSync = function() {
   if (this.animationDelayKey_) {
-    ol.global.cancelAnimationFrame(this.animationDelayKey_);
+    cancelAnimationFrame(this.animationDelayKey_);
   }
   this.animationDelay_();
 };
@@ -1172,7 +1158,7 @@ ol.Map.prototype.renderSync = function() {
  */
 ol.Map.prototype.render = function() {
   if (this.animationDelayKey_ === undefined) {
-    this.animationDelayKey_ = ol.global.requestAnimationFrame(
+    this.animationDelayKey_ = requestAnimationFrame(
         this.animationDelay_);
   }
 };
@@ -1304,15 +1290,15 @@ ol.Map.prototype.renderFrame_ = function(time) {
 
     if (idle) {
       this.dispatchEvent(
-          new ol.MapEvent(ol.MapEventType.MOVEEND, this, frameState));
+          new ol.MapEvent(ol.MapEvent.Type.MOVEEND, this, frameState));
       ol.extent.clone(frameState.extent, this.previousExtent_);
     }
   }
 
   this.dispatchEvent(
-      new ol.MapEvent(ol.MapEventType.POSTRENDER, this, frameState));
+      new ol.MapEvent(ol.MapEvent.Type.POSTRENDER, this, frameState));
 
-  goog.async.nextTick(this.handlePostRender, this);
+  setTimeout(this.handlePostRender.bind(this), 0);
 
 };
 
@@ -1325,7 +1311,7 @@ ol.Map.prototype.renderFrame_ = function(time) {
  * @api stable
  */
 ol.Map.prototype.setLayerGroup = function(layerGroup) {
-  this.set(ol.MapProperty.LAYERGROUP, layerGroup);
+  this.set(ol.Map.Property.LAYERGROUP, layerGroup);
 };
 
 
@@ -1336,7 +1322,7 @@ ol.Map.prototype.setLayerGroup = function(layerGroup) {
  * @api
  */
 ol.Map.prototype.setSize = function(size) {
-  this.set(ol.MapProperty.SIZE, size);
+  this.set(ol.Map.Property.SIZE, size);
 };
 
 
@@ -1348,7 +1334,7 @@ ol.Map.prototype.setSize = function(size) {
  * @api stable
  */
 ol.Map.prototype.setTarget = function(target) {
-  this.set(ol.MapProperty.TARGET, target);
+  this.set(ol.Map.Property.TARGET, target);
 };
 
 
@@ -1359,7 +1345,7 @@ ol.Map.prototype.setTarget = function(target) {
  * @api stable
  */
 ol.Map.prototype.setView = function(view) {
-  this.set(ol.MapProperty.VIEW, view);
+  this.set(ol.Map.Property.VIEW, view);
 };
 
 
@@ -1384,7 +1370,7 @@ ol.Map.prototype.updateSize = function() {
   if (!targetElement) {
     this.setSize(undefined);
   } else {
-    var computedStyle = ol.global.getComputedStyle(targetElement);
+    var computedStyle = getComputedStyle(targetElement);
     this.setSize([
       targetElement.offsetWidth -
           parseFloat(computedStyle['borderLeftWidth']) -
@@ -1451,11 +1437,11 @@ ol.Map.createOptionsInternal = function(options) {
 
   var layerGroup = (options.layers instanceof ol.layer.Group) ?
       options.layers : new ol.layer.Group({layers: options.layers});
-  values[ol.MapProperty.LAYERGROUP] = layerGroup;
+  values[ol.Map.Property.LAYERGROUP] = layerGroup;
 
-  values[ol.MapProperty.TARGET] = options.target;
+  values[ol.Map.Property.TARGET] = options.target;
 
-  values[ol.MapProperty.VIEW] = options.view !== undefined ?
+  values[ol.Map.Property.VIEW] = options.view !== undefined ?
       options.view : new ol.View();
 
   /**
@@ -1464,7 +1450,7 @@ ol.Map.createOptionsInternal = function(options) {
   var rendererConstructor = ol.renderer.Map;
 
   /**
-   * @type {Array.<ol.RendererType>}
+   * @type {Array.<ol.renderer.Type>}
    */
   var rendererTypes;
   if (options.renderer !== undefined) {
@@ -1475,25 +1461,24 @@ ol.Map.createOptionsInternal = function(options) {
     } else {
       ol.asserts.assert(false, 46); // Incorrect format for `renderer` option
     }
+    if (rendererTypes.indexOf(/** @type {ol.renderer.Type} */ ('dom')) >= 0) {
+      ol.DEBUG && console.assert(false, 'The DOM render has been removed');
+      rendererTypes = rendererTypes.concat(ol.DEFAULT_RENDERER_TYPES);
+    }
   } else {
     rendererTypes = ol.DEFAULT_RENDERER_TYPES;
   }
 
   var i, ii;
   for (i = 0, ii = rendererTypes.length; i < ii; ++i) {
-    /** @type {ol.RendererType} */
+    /** @type {ol.renderer.Type} */
     var rendererType = rendererTypes[i];
-    if (ol.ENABLE_CANVAS && rendererType == ol.RendererType.CANVAS) {
+    if (ol.ENABLE_CANVAS && rendererType == ol.renderer.Type.CANVAS) {
       if (ol.has.CANVAS) {
         rendererConstructor = ol.renderer.canvas.Map;
         break;
       }
-    } else if (ol.ENABLE_DOM && rendererType == ol.RendererType.DOM) {
-      if (ol.has.DOM) {
-        rendererConstructor = ol.renderer.dom.Map;
-        break;
-      }
-    } else if (ol.ENABLE_WEBGL && rendererType == ol.RendererType.WEBGL) {
+    } else if (ol.ENABLE_WEBGL && rendererType == ol.renderer.Type.WEBGL) {
       if (ol.has.WEBGL) {
         rendererConstructor = ol.renderer.webgl.Map;
         break;
@@ -1550,6 +1535,16 @@ ol.Map.createOptionsInternal = function(options) {
     values: values
   };
 
+};
+
+/**
+ * @enum {string}
+ */
+ol.Map.Property = {
+  LAYERGROUP: 'layergroup',
+  SIZE: 'size',
+  TARGET: 'target',
+  VIEW: 'view'
 };
 
 

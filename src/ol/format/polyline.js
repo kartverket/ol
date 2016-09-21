@@ -1,5 +1,7 @@
 goog.provide('ol.format.Polyline');
 
+goog.require('ol');
+goog.require('ol.asserts');
 goog.require('ol.Feature');
 goog.require('ol.format.Feature');
 goog.require('ol.format.TextFeature');
@@ -365,7 +367,7 @@ ol.format.Polyline.prototype.writeFeatureText = function(feature, opt_options) {
  * @inheritDoc
  */
 ol.format.Polyline.prototype.writeFeaturesText = function(features, opt_options) {
-  goog.DEBUG && console.assert(features.length == 1,
+  ol.DEBUG && console.assert(features.length == 1,
       'features array should have 1 item');
   return this.writeFeatureText(features[0], opt_options);
 };

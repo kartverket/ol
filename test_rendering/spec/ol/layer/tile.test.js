@@ -19,10 +19,12 @@ describe('ol.rendering.layer.Tile', function() {
 
   var target, map;
 
-  function createMap(renderer, opt_center) {
-    target = createMapDiv(50, 50);
+  function createMap(renderer, opt_center, opt_size, opt_pixelRatio) {
+    var size = opt_size !== undefined ? opt_size : [50, 50];
+    target = createMapDiv(size[0], size[1]);
 
     map = new ol.Map({
+      pixelRatio: opt_pixelRatio || 1,
       target: target,
       renderer: renderer,
       view: new ol.View({
@@ -151,6 +153,24 @@ describe('ol.rendering.layer.Tile', function() {
             IMAGE_TOLERANCE, done);
       });
     });
+
+    it('tests canvas layer extent clipping (HiDPI)', function(done) {
+      map = createMap('canvas', undefined, undefined, 2);
+      waitForTiles([source1, source2], [{}, {extent: centerExtent(map)}], function() {
+        expectResemble(map, 'spec/ol/layer/expected/2-layers-canvas-extent-hidpi.png',
+            IMAGE_TOLERANCE, done);
+      });
+    });
+
+    it('tests canvas layer extent clipping with rotation (HiDPI)', function(done) {
+      map = createMap('canvas', undefined, undefined, 2);
+      map.getView().setRotation(Math.PI / 2);
+      waitForTiles([source1, source2], [{}, {extent: centerExtent(map)}], function() {
+        expectResemble(map, 'spec/ol/layer/expected/2-layers-canvas-extent-rotate-hidpi.png',
+            IMAGE_TOLERANCE, done);
+      });
+    });
+
   });
 
   describe('tile layer with opacity', function() {
@@ -253,11 +273,11 @@ describe('ol.rendering.layer.Tile', function() {
     });
 
     it('works with the canvas renderer', function(done) {
-      map = createMap('canvas');
+      map = createMap('canvas', undefined, [100, 100]);
       map.getLayers().on('add', onAddLayer);
       waitForTiles([source], {}, function() {
         expectResemble(map, 'spec/ol/layer/expected/render-canvas.png',
-            2.6, done);
+            IMAGE_TOLERANCE, done);
       });
     });
   });

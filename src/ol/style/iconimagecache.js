@@ -1,5 +1,6 @@
 goog.provide('ol.style.IconImageCache');
 
+goog.require('ol');
 goog.require('ol.color');
 
 
@@ -36,7 +37,7 @@ ol.style.IconImageCache = function() {
  * @return {string} Cache key.
  */
 ol.style.IconImageCache.getKey = function(src, crossOrigin, color) {
-  goog.DEBUG && console.assert(crossOrigin !== undefined,
+  ol.DEBUG && console.assert(crossOrigin !== undefined,
       'argument crossOrigin must be defined');
   var colorString = color ? ol.color.asString(color) : 'null';
   return crossOrigin + ':' + src + ':' + colorString;

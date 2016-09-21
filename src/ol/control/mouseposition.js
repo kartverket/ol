@@ -2,20 +2,12 @@
 
 goog.provide('ol.control.MousePosition');
 
+goog.require('ol');
 goog.require('ol.events');
 goog.require('ol.events.EventType');
 goog.require('ol.Object');
 goog.require('ol.control.Control');
 goog.require('ol.proj');
-
-
-/**
- * @enum {string}
- */
-ol.control.MousePositionProperty = {
-  PROJECTION: 'projection',
-  COORDINATE_FORMAT: 'coordinateFormat'
-};
 
 
 /**
@@ -48,7 +40,7 @@ ol.control.MousePosition = function(opt_options) {
   });
 
   ol.events.listen(this,
-      ol.Object.getChangeEventType(ol.control.MousePositionProperty.PROJECTION),
+      ol.Object.getChangeEventType(ol.control.MousePosition.Property.PROJECTION),
       this.handleProjectionChanged_, this);
 
   if (options.coordinateFormat) {
@@ -130,7 +122,7 @@ ol.control.MousePosition.prototype.handleProjectionChanged_ = function() {
  */
 ol.control.MousePosition.prototype.getCoordinateFormat = function() {
   return /** @type {ol.CoordinateFormatType|undefined} */ (
-      this.get(ol.control.MousePositionProperty.COORDINATE_FORMAT));
+      this.get(ol.control.MousePosition.Property.COORDINATE_FORMAT));
 };
 
 
@@ -143,7 +135,7 @@ ol.control.MousePosition.prototype.getCoordinateFormat = function() {
  */
 ol.control.MousePosition.prototype.getProjection = function() {
   return /** @type {ol.proj.Projection|undefined} */ (
-      this.get(ol.control.MousePositionProperty.PROJECTION));
+      this.get(ol.control.MousePosition.Property.PROJECTION));
 };
 
 
@@ -194,7 +186,7 @@ ol.control.MousePosition.prototype.setMap = function(map) {
  * @api stable
  */
 ol.control.MousePosition.prototype.setCoordinateFormat = function(format) {
-  this.set(ol.control.MousePositionProperty.COORDINATE_FORMAT, format);
+  this.set(ol.control.MousePosition.Property.COORDINATE_FORMAT, format);
 };
 
 
@@ -206,7 +198,7 @@ ol.control.MousePosition.prototype.setCoordinateFormat = function(format) {
  * @api stable
  */
 ol.control.MousePosition.prototype.setProjection = function(projection) {
-  this.set(ol.control.MousePositionProperty.PROJECTION, projection);
+  this.set(ol.control.MousePosition.Property.PROJECTION, projection);
 };
 
 
@@ -242,4 +234,13 @@ ol.control.MousePosition.prototype.updateHTML_ = function(pixel) {
     this.element.innerHTML = html;
     this.renderedHTML_ = html;
   }
+};
+
+
+/**
+ * @enum {string}
+ */
+ol.control.MousePosition.Property = {
+  PROJECTION: 'projection',
+  COORDINATE_FORMAT: 'coordinateFormat'
 };

@@ -1,6 +1,7 @@
 goog.provide('ol.format.WFS');
 
 goog.require('ol');
+goog.require('ol.asserts');
 goog.require('ol.format.GML3');
 goog.require('ol.format.GMLBase');
 goog.require('ol.format.ogc.filter');
@@ -71,6 +72,20 @@ ol.format.WFS.FEATURE_PREFIX = 'feature';
  * @type {string}
  */
 ol.format.WFS.XMLNS = 'http://www.w3.org/2000/xmlns/';
+
+
+/**
+ * @const
+ * @type {string}
+ */
+ol.format.WFS.OGCNS = 'http://www.opengis.net/ogc';
+
+
+/**
+ * @const
+ * @type {string}
+ */
+ol.format.WFS.WFSNS = 'http://www.opengis.net/wfs';
 
 
 /**
@@ -169,7 +184,7 @@ ol.format.WFS.prototype.readFeatureCollectionMetadata = function(source) {
  *     FeatureCollection metadata.
  */
 ol.format.WFS.prototype.readFeatureCollectionMetadataFromDocument = function(doc) {
-  goog.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
+  ol.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
       'doc.nodeType should be DOCUMENT');
   for (var n = doc.firstChild; n; n = n.nextSibling) {
     if (n.nodeType == Node.ELEMENT_NODE) {
@@ -199,9 +214,9 @@ ol.format.WFS.FEATURE_COLLECTION_PARSERS_ = {
  *     FeatureCollection metadata.
  */
 ol.format.WFS.prototype.readFeatureCollectionMetadataFromNode = function(node) {
-  goog.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
+  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
       'node.nodeType should be ELEMENT');
-  goog.DEBUG && console.assert(node.localName == 'FeatureCollection',
+  ol.DEBUG && console.assert(node.localName == 'FeatureCollection',
       'localName should be FeatureCollection');
   var result = {};
   var value = ol.format.XSD.readNonNegativeIntegerString(
@@ -310,7 +325,7 @@ ol.format.WFS.TRANSACTION_RESPONSE_PARSERS_ = {
  * @return {ol.WFSTransactionResponse|undefined} Transaction response.
  */
 ol.format.WFS.prototype.readTransactionResponseFromDocument = function(doc) {
-  goog.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
+  ol.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
       'doc.nodeType should be DOCUMENT');
   for (var n = doc.firstChild; n; n = n.nextSibling) {
     if (n.nodeType == Node.ELEMENT_NODE) {
@@ -326,9 +341,9 @@ ol.format.WFS.prototype.readTransactionResponseFromDocument = function(doc) {
  * @return {ol.WFSTransactionResponse|undefined} Transaction response.
  */
 ol.format.WFS.prototype.readTransactionResponseFromNode = function(node) {
-  goog.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
+  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
       'node.nodeType should  be ELEMENT');
-  goog.DEBUG && console.assert(node.localName == 'TransactionResponse',
+  ol.DEBUG && console.assert(node.localName == 'TransactionResponse',
       'localName should be TransactionResponse');
   return ol.xml.pushParseAndPop(
       /** @type {ol.WFSTransactionResponse} */({}),
@@ -370,8 +385,8 @@ ol.format.WFS.writeFeature_ = function(node, feature, objectStack) {
  * @private
  */
 ol.format.WFS.writeOgcFidFilter_ = function(node, fid, objectStack) {
-  var filter = ol.xml.createElementNS('http://www.opengis.net/ogc', 'Filter');
-  var child = ol.xml.createElementNS('http://www.opengis.net/ogc', 'FeatureId');
+  var filter = ol.xml.createElementNS(ol.format.WFS.OGCNS, 'Filter');
+  var child = ol.xml.createElementNS(ol.format.WFS.OGCNS, 'FeatureId');
   filter.appendChild(child);
   child.setAttribute('fid', fid);
   node.appendChild(filter);
@@ -446,11 +461,11 @@ ol.format.WFS.writeUpdate_ = function(node, feature, objectStack) {
  * @private
  */
 ol.format.WFS.writeProperty_ = function(node, pair, objectStack) {
-  var name = ol.xml.createElementNS('http://www.opengis.net/wfs', 'Name');
+  var name = ol.xml.createElementNS(ol.format.WFS.WFSNS, 'Name');
   node.appendChild(name);
   ol.format.XSD.writeStringTextNode(name, pair.name);
   if (pair.value !== undefined && pair.value !== null) {
-    var value = ol.xml.createElementNS('http://www.opengis.net/wfs', 'Value');
+    var value = ol.xml.createElementNS(ol.format.WFS.WFSNS, 'Value');
     node.appendChild(value);
     if (pair.value instanceof ol.geom.Geometry) {
       ol.format.GML3.prototype.writeGeometryElement(value,
@@ -526,7 +541,7 @@ ol.format.WFS.writeQuery_ = function(node, featureType, objectStack) {
       objectStack);
   var filter = context['filter'];
   if (filter) {
-    var child = ol.xml.createElementNS('http://www.opengis.net/ogc', 'Filter');
+    var child = ol.xml.createElementNS(ol.format.WFS.OGCNS, 'Filter');
     node.appendChild(child);
     ol.format.WFS.writeFilterCondition_(child, filter, objectStack);
   }
@@ -667,8 +682,14 @@ ol.format.WFS.writeIsNullFilter_ = function(node, filter, objectStack) {
  */
 ol.format.WFS.writeIsBetweenFilter_ = function(node, filter, objectStack) {
   ol.format.WFS.writeOgcPropertyName_(node, filter.propertyName);
-  ol.format.WFS.writeOgcExpression_('LowerBoundary', node, '' + filter.lowerBoundary);
-  ol.format.WFS.writeOgcExpression_('UpperBoundary', node, '' + filter.upperBoundary);
+
+  var lowerBoundary = ol.xml.createElementNS(ol.format.WFS.OGCNS, 'LowerBoundary');
+  node.appendChild(lowerBoundary);
+  ol.format.WFS.writeOgcLiteral_(lowerBoundary, '' + filter.lowerBoundary);
+
+  var upperBoundary = ol.xml.createElementNS(ol.format.WFS.OGCNS, 'UpperBoundary');
+  node.appendChild(upperBoundary);
+  ol.format.WFS.writeOgcLiteral_(upperBoundary, '' + filter.upperBoundary);
 };
 
 
@@ -697,7 +718,7 @@ ol.format.WFS.writeIsLikeFilter_ = function(node, filter, objectStack) {
  * @private
  */
 ol.format.WFS.writeOgcExpression_ = function(tagName, node, value) {
-  var property = ol.xml.createElementNS('http://www.opengis.net/ogc', tagName);
+  var property = ol.xml.createElementNS(ol.format.WFS.OGCNS, tagName);
   ol.format.XSD.writeStringTextNode(property, value);
   node.appendChild(property);
 };
@@ -776,8 +797,7 @@ ol.format.WFS.writeGetFeature_ = function(node, featureTypes, objectStack) {
  * @api stable
  */
 ol.format.WFS.prototype.writeGetFeature = function(options) {
-  var node = ol.xml.createElementNS('http://www.opengis.net/wfs',
-      'GetFeature');
+  var node = ol.xml.createElementNS(ol.format.WFS.WFSNS, 'GetFeature');
   node.setAttribute('service', 'WFS');
   node.setAttribute('version', '1.1.0');
   var filter;
@@ -846,8 +866,7 @@ ol.format.WFS.prototype.writeGetFeature = function(options) {
 ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
     options) {
   var objectStack = [];
-  var node = ol.xml.createElementNS('http://www.opengis.net/wfs',
-      'Transaction');
+  var node = ol.xml.createElementNS(ol.format.WFS.WFSNS, 'Transaction');
   node.setAttribute('service', 'WFS');
   node.setAttribute('version', '1.1.0');
   var baseObj;
@@ -916,7 +935,7 @@ ol.format.WFS.prototype.readProjection;
  * @inheritDoc
  */
 ol.format.WFS.prototype.readProjectionFromDocument = function(doc) {
-  goog.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
+  ol.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
       'doc.nodeType should be a DOCUMENT');
   for (var n = doc.firstChild; n; n = n.nextSibling) {
     if (n.nodeType == Node.ELEMENT_NODE) {
@@ -931,9 +950,9 @@ ol.format.WFS.prototype.readProjectionFromDocument = function(doc) {
  * @inheritDoc
  */
 ol.format.WFS.prototype.readProjectionFromNode = function(node) {
-  goog.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
+  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
       'node.nodeType should be ELEMENT');
-  goog.DEBUG && console.assert(node.localName == 'FeatureCollection',
+  ol.DEBUG && console.assert(node.localName == 'FeatureCollection',
       'localName should be FeatureCollection');
 
   if (node.firstElementChild &&

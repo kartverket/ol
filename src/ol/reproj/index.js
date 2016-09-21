@@ -17,18 +17,18 @@ goog.require('ol.proj');
  * @type {boolean}
  * @private
  */
-ol.reproj.browserAntialiasesClip_ = (function(global) {
+ol.reproj.browserAntialiasesClip_ = (function() {
   // Adapted from http://stackoverflow.com/questions/4565112/javascript-how-to-find-out-if-the-user-browser-is-chrome
-  var isOpera = global.navigator.userAgent.indexOf('OPR') > -1;
-  var isIEedge = global.navigator.userAgent.indexOf('Edge') > -1;
+  var isOpera = navigator.userAgent.indexOf('OPR') > -1;
+  var isIEedge = navigator.userAgent.indexOf('Edge') > -1;
   return !(
-    !global.navigator.userAgent.match('CriOS') &&  // Not Chrome on iOS
-    global.chrome !== null && global.chrome !== undefined && // Has chrome in window
-    global.navigator.vendor === 'Google Inc.' && // Vendor is Google.
+    !navigator.userAgent.match('CriOS') &&  // Not Chrome on iOS
+    'chrome' in window && // Has chrome in window
+    navigator.vendor === 'Google Inc.' && // Vendor is Google.
     isOpera == false && // Not Opera
     isIEedge == false // Not Edge
   );
-})(ol.global);
+})();
 
 
 /**
@@ -217,15 +217,14 @@ ol.reproj.render = function(width, height, pixelRatio,
       var p1 = ol.reproj.enlargeClipPoint_(centroidX, centroidY, u1, v1);
       var p2 = ol.reproj.enlargeClipPoint_(centroidX, centroidY, u2, v2);
 
-      context.moveTo(p0[0], p0[1]);
-      context.lineTo(p1[0], p1[1]);
+      context.moveTo(p1[0], p1[1]);
+      context.lineTo(p0[0], p0[1]);
       context.lineTo(p2[0], p2[1]);
     } else {
-      context.moveTo(u0, v0);
-      context.lineTo(u1, v1);
+      context.moveTo(u1, v1);
+      context.lineTo(u0, v0);
       context.lineTo(u2, v2);
     }
-    context.closePath();
     context.clip();
 
     context.transform(
@@ -257,8 +256,8 @@ ol.reproj.render = function(width, height, pixelRatio,
           v2 = -(target[2][1] - targetTopLeft[1]) / targetResolution;
 
       context.beginPath();
-      context.moveTo(u0, v0);
-      context.lineTo(u1, v1);
+      context.moveTo(u1, v1);
+      context.lineTo(u0, v0);
       context.lineTo(u2, v2);
       context.closePath();
       context.stroke();

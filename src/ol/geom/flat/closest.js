@@ -1,5 +1,6 @@
 goog.provide('ol.geom.flat.closest');
 
+goog.require('ol');
 goog.require('ol.math');
 
 
@@ -147,7 +148,7 @@ ol.geom.flat.closest.getClosestPoint = function(flatCoordinates, offset, end,
       return minSquaredDistance;
     }
   }
-  goog.DEBUG && console.assert(maxDelta > 0, 'maxDelta should be larger than 0');
+  ol.DEBUG && console.assert(maxDelta > 0, 'maxDelta should be larger than 0');
   var tmpPoint = opt_tmpPoint ? opt_tmpPoint : [NaN, NaN];
   var index = offset + stride;
   while (index < end) {

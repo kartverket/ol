@@ -1,37 +1,13 @@
 goog.provide('ol.style.Icon');
-goog.provide('ol.style.IconAnchorUnits');
-goog.provide('ol.style.IconOrigin');
 
 goog.require('ol');
 goog.require('ol.asserts');
 goog.require('ol.color');
 goog.require('ol.events');
 goog.require('ol.events.EventType');
+goog.require('ol.Image');
 goog.require('ol.style.IconImage');
 goog.require('ol.style.Image');
-goog.require('ol.style.ImageState');
-
-
-/**
- * Icon anchor units. One of 'fraction', 'pixels'.
- * @enum {string}
- */
-ol.style.IconAnchorUnits = {
-  FRACTION: 'fraction',
-  PIXELS: 'pixels'
-};
-
-
-/**
- * Icon origin. One of 'bottom-left', 'bottom-right', 'top-left', 'top-right'.
- * @enum {string}
- */
-ol.style.IconOrigin = {
-  BOTTOM_LEFT: 'bottom-left',
-  BOTTOM_RIGHT: 'bottom-right',
-  TOP_LEFT: 'top-left',
-  TOP_RIGHT: 'top-right'
-};
 
 
 /**
@@ -61,29 +37,30 @@ ol.style.Icon = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.IconOrigin}
+   * @type {ol.style.Icon.Origin}
    */
   this.anchorOrigin_ = options.anchorOrigin !== undefined ?
-      options.anchorOrigin : ol.style.IconOrigin.TOP_LEFT;
+      options.anchorOrigin : ol.style.Icon.Origin.TOP_LEFT;
 
   /**
    * @private
-   * @type {ol.style.IconAnchorUnits}
+   * @type {ol.style.Icon.AnchorUnits}
    */
   this.anchorXUnits_ = options.anchorXUnits !== undefined ?
-      options.anchorXUnits : ol.style.IconAnchorUnits.FRACTION;
+      options.anchorXUnits : ol.style.Icon.AnchorUnits.FRACTION;
 
   /**
    * @private
-   * @type {ol.style.IconAnchorUnits}
+   * @type {ol.style.Icon.AnchorUnits}
    */
   this.anchorYUnits_ = options.anchorYUnits !== undefined ?
-      options.anchorYUnits : ol.style.IconAnchorUnits.FRACTION;
+      options.anchorYUnits : ol.style.Icon.AnchorUnits.FRACTION;
 
   /**
+   * @private
    * @type {?string}
    */
-  var crossOrigin =
+  this.crossOrigin_ =
       options.crossOrigin !== undefined ? options.crossOrigin : null;
 
   /**
@@ -113,15 +90,16 @@ ol.style.Icon = function(opt_options) {
       6); // A defined and non-empty `src` or `image` must be provided
 
   /**
-   * @type {ol.style.ImageState}
+   * @type {ol.Image.State}
    */
   var imageState = options.src !== undefined ?
-      ol.style.ImageState.IDLE : ol.style.ImageState.LOADED;
+      ol.Image.State.IDLE : ol.Image.State.LOADED;
 
   /**
+   * @private
    * @type {ol.Color}
    */
-  var color = options.color !== undefined ? ol.color.asArray(options.color) :
+  this.color_ = options.color !== undefined ? ol.color.asArray(options.color) :
       null;
 
   /**
@@ -129,7 +107,7 @@ ol.style.Icon = function(opt_options) {
    * @type {ol.style.IconImage}
    */
   this.iconImage_ = ol.style.IconImage.get(
-      image, /** @type {string} */ (src), imgSize, crossOrigin, imageState, color);
+      image, /** @type {string} */ (src), imgSize, this.crossOrigin_, imageState, this.color_);
 
   /**
    * @private
@@ -139,10 +117,10 @@ ol.style.Icon = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.IconOrigin}
+   * @type {ol.style.Icon.Origin}
    */
   this.offsetOrigin_ = options.offsetOrigin !== undefined ?
-      options.offsetOrigin : ol.style.IconOrigin.TOP_LEFT;
+      options.offsetOrigin : ol.style.Icon.Origin.TOP_LEFT;
 
   /**
    * @private
@@ -196,6 +174,47 @@ ol.inherits(ol.style.Icon, ol.style.Image);
 
 
 /**
+ * Clones the style.
+ * @return {ol.style.Icon} The cloned style.
+ * @api
+ */
+ol.style.Icon.prototype.clone = function() {
+  var oldImage = this.getImage(1);
+  var newImage;
+  if (this.iconImage_.getImageState() === ol.Image.State.LOADED) {
+    if (oldImage.tagName.toUpperCase() === 'IMG') {
+      newImage = /** @type {Image} */ (oldImage.cloneNode(true));
+    } else {
+      newImage = /** @type {HTMLCanvasElement} */ (document.createElement('canvas'));
+      var context = newImage.getContext('2d');
+      newImage.width = oldImage.width;
+      newImage.height = oldImage.height;
+      context.drawImage(oldImage, 0, 0);
+    }
+  }
+  return new ol.style.Icon({
+    anchor: this.anchor_.slice(),
+    anchorOrigin: this.anchorOrigin_,
+    anchorXUnits: this.anchorXUnits_,
+    anchorYUnits: this.anchorYUnits_,
+    crossOrigin: this.crossOrigin_,
+    color: (this.color_ && this.color_.slice) ? this.color_.slice() : this.color_ || undefined,
+    img: newImage ? newImage : undefined,
+    imgSize: newImage ? this.iconImage_.getSize().slice() : undefined,
+    src: newImage ? undefined : this.getSrc(),
+    offset: this.offset_.slice(),
+    offsetOrigin: this.offsetOrigin_,
+    size: this.size_ !== null ? this.size_.slice() : undefined,
+    opacity: this.getOpacity(),
+    scale: this.getScale(),
+    snapToPixel: this.getSnapToPixel(),
+    rotation: this.getRotation(),
+    rotateWithView: this.getRotateWithView()
+  });
+};
+
+
+/**
  * @inheritDoc
  * @api
  */
@@ -205,33 +224,33 @@ ol.style.Icon.prototype.getAnchor = function() {
   }
   var anchor = this.anchor_;
   var size = this.getSize();
-  if (this.anchorXUnits_ == ol.style.IconAnchorUnits.FRACTION ||
-      this.anchorYUnits_ == ol.style.IconAnchorUnits.FRACTION) {
+  if (this.anchorXUnits_ == ol.style.Icon.AnchorUnits.FRACTION ||
+      this.anchorYUnits_ == ol.style.Icon.AnchorUnits.FRACTION) {
     if (!size) {
       return null;
     }
     anchor = this.anchor_.slice();
-    if (this.anchorXUnits_ == ol.style.IconAnchorUnits.FRACTION) {
+    if (this.anchorXUnits_ == ol.style.Icon.AnchorUnits.FRACTION) {
       anchor[0] *= size[0];
     }
-    if (this.anchorYUnits_ == ol.style.IconAnchorUnits.FRACTION) {
+    if (this.anchorYUnits_ == ol.style.Icon.AnchorUnits.FRACTION) {
       anchor[1] *= size[1];
     }
   }
 
-  if (this.anchorOrigin_ != ol.style.IconOrigin.TOP_LEFT) {
+  if (this.anchorOrigin_ != ol.style.Icon.Origin.TOP_LEFT) {
     if (!size) {
       return null;
     }
     if (anchor === this.anchor_) {
       anchor = this.anchor_.slice();
     }
-    if (this.anchorOrigin_ == ol.style.IconOrigin.TOP_RIGHT ||
-        this.anchorOrigin_ == ol.style.IconOrigin.BOTTOM_RIGHT) {
+    if (this.anchorOrigin_ == ol.style.Icon.Origin.TOP_RIGHT ||
+        this.anchorOrigin_ == ol.style.Icon.Origin.BOTTOM_RIGHT) {
       anchor[0] = -anchor[0] + size[0];
     }
-    if (this.anchorOrigin_ == ol.style.IconOrigin.BOTTOM_LEFT ||
-        this.anchorOrigin_ == ol.style.IconOrigin.BOTTOM_RIGHT) {
+    if (this.anchorOrigin_ == ol.style.Icon.Origin.BOTTOM_LEFT ||
+        this.anchorOrigin_ == ol.style.Icon.Origin.BOTTOM_RIGHT) {
       anchor[1] = -anchor[1] + size[1];
     }
   }
@@ -294,19 +313,19 @@ ol.style.Icon.prototype.getOrigin = function() {
   }
   var offset = this.offset_;
 
-  if (this.offsetOrigin_ != ol.style.IconOrigin.TOP_LEFT) {
+  if (this.offsetOrigin_ != ol.style.Icon.Origin.TOP_LEFT) {
     var size = this.getSize();
     var iconImageSize = this.iconImage_.getSize();
     if (!size || !iconImageSize) {
       return null;
     }
     offset = offset.slice();
-    if (this.offsetOrigin_ == ol.style.IconOrigin.TOP_RIGHT ||
-        this.offsetOrigin_ == ol.style.IconOrigin.BOTTOM_RIGHT) {
+    if (this.offsetOrigin_ == ol.style.Icon.Origin.TOP_RIGHT ||
+        this.offsetOrigin_ == ol.style.Icon.Origin.BOTTOM_RIGHT) {
       offset[0] = iconImageSize[0] - size[0] - offset[0];
     }
-    if (this.offsetOrigin_ == ol.style.IconOrigin.BOTTOM_LEFT ||
-        this.offsetOrigin_ == ol.style.IconOrigin.BOTTOM_RIGHT) {
+    if (this.offsetOrigin_ == ol.style.Icon.Origin.BOTTOM_LEFT ||
+        this.offsetOrigin_ == ol.style.Icon.Origin.BOTTOM_RIGHT) {
       offset[1] = iconImageSize[1] - size[1] - offset[1];
     }
   }
@@ -361,4 +380,26 @@ ol.style.Icon.prototype.load = function() {
 ol.style.Icon.prototype.unlistenImageChange = function(listener, thisArg) {
   ol.events.unlisten(this.iconImage_, ol.events.EventType.CHANGE,
       listener, thisArg);
+};
+
+
+/**
+ * Icon anchor units. One of 'fraction', 'pixels'.
+ * @enum {string}
+ */
+ol.style.Icon.AnchorUnits = {
+  FRACTION: 'fraction',
+  PIXELS: 'pixels'
+};
+
+
+/**
+ * Icon origin. One of 'bottom-left', 'bottom-right', 'top-left', 'top-right'.
+ * @enum {string}
+ */
+ol.style.Icon.Origin = {
+  BOTTOM_LEFT: 'bottom-left',
+  BOTTOM_RIGHT: 'bottom-right',
+  TOP_LEFT: 'top-left',
+  TOP_RIGHT: 'top-right'
 };

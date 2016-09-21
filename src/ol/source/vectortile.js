@@ -21,7 +21,7 @@ goog.require('ol.source.UrlTile');
  * editing.
  *
  * @constructor
- * @fires ol.source.TileEvent
+ * @fires ol.source.Tile.Event
  * @extends {ol.source.UrlTile}
  * @param {olx.source.VectorTileOptions} options Vector tile options.
  * @api
@@ -53,6 +53,12 @@ ol.source.VectorTile = function(options) {
   this.format_ = options.format ? options.format : null;
 
   /**
+   * @private
+   * @type {boolean}
+   */
+  this.overlaps_ = options.overlaps == undefined ? true : options.overlaps;
+
+  /**
    * @protected
    * @type {function(new: ol.VectorTile, ol.TileCoord, ol.Tile.State, string,
    *        ol.format.Feature, ol.TileLoadFunctionType)}
@@ -61,6 +67,14 @@ ol.source.VectorTile = function(options) {
 
 };
 ol.inherits(ol.source.VectorTile, ol.source.UrlTile);
+
+
+/**
+ * @return {boolean} The source can have overlapping geometries.
+ */
+ol.source.VectorTile.prototype.getOverlaps = function() {
+  return this.overlaps_;
+};
 
 
 /**
@@ -93,9 +107,19 @@ ol.source.VectorTile.prototype.getTile = function(z, x, y, pixelRatio, projectio
 /**
  * @inheritDoc
  */
+ol.source.VectorTile.prototype.getTilePixelRatio = function(opt_pixelRatio) {
+  return opt_pixelRatio == undefined ?
+      ol.source.UrlTile.prototype.getTilePixelRatio.call(this, opt_pixelRatio) :
+      opt_pixelRatio;
+};
+
+
+/**
+ * @inheritDoc
+ */
 ol.source.VectorTile.prototype.getTilePixelSize = function(z, pixelRatio, projection) {
   var tileSize = ol.size.toSize(this.tileGrid.getTileSize(z));
-  return [tileSize[0] * pixelRatio, tileSize[1] * pixelRatio];
+  return [Math.round(tileSize[0] * pixelRatio), Math.round(tileSize[1] * pixelRatio)];
 };
 
 

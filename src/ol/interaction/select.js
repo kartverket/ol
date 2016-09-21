@@ -1,7 +1,7 @@
 goog.provide('ol.interaction.Select');
-goog.provide('ol.interaction.SelectEvent');
-goog.provide('ol.interaction.SelectEventType');
 
+goog.require('ol');
+goog.require('ol.asserts');
 goog.require('ol.functions');
 goog.require('ol.Collection');
 goog.require('ol.Feature');
@@ -14,60 +14,7 @@ goog.require('ol.interaction.Interaction');
 goog.require('ol.layer.Vector');
 goog.require('ol.obj');
 goog.require('ol.source.Vector');
-
-
-/**
- * @enum {string}
- */
-ol.interaction.SelectEventType = {
-  /**
-   * Triggered when feature(s) has been (de)selected.
-   * @event ol.interaction.SelectEvent#select
-   * @api
-   */
-  SELECT: 'select'
-};
-
-
-/**
- * @classdesc
- * Events emitted by {@link ol.interaction.Select} instances are instances of
- * this type.
- *
- * @param {string} type The event type.
- * @param {Array.<ol.Feature>} selected Selected features.
- * @param {Array.<ol.Feature>} deselected Deselected features.
- * @param {ol.MapBrowserEvent} mapBrowserEvent Associated
- *     {@link ol.MapBrowserEvent}.
- * @implements {oli.SelectEvent}
- * @extends {ol.events.Event}
- * @constructor
- */
-ol.interaction.SelectEvent = function(type, selected, deselected, mapBrowserEvent) {
-  ol.events.Event.call(this, type);
-
-  /**
-   * Selected features array.
-   * @type {Array.<ol.Feature>}
-   * @api
-   */
-  this.selected = selected;
-
-  /**
-   * Deselected features array.
-   * @type {Array.<ol.Feature>}
-   * @api
-   */
-  this.deselected = deselected;
-
-  /**
-   * Associated {@link ol.MapBrowserEvent}.
-   * @type {ol.MapBrowserEvent}
-   * @api
-   */
-  this.mapBrowserEvent = mapBrowserEvent;
-};
-ol.inherits(ol.interaction.SelectEvent, ol.events.Event);
+goog.require('ol.style.Style');
 
 
 /**
@@ -85,7 +32,7 @@ ol.inherits(ol.interaction.SelectEvent, ol.events.Event);
  * @constructor
  * @extends {ol.interaction.Interaction}
  * @param {olx.interaction.SelectOptions=} opt_options Options.
- * @fires ol.interaction.SelectEvent
+ * @fires ol.interaction.Select.Event
  * @api stable
  */
 ol.interaction.Select = function(opt_options) {
@@ -270,14 +217,19 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
             return !this.multi_;
           }
         }, this, this.layerFilter_);
-    if (selected.length > 0 && features.getLength() == 1 && features.item(0) == selected[0]) {
-      // No change; an already selected feature is selected again
-      selected.length = 0;
-    } else {
-      if (features.getLength() !== 0) {
-        deselected = Array.prototype.concat(features.getArray());
-        features.clear();
+    var i;
+    for (i = features.getLength() - 1; i >= 0; --i) {
+      var feature = features.item(i);
+      var index = selected.indexOf(feature);
+      if (index > -1) {
+        // feature is already selected
+        selected.splice(index, 1);
+      } else {
+        features.remove(feature);
+        deselected.push(feature);
       }
+    }
+    if (selected.length !== 0) {
       features.extend(selected);
     }
   } else {
@@ -302,15 +254,15 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
             return !this.multi_;
           }
         }, this, this.layerFilter_);
-    var i;
-    for (i = deselected.length - 1; i >= 0; --i) {
-      features.remove(deselected[i]);
+    var j;
+    for (j = deselected.length - 1; j >= 0; --j) {
+      features.remove(deselected[j]);
     }
     features.extend(selected);
   }
   if (selected.length > 0 || deselected.length > 0) {
     this.dispatchEvent(
-        new ol.interaction.SelectEvent(ol.interaction.SelectEventType.SELECT,
+        new ol.interaction.Select.Event(ol.interaction.Select.EventType.SELECT,
             selected, deselected, mapBrowserEvent));
   }
   return ol.events.condition.pointerMove(mapBrowserEvent);
@@ -349,6 +301,9 @@ ol.interaction.Select.getDefaultStyleFunction = function() {
       styles[ol.geom.GeometryType.LINE_STRING]);
 
   return function(feature, resolution) {
+    if (!feature.getGeometry()) {
+      return null;
+    }
     return styles[feature.getGeometry().getType()];
   };
 };
@@ -385,4 +340,58 @@ ol.interaction.Select.prototype.removeFeature_ = function(evt) {
 ol.interaction.Select.prototype.removeFeatureLayerAssociation_ = function(feature) {
   var key = ol.getUid(feature);
   delete this.featureLayerAssociation_[key];
+};
+
+
+/**
+ * @classdesc
+ * Events emitted by {@link ol.interaction.Select} instances are instances of
+ * this type.
+ *
+ * @param {ol.interaction.Select.EventType} type The event type.
+ * @param {Array.<ol.Feature>} selected Selected features.
+ * @param {Array.<ol.Feature>} deselected Deselected features.
+ * @param {ol.MapBrowserEvent} mapBrowserEvent Associated
+ *     {@link ol.MapBrowserEvent}.
+ * @implements {oli.SelectEvent}
+ * @extends {ol.events.Event}
+ * @constructor
+ */
+ol.interaction.Select.Event = function(type, selected, deselected, mapBrowserEvent) {
+  ol.events.Event.call(this, type);
+
+  /**
+   * Selected features array.
+   * @type {Array.<ol.Feature>}
+   * @api
+   */
+  this.selected = selected;
+
+  /**
+   * Deselected features array.
+   * @type {Array.<ol.Feature>}
+   * @api
+   */
+  this.deselected = deselected;
+
+  /**
+   * Associated {@link ol.MapBrowserEvent}.
+   * @type {ol.MapBrowserEvent}
+   * @api
+   */
+  this.mapBrowserEvent = mapBrowserEvent;
+};
+ol.inherits(ol.interaction.Select.Event, ol.events.Event);
+
+
+/**
+ * @enum {string}
+ */
+ol.interaction.Select.EventType = {
+  /**
+   * Triggered when feature(s) has been (de)selected.
+   * @event ol.interaction.Select.Event#select
+   * @api
+   */
+  SELECT: 'select'
 };

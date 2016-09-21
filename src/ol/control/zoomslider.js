@@ -2,6 +2,7 @@
 
 goog.provide('ol.control.ZoomSlider');
 
+goog.require('ol');
 goog.require('ol.View');
 goog.require('ol.animation');
 goog.require('ol.control.Control');
@@ -11,6 +12,7 @@ goog.require('ol.events');
 goog.require('ol.events.Event');
 goog.require('ol.events.EventType');
 goog.require('ol.math');
+goog.require('ol.pointer.EventType');
 goog.require('ol.pointer.PointerEventHandler');
 
 
@@ -185,7 +187,7 @@ ol.control.ZoomSlider.prototype.initSlider_ = function() {
   };
 
   var thumb = container.firstElementChild;
-  var computedStyle = ol.global.getComputedStyle(thumb);
+  var computedStyle = getComputedStyle(thumb);
   var thumbWidth = thumb.offsetWidth +
       parseFloat(computedStyle['marginRight']) +
       parseFloat(computedStyle['marginLeft']);

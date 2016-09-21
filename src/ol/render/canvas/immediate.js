@@ -6,7 +6,6 @@ goog.provide('ol.render.canvas.Immediate');
 
 goog.require('ol');
 goog.require('ol.array');
-goog.require('ol.color');
 goog.require('ol.colorlike');
 goog.require('ol.extent');
 goog.require('ol.geom.GeometryType');
@@ -191,6 +190,12 @@ ol.render.canvas.Immediate = function(context, pixelRatio, extent, transform, vi
 
   /**
    * @private
+   * @type {boolean}
+   */
+  this.textRotateWithView_ = false;
+
+  /**
+   * @private
    * @type {number}
    */
   this.textRotation_ = 0;
@@ -246,8 +251,8 @@ ol.render.canvas.Immediate.prototype.drawImages_ = function(flatCoordinates, off
   if (!this.image_) {
     return;
   }
-  goog.DEBUG && console.assert(offset === 0, 'offset should be 0');
-  goog.DEBUG && console.assert(end == flatCoordinates.length,
+  ol.DEBUG && console.assert(offset === 0, 'offset should be 0');
+  ol.DEBUG && console.assert(end == flatCoordinates.length,
       'end should be equal to the length of flatCoordinates');
   var pixelCoordinates = ol.geom.flat.transform.transform2D(
       flatCoordinates, offset, end, 2, this.transform_,
@@ -311,21 +316,25 @@ ol.render.canvas.Immediate.prototype.drawText_ = function(flatCoordinates, offse
     this.setContextStrokeState_(this.textStrokeState_);
   }
   this.setContextTextState_(this.textState_);
-  goog.DEBUG && console.assert(offset === 0, 'offset should be 0');
-  goog.DEBUG && console.assert(end == flatCoordinates.length,
+  ol.DEBUG && console.assert(offset === 0, 'offset should be 0');
+  ol.DEBUG && console.assert(end == flatCoordinates.length,
       'end should be equal to the length of flatCoordinates');
   var pixelCoordinates = ol.geom.flat.transform.transform2D(
       flatCoordinates, offset, end, stride, this.transform_,
       this.pixelCoordinates_);
   var context = this.context_;
+  var rotation = this.textRotation_;
+  if (this.textRotateWithView_) {
+    rotation += this.viewRotation_;
+  }
   for (; offset < end; offset += stride) {
     var x = pixelCoordinates[offset] + this.textOffsetX_;
     var y = pixelCoordinates[offset + 1] + this.textOffsetY_;
-    if (this.textRotation_ !== 0 || this.textScale_ != 1) {
+    if (rotation !== 0 || this.textScale_ != 1) {
       var localTransform = ol.transform.compose(this.tmpLocalTransform_,
           x, y,
           this.textScale_, this.textScale_,
-          this.textRotation_,
+          rotation,
           -x, -y);
       context.setTransform.apply(context, localTransform);
     }
@@ -336,7 +345,7 @@ ol.render.canvas.Immediate.prototype.drawText_ = function(flatCoordinates, offse
       context.fillText(this.text_, x, y);
     }
   }
-  if (this.textRotation_ !== 0 || this.textScale_ != 1) {
+  if (rotation !== 0 || this.textScale_ != 1) {
     context.setTransform(1, 0, 0, 1, 0, 0);
   }
 };
@@ -478,7 +487,7 @@ ol.render.canvas.Immediate.prototype.drawGeometry = function(geometry) {
       this.drawCircle(/** @type {ol.geom.Circle} */ (geometry));
       break;
     default:
-      goog.DEBUG && console.assert(false, 'Unsupported geometry type: ' + type);
+      ol.DEBUG && console.assert(false, 'Unsupported geometry type: ' + type);
   }
 };
 
@@ -831,7 +840,7 @@ ol.render.canvas.Immediate.prototype.setFillStrokeStyle = function(fillStyle, st
           strokeStyleWidth : ol.render.canvas.defaultLineWidth),
       miterLimit: strokeStyleMiterLimit !== undefined ?
           strokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit,
-      strokeStyle: ol.color.asString(strokeStyleColor ?
+      strokeStyle: ol.colorlike.asColorLike(strokeStyleColor ?
           strokeStyleColor : ol.render.canvas.defaultStrokeStyle)
     };
   }
@@ -853,7 +862,7 @@ ol.render.canvas.Immediate.prototype.setImageStyle = function(imageStyle) {
     var imageImage = imageStyle.getImage(1);
     var imageOrigin = imageStyle.getOrigin();
     var imageSize = imageStyle.getSize();
-    goog.DEBUG && console.assert(imageImage, 'imageImage must be truthy');
+    ol.DEBUG && console.assert(imageImage, 'imageImage must be truthy');
     this.imageAnchorX_ = imageAnchor[0];
     this.imageAnchorY_ = imageAnchor[1];
     this.imageHeight_ = imageSize[1];
@@ -911,13 +920,14 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
             textStrokeStyleWidth : ol.render.canvas.defaultLineWidth,
         miterLimit: textStrokeStyleMiterLimit !== undefined ?
             textStrokeStyleMiterLimit : ol.render.canvas.defaultMiterLimit,
-        strokeStyle: ol.color.asString(textStrokeStyleColor ?
+        strokeStyle: ol.colorlike.asColorLike(textStrokeStyleColor ?
             textStrokeStyleColor : ol.render.canvas.defaultStrokeStyle)
       };
     }
     var textFont = textStyle.getFont();
     var textOffsetX = textStyle.getOffsetX();
     var textOffsetY = textStyle.getOffsetY();
+    var textRotateWithView = textStyle.getRotateWithView();
     var textRotation = textStyle.getRotation();
     var textScale = textStyle.getScale();
     var textText = textStyle.getText();
@@ -936,6 +946,7 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
         textOffsetX !== undefined ? (this.pixelRatio_ * textOffsetX) : 0;
     this.textOffsetY_ =
         textOffsetY !== undefined ? (this.pixelRatio_ * textOffsetY) : 0;
+    this.textRotateWithView_ = textRotateWithView !== undefined ? textRotateWithView : false;
     this.textRotation_ = textRotation !== undefined ? textRotation : 0;
     this.textScale_ = this.pixelRatio_ * (textScale !== undefined ?
         textScale : 1);

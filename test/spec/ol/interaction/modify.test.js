@@ -11,7 +11,6 @@ goog.require('ol.geom.LineString');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
 goog.require('ol.interaction.Modify');
-goog.require('ol.interaction.ModifyEvent');
 goog.require('ol.layer.Vector');
 goog.require('ol.pointer.PointerEvent');
 goog.require('ol.source.Vector');
@@ -102,7 +101,7 @@ describe('ol.interaction.Modify', function() {
    * modifications. Helper function to
    * @param {ol.Feature} feature Modified feature.
    * @param {ol.interaction.Modify} interaction The interaction.
-   * @return {Array<ol.interaction.ModifyEvent|string>} events
+   * @return {Array<ol.interaction.Modify.Event|string>} events
    */
   function trackEvents(feature, interaction) {
     var events = [];
@@ -122,7 +121,7 @@ describe('ol.interaction.Modify', function() {
   * Validates the event array to verify proper event sequence. Checks
   * that first and last event are correct ModifyEvents and that feature
   * modifications event are in between.
-  * @param {Array<ol.interaction.ModifyEvent|string>} events The events.
+  * @param {Array<ol.interaction.Modify.Event|string>} events The events.
   * @param {Array<ol.Feature>} features The features.
   */
   function validateEvents(events, features) {
@@ -131,11 +130,11 @@ describe('ol.interaction.Modify', function() {
     var endevent = events[events.length - 1];
 
     // first event should be modifystary
-    expect(startevent).to.be.an(ol.interaction.ModifyEvent);
+    expect(startevent).to.be.an(ol.interaction.Modify.Event);
     expect(startevent.type).to.eql('modifystart');
 
     // last event should be modifyend
-    expect(endevent).to.be.an(ol.interaction.ModifyEvent);
+    expect(endevent).to.be.an(ol.interaction.Modify.Event);
     expect(endevent.type).to.eql('modifyend');
 
     // make sure we get change events to events array
@@ -162,6 +161,22 @@ describe('ol.interaction.Modify', function() {
       expect(rbushEntries.length).to.be(1);
       expect(rbushEntries[0].feature).to.be(feature);
     });
+
+    it('accepts feature without geometry', function() {
+      var feature = new ol.Feature();
+      var features = new ol.Collection([feature]);
+      var modify = new ol.interaction.Modify({
+        features: features
+      });
+      var rbushEntries = modify.rBush_.getAll();
+      expect(rbushEntries.length).to.be(0);
+
+      feature.setGeometry(new ol.geom.Point([0, 10]));
+      rbushEntries = modify.rBush_.getAll();
+      expect(rbushEntries.length).to.be(1);
+      expect(rbushEntries[0].feature).to.be(feature);
+    });
+
   });
 
   describe('vertex deletion', function() {

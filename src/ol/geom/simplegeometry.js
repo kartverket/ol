@@ -1,5 +1,6 @@
 goog.provide('ol.geom.SimpleGeometry');
 
+goog.require('ol');
 goog.require('ol.functions');
 goog.require('ol.extent');
 goog.require('ol.geom.Geometry');
@@ -57,7 +58,7 @@ ol.geom.SimpleGeometry.getLayoutForStride_ = function(stride) {
   } else if (stride == 4) {
     layout = ol.geom.GeometryLayout.XYZM;
   }
-  goog.DEBUG && console.assert(layout, 'unsupported stride: ' + stride);
+  ol.DEBUG && console.assert(layout, 'unsupported stride: ' + stride);
   return /** @type {ol.geom.GeometryLayout} */ (layout);
 };
 
@@ -75,7 +76,7 @@ ol.geom.SimpleGeometry.getStrideForLayout = function(layout) {
   } else if (layout == ol.geom.GeometryLayout.XYZM) {
     stride = 4;
   }
-  goog.DEBUG && console.assert(stride, 'unsupported layout: ' + layout);
+  ol.DEBUG && console.assert(stride, 'unsupported layout: ' + layout);
   return /** @type {number} */ (stride);
 };
 

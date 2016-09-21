@@ -69,7 +69,7 @@ ol.source.Cluster = function(options) {
   this.source_ = options.source;
 
   this.source_.on(ol.events.EventType.CHANGE,
-      ol.source.Cluster.prototype.onSourceChange_, this);
+      ol.source.Cluster.prototype.refresh_, this);
 };
 ol.inherits(ol.source.Cluster, ol.source.Vector);
 
@@ -100,10 +100,21 @@ ol.source.Cluster.prototype.loadFeatures = function(extent, resolution,
 
 
 /**
+ * Set the distance in pixels between clusters.
+ * @param {number} distance The distance in pixels.
+ * @api
+ */
+ol.source.Cluster.prototype.setDistance = function(distance) {
+  this.distance_ = distance;
+  this.refresh_();
+};
+
+
+/**
  * handle the source changing
  * @private
  */
-ol.source.Cluster.prototype.onSourceChange_ = function() {
+ol.source.Cluster.prototype.refresh_ = function() {
   this.clear();
   this.cluster_();
   this.addFeatures(this.features_);
@@ -138,7 +149,7 @@ ol.source.Cluster.prototype.cluster_ = function() {
         ol.extent.buffer(extent, mapDistance, extent);
 
         var neighbors = this.source_.getFeaturesInExtent(extent);
-        goog.DEBUG && console.assert(neighbors.length >= 1, 'at least one neighbor found');
+        ol.DEBUG && console.assert(neighbors.length >= 1, 'at least one neighbor found');
         neighbors = neighbors.filter(function(neighbor) {
           var uid = ol.getUid(neighbor).toString();
           if (!(uid in clustered)) {
@@ -152,7 +163,7 @@ ol.source.Cluster.prototype.cluster_ = function() {
       }
     }
   }
-  goog.DEBUG && console.assert(
+  ol.DEBUG && console.assert(
       Object.keys(clustered).length == this.source_.getFeatures().length,
       'number of clustered equals number of features in the source');
 };

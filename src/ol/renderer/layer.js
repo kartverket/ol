@@ -1,7 +1,7 @@
 goog.provide('ol.renderer.Layer');
 
 goog.require('ol');
-goog.require('ol.ImageState');
+goog.require('ol.Image');
 goog.require('ol.Observable');
 goog.require('ol.Tile');
 goog.require('ol.asserts');
@@ -48,7 +48,7 @@ ol.renderer.Layer.prototype.forEachFeatureAtCoordinate = ol.nullFunction;
 /**
  * @param {ol.Pixel} pixel Pixel.
  * @param {olx.FrameState} frameState Frame state.
- * @param {function(this: S, ol.layer.Layer, ol.Color): T} callback Layer callback.
+ * @param {function(this: S, ol.layer.Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer callback.
  * @param {S} thisArg Value to use as `this` when executing `callback`.
  * @return {T|undefined} Callback result.
  * @template S,T
@@ -121,7 +121,7 @@ ol.renderer.Layer.prototype.getLayer = function() {
  */
 ol.renderer.Layer.prototype.handleImageChange_ = function(event) {
   var image = /** @type {ol.Image} */ (event.target);
-  if (image.getState() === ol.ImageState.LOADED) {
+  if (image.getState() === ol.Image.State.LOADED) {
     this.renderIfReadyAndVisible();
   }
 };
@@ -137,24 +137,24 @@ ol.renderer.Layer.prototype.handleImageChange_ = function(event) {
  */
 ol.renderer.Layer.prototype.loadImage = function(image) {
   var imageState = image.getState();
-  if (imageState != ol.ImageState.LOADED &&
-      imageState != ol.ImageState.ERROR) {
+  if (imageState != ol.Image.State.LOADED &&
+      imageState != ol.Image.State.ERROR) {
     // the image is either "idle" or "loading", register the change
     // listener (a noop if the listener was already registered)
-    goog.DEBUG && console.assert(imageState == ol.ImageState.IDLE ||
-        imageState == ol.ImageState.LOADING,
+    ol.DEBUG && console.assert(imageState == ol.Image.State.IDLE ||
+        imageState == ol.Image.State.LOADING,
         'imageState is "idle" or "loading"');
     ol.events.listen(image, ol.events.EventType.CHANGE,
         this.handleImageChange_, this);
   }
-  if (imageState == ol.ImageState.IDLE) {
+  if (imageState == ol.Image.State.IDLE) {
     image.load();
     imageState = image.getState();
-    goog.DEBUG && console.assert(imageState == ol.ImageState.LOADING ||
-        imageState == ol.ImageState.LOADED,
+    ol.DEBUG && console.assert(imageState == ol.Image.State.LOADING ||
+        imageState == ol.Image.State.LOADED,
         'imageState is "loading" or "loaded"');
   }
-  return imageState == ol.ImageState.LOADED;
+  return imageState == ol.Image.State.LOADED;
 };
 
 

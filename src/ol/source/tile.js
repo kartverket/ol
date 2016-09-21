@@ -1,5 +1,4 @@
 goog.provide('ol.source.Tile');
-goog.provide('ol.source.TileEvent');
 
 goog.require('ol');
 goog.require('ol.Tile');
@@ -242,10 +241,14 @@ ol.source.Tile.prototype.getTileCacheForProjection = function(projection) {
 
 
 /**
- * @param {number} pixelRatio Pixel ratio.
+ * Get the tile pixel ratio for this source. Subclasses may override this
+ * method, which is meant to return a supported pixel ratio that matches the
+ * provided `opt_pixelRatio` as close as possible. When no `opt_pixelRatio` is
+ * provided, it is meant to return `this.tilePixelRatio_`.
+ * @param {number=} opt_pixelRatio Pixel ratio.
  * @return {number} Tile pixel ratio.
  */
-ol.source.Tile.prototype.getTilePixelRatio = function(pixelRatio) {
+ol.source.Tile.prototype.getTilePixelRatio = function(opt_pixelRatio) {
   return this.tilePixelRatio_;
 };
 
@@ -314,11 +317,11 @@ ol.source.Tile.prototype.useTile = ol.nullFunction;
  *
  * @constructor
  * @extends {ol.events.Event}
- * @implements {oli.source.TileEvent}
+ * @implements {oli.source.Tile.Event}
  * @param {string} type Type.
  * @param {ol.Tile} tile The tile.
  */
-ol.source.TileEvent = function(type, tile) {
+ol.source.Tile.Event = function(type, tile) {
 
   ol.events.Event.call(this, type);
 
@@ -330,31 +333,31 @@ ol.source.TileEvent = function(type, tile) {
   this.tile = tile;
 
 };
-ol.inherits(ol.source.TileEvent, ol.events.Event);
+ol.inherits(ol.source.Tile.Event, ol.events.Event);
 
 
 /**
  * @enum {string}
  */
-ol.source.TileEventType = {
+ol.source.Tile.EventType = {
 
   /**
    * Triggered when a tile starts loading.
-   * @event ol.source.TileEvent#tileloadstart
+   * @event ol.source.Tile.Event#tileloadstart
    * @api stable
    */
   TILELOADSTART: 'tileloadstart',
 
   /**
    * Triggered when a tile finishes loading.
-   * @event ol.source.TileEvent#tileloadend
+   * @event ol.source.Tile.Event#tileloadend
    * @api stable
    */
   TILELOADEND: 'tileloadend',
 
   /**
    * Triggered if tile loading results in an error.
-   * @event ol.source.TileEvent#tileloaderror
+   * @event ol.source.Tile.Event#tileloaderror
    * @api stable
    */
   TILELOADERROR: 'tileloaderror'

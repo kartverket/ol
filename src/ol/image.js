@@ -1,7 +1,7 @@
 goog.provide('ol.Image');
 
+goog.require('ol');
 goog.require('ol.ImageBase');
-goog.require('ol.ImageState');
 goog.require('ol.events');
 goog.require('ol.events.EventType');
 goog.require('ol.extent');
@@ -22,7 +22,7 @@ goog.require('ol.obj');
 ol.Image = function(extent, resolution, pixelRatio, attributions, src,
     crossOrigin, imageLoadFunction) {
 
-  ol.ImageBase.call(this, extent, resolution, pixelRatio, ol.ImageState.IDLE,
+  ol.ImageBase.call(this, extent, resolution, pixelRatio, ol.Image.State.IDLE,
       attributions);
 
   /**
@@ -54,9 +54,9 @@ ol.Image = function(extent, resolution, pixelRatio, attributions, src,
 
   /**
    * @protected
-   * @type {ol.ImageState}
+   * @type {ol.Image.State}
    */
-  this.state = ol.ImageState.IDLE;
+  this.state = ol.Image.State.IDLE;
 
   /**
    * @private
@@ -99,7 +99,7 @@ ol.Image.prototype.getImage = function(opt_context) {
  * @private
  */
 ol.Image.prototype.handleImageError_ = function() {
-  this.state = ol.ImageState.ERROR;
+  this.state = ol.Image.State.ERROR;
   this.unlistenImage_();
   this.changed();
 };
@@ -114,7 +114,7 @@ ol.Image.prototype.handleImageLoad_ = function() {
   if (this.resolution === undefined) {
     this.resolution = ol.extent.getHeight(this.extent) / this.image_.height;
   }
-  this.state = ol.ImageState.LOADED;
+  this.state = ol.Image.State.LOADED;
   this.unlistenImage_();
   this.changed();
 };
@@ -127,10 +127,10 @@ ol.Image.prototype.handleImageLoad_ = function() {
  * @api
  */
 ol.Image.prototype.load = function() {
-  if (this.state == ol.ImageState.IDLE || this.state == ol.ImageState.ERROR) {
-    this.state = ol.ImageState.LOADING;
+  if (this.state == ol.Image.State.IDLE || this.state == ol.Image.State.ERROR) {
+    this.state = ol.Image.State.LOADING;
     this.changed();
-    goog.DEBUG && console.assert(!this.imageListenerKeys_,
+    ol.DEBUG && console.assert(!this.imageListenerKeys_,
         'this.imageListenerKeys_ should be null');
     this.imageListenerKeys_ = [
       ol.events.listenOnce(this.image_, ol.events.EventType.ERROR,
@@ -159,4 +159,15 @@ ol.Image.prototype.setImage = function(image) {
 ol.Image.prototype.unlistenImage_ = function() {
   this.imageListenerKeys_.forEach(ol.events.unlistenByKey);
   this.imageListenerKeys_ = null;
+};
+
+
+/**
+ * @enum {number}
+ */
+ol.Image.State = {
+  IDLE: 0,
+  LOADING: 1,
+  LOADED: 2,
+  ERROR: 3
 };

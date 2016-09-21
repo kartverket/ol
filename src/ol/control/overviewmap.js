@@ -3,11 +3,10 @@ goog.provide('ol.control.OverviewMap');
 goog.require('ol');
 goog.require('ol.Collection');
 goog.require('ol.Map');
-goog.require('ol.MapEventType');
+goog.require('ol.MapEvent');
 goog.require('ol.Object');
 goog.require('ol.ObjectEventType');
 goog.require('ol.Overlay');
-goog.require('ol.OverlayPositioning');
 goog.require('ol.View');
 goog.require('ol.control.Control');
 goog.require('ol.coordinate');
@@ -123,7 +122,7 @@ ol.control.OverviewMap = function(opt_options) {
    */
   this.boxOverlay_ = new ol.Overlay({
     position: [0, 0],
-    positioning: ol.OverlayPositioning.BOTTOM_LEFT,
+    positioning: ol.Overlay.Positioning.BOTTOM_LEFT,
     element: box
   });
   this.ovmap_.addOverlay(this.boxOverlay_);
@@ -193,7 +192,7 @@ ol.control.OverviewMap.prototype.setMap = function(map) {
  * @private
  */
 ol.control.OverviewMap.prototype.handleMapPropertyChange_ = function(event) {
-  if (event.key === ol.MapProperty.VIEW) {
+  if (event.key === ol.Map.Property.VIEW) {
     var oldView = /** @type {ol.View} */ (event.oldValue);
     if (oldView) {
       this.unbindView_(oldView);
@@ -446,7 +445,7 @@ ol.control.OverviewMap.prototype.handleToggle_ = function() {
   if (!this.collapsed_ && !ovmap.isRendered()) {
     ovmap.updateSize();
     this.resetExtent_();
-    ol.events.listenOnce(ovmap, ol.MapEventType.POSTRENDER,
+    ol.events.listenOnce(ovmap, ol.MapEvent.Type.POSTRENDER,
         function(event) {
           this.updateBox_();
         },

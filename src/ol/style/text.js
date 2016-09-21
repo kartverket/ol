@@ -30,6 +30,12 @@ ol.style.Text = function(opt_options) {
 
   /**
    * @private
+   * @type {boolean|undefined}
+   */
+  this.rotateWithView_ = options.rotateWithView;
+
+  /**
+   * @private
    * @type {number|undefined}
    */
   this.scale_ = options.scale;
@@ -90,6 +96,28 @@ ol.style.Text.DEFAULT_FILL_COLOR_ = '#333';
 
 
 /**
+ * Clones the style.
+ * @return {ol.style.Text} The cloned style.
+ * @api
+ */
+ol.style.Text.prototype.clone = function() {
+  return new ol.style.Text({
+    font: this.getFont(),
+    rotation: this.getRotation(),
+    rotateWithView: this.getRotateWithView(),
+    scale: this.getScale(),
+    text: this.getText(),
+    textAlign: this.getTextAlign(),
+    textBaseline: this.getTextBaseline(),
+    fill: this.getFill() ? this.getFill().clone() : undefined,
+    stroke: this.getStroke() ? this.getStroke().clone() : undefined,
+    offsetX: this.getOffsetX(),
+    offsetY: this.getOffsetY()
+  });
+};
+
+
+/**
  * Get the font name.
  * @return {string|undefined} Font.
  * @api
@@ -126,6 +154,16 @@ ol.style.Text.prototype.getOffsetY = function() {
  */
 ol.style.Text.prototype.getFill = function() {
   return this.fill_;
+};
+
+
+/**
+ * Determine whether the text rotates with the map.
+ * @return {boolean|undefined} Rotate with map.
+ * @api
+ */
+ol.style.Text.prototype.getRotateWithView = function() {
+  return this.rotateWithView_;
 };
 
 

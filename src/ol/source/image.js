@@ -1,8 +1,7 @@
 goog.provide('ol.source.Image');
-goog.provide('ol.source.ImageEvent');
 
 goog.require('ol');
-goog.require('ol.ImageState');
+goog.require('ol.Image');
 goog.require('ol.array');
 goog.require('ol.events.Event');
 goog.require('ol.extent');
@@ -38,7 +37,7 @@ ol.source.Image = function(options) {
    */
   this.resolutions_ = options.resolutions !== undefined ?
       options.resolutions : null;
-  goog.DEBUG && console.assert(!this.resolutions_ ||
+  ol.DEBUG && console.assert(!this.resolutions_ ||
       ol.array.isSorted(this.resolutions_,
           function(a, b) {
             return b - a;
@@ -148,19 +147,19 @@ ol.source.Image.prototype.getImageInternal = function(extent, resolution, pixelR
 ol.source.Image.prototype.handleImageChange = function(event) {
   var image = /** @type {ol.Image} */ (event.target);
   switch (image.getState()) {
-    case ol.ImageState.LOADING:
+    case ol.Image.State.LOADING:
       this.dispatchEvent(
-          new ol.source.ImageEvent(ol.source.ImageEventType.IMAGELOADSTART,
+          new ol.source.Image.Event(ol.source.Image.EventType.IMAGELOADSTART,
               image));
       break;
-    case ol.ImageState.LOADED:
+    case ol.Image.State.LOADED:
       this.dispatchEvent(
-          new ol.source.ImageEvent(ol.source.ImageEventType.IMAGELOADEND,
+          new ol.source.Image.Event(ol.source.Image.EventType.IMAGELOADEND,
               image));
       break;
-    case ol.ImageState.ERROR:
+    case ol.Image.State.ERROR:
       this.dispatchEvent(
-          new ol.source.ImageEvent(ol.source.ImageEventType.IMAGELOADERROR,
+          new ol.source.Image.Event(ol.source.Image.EventType.IMAGELOADERROR,
               image));
       break;
     default:
@@ -191,7 +190,7 @@ ol.source.Image.defaultImageLoadFunction = function(image, src) {
  * @param {string} type Type.
  * @param {ol.Image} image The image.
  */
-ol.source.ImageEvent = function(type, image) {
+ol.source.Image.Event = function(type, image) {
 
   ol.events.Event.call(this, type);
 
@@ -203,31 +202,31 @@ ol.source.ImageEvent = function(type, image) {
   this.image = image;
 
 };
-ol.inherits(ol.source.ImageEvent, ol.events.Event);
+ol.inherits(ol.source.Image.Event, ol.events.Event);
 
 
 /**
  * @enum {string}
  */
-ol.source.ImageEventType = {
+ol.source.Image.EventType = {
 
   /**
    * Triggered when an image starts loading.
-   * @event ol.source.ImageEvent#imageloadstart
+   * @event ol.source.Image.Event#imageloadstart
    * @api
    */
   IMAGELOADSTART: 'imageloadstart',
 
   /**
    * Triggered when an image finishes loading.
-   * @event ol.source.ImageEvent#imageloadend
+   * @event ol.source.Image.Event#imageloadend
    * @api
    */
   IMAGELOADEND: 'imageloadend',
 
   /**
    * Triggered if image loading results in an error.
-   * @event ol.source.ImageEvent#imageloaderror
+   * @event ol.source.Image.Event#imageloaderror
    * @api
    */
   IMAGELOADERROR: 'imageloaderror'

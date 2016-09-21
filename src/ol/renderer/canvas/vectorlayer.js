@@ -85,14 +85,30 @@ ol.renderer.canvas.VectorLayer.prototype.composeFrame = function(frameState, lay
 
   this.dispatchPreComposeEvent(context, frameState, transform);
 
+  // clipped rendering if layer extent is set
+  var clipExtent = layerState.extent;
+  var clipped = clipExtent !== undefined;
+  if (clipped) {
+    this.clip(context, frameState,  /** @type {ol.Extent} */ (clipExtent));
+  }
   var replayGroup = this.replayGroup_;
   if (replayGroup && !replayGroup.isEmpty()) {
     var layer = this.getLayer();
+    var drawOffsetX = 0;
+    var drawOffsetY = 0;
     var replayContext;
     if (layer.hasListener(ol.render.EventType.RENDER)) {
+      var drawWidth = context.canvas.width;
+      var drawHeight = context.canvas.height;
+      if (rotation) {
+        var drawSize = Math.round(Math.sqrt(drawWidth * drawWidth + drawHeight * drawHeight));
+        drawOffsetX = (drawSize - drawWidth) / 2;
+        drawOffsetY = (drawSize - drawHeight) / 2;
+        drawWidth = drawHeight = drawSize;
+      }
       // resize and clear
-      this.context_.canvas.width = context.canvas.width;
-      this.context_.canvas.height = context.canvas.height;
+      this.context_.canvas.width = drawWidth;
+      this.context_.canvas.height = drawHeight;
       replayContext = this.context_;
     } else {
       replayContext = context;
@@ -102,6 +118,9 @@ ol.renderer.canvas.VectorLayer.prototype.composeFrame = function(frameState, lay
     // see http://jsperf.com/context-save-restore-versus-variable
     var alpha = replayContext.globalAlpha;
     replayContext.globalAlpha = layerState.opacity;
+    if (replayContext != context) {
+      replayContext.translate(drawOffsetX, drawOffsetY);
+    }
 
     var width = frameState.size[0] * pixelRatio;
     var height = frameState.size[1] * pixelRatio;
@@ -141,11 +160,15 @@ ol.renderer.canvas.VectorLayer.prototype.composeFrame = function(frameState, lay
 
     if (replayContext != context) {
       this.dispatchRenderEvent(replayContext, frameState, transform);
-      context.drawImage(replayContext.canvas, 0, 0);
+      context.drawImage(replayContext.canvas, -drawOffsetX, -drawOffsetY);
+      replayContext.translate(-drawOffsetX, -drawOffsetY);
     }
     replayContext.globalAlpha = alpha;
   }
 
+  if (clipped) {
+    context.restore();
+  }
   this.dispatchPostComposeEvent(context, frameState, transform);
 
 };
@@ -257,7 +280,7 @@ ol.renderer.canvas.VectorLayer.prototype.prepareFrame = function(frameState, lay
   var replayGroup =
       new ol.render.canvas.ReplayGroup(
           ol.renderer.vector.getTolerance(resolution, pixelRatio), extent,
-          resolution, vectorLayer.getRenderBuffer());
+          resolution, vectorSource.getOverlaps(), vectorLayer.getRenderBuffer());
   vectorSource.loadFeatures(extent, resolution, projection);
   /**
    * @param {ol.Feature} feature Feature.
