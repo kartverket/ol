@@ -140,7 +140,7 @@ describe('ol.interaction.Modify', function() {
     // make sure we get change events to events array
     expect(events.length > 2).to.be(true);
     // middle events should be feature modification events
-    for (var i = 1; i < events.length - 2; i++) {
+    for (var i = 1; i < events.length - 1; i++) {
       expect(events[i]).to.equal('change');
     }
 
@@ -531,6 +531,22 @@ describe('ol.interaction.Modify', function() {
 
       listeners = getListeners(feature, modify);
       expect(listeners).to.have.length(1);
+    });
+  });
+
+  describe('#setActive', function() {
+    it('removes the vertexFeature of deactivation', function() {
+      var modify = new ol.interaction.Modify({
+        features: new ol.Collection(features)
+      });
+      map.addInteraction(modify);
+      expect(modify.vertexFeature_).to.be(null);
+
+      simulateEvent('pointermove', 10, -20, false, 0);
+      expect(modify.vertexFeature_).to.not.be(null);
+
+      modify.setActive(false);
+      expect(modify.vertexFeature_).to.be(null);
     });
   });
 

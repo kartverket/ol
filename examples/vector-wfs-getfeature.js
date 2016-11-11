@@ -1,6 +1,6 @@
 goog.require('ol.Map');
 goog.require('ol.View');
-goog.require('ol.format.ogc.filter');
+goog.require('ol.format.filter');
 goog.require('ol.format.WFS');
 goog.require('ol.format.GeoJSON');
 goog.require('ol.layer.Tile');
@@ -46,14 +46,14 @@ var featureRequest = new ol.format.WFS().writeGetFeature({
   featurePrefix: 'osm',
   featureTypes: ['water_areas'],
   outputFormat: 'application/json',
-  filter: ol.format.ogc.filter.and(
-    ol.format.ogc.filter.like('name', 'Mississippi*'),
-    ol.format.ogc.filter.equalTo('waterway', 'riverbank')
+  filter: ol.format.filter.and(
+    ol.format.filter.like('name', 'Mississippi*'),
+    ol.format.filter.equalTo('waterway', 'riverbank')
   )
 });
 
 // then post the request and add the received features to a layer
-fetch('http://demo.boundlessgeo.com/geoserver/wfs', {
+fetch('https://ahocevar.com/geoserver/wfs', {
   method: 'POST',
   body: new XMLSerializer().serializeToString(featureRequest)
 }).then(function(response) {

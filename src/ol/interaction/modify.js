@@ -261,6 +261,18 @@ ol.interaction.Modify.prototype.removeFeatureSegmentData_ = function(feature) {
 /**
  * @inheritDoc
  */
+ol.interaction.Modify.prototype.setActive = function(active) {
+  if (this.vertexFeature_ && !active) {
+    this.overlay_.getSource().removeFeature(this.vertexFeature_);
+    this.vertexFeature_ = null;
+  }
+  ol.interaction.Pointer.prototype.setActive.call(this, active);
+};
+
+
+/**
+ * @inheritDoc
+ */
 ol.interaction.Modify.prototype.setMap = function(map) {
   this.overlay_.setMap(map);
   ol.interaction.Pointer.prototype.setMap.call(this, map);
@@ -688,11 +700,9 @@ ol.interaction.Modify.prototype.handlePointerAtPixel_ = function(pixel, map) {
         ol.coordinate.squaredDistanceToSegment(pixelCoordinate, b.segment);
   };
 
-  var lowerLeft = map.getCoordinateFromPixel(
-      [pixel[0] - this.pixelTolerance_, pixel[1] + this.pixelTolerance_]);
-  var upperRight = map.getCoordinateFromPixel(
-      [pixel[0] + this.pixelTolerance_, pixel[1] - this.pixelTolerance_]);
-  var box = ol.extent.boundingExtent([lowerLeft, upperRight]);
+  var box = ol.extent.buffer(
+      ol.extent.createOrUpdateFromCoordinate(pixelCoordinate),
+      map.getView().getResolution() * this.pixelTolerance_);
 
   var rBush = this.rBush_;
   var nodes = rBush.getInExtent(box);

@@ -55,10 +55,11 @@ describe('ol.source.WMTS', function() {
 
     it('can create REST options from spec/ol/format/wmts/ogcsample.xml',
         function() {
-          var options = ol.source.WMTS.optionsFromCapabilities(
-              capabilities,
-              {layer: 'BlueMarbleNextGeneration', matrixSet: 'google3857',
-                requestEncoding: 'REST'});
+          var options = ol.source.WMTS.optionsFromCapabilities(capabilities, {
+            layer: 'BlueMarbleNextGeneration',
+            matrixSet: 'google3857',
+            requestEncoding: 'REST'
+          });
 
           expect(options.urls).to.be.an('array');
           expect(options.urls).to.have.length(1);
@@ -85,10 +86,11 @@ describe('ol.source.WMTS', function() {
         });
 
     it('can find a MatrixSet by SRS identifier', function() {
-      var options = ol.source.WMTS.optionsFromCapabilities(
-          capabilities,
-          {layer: 'BlueMarbleNextGeneration', projection: 'EPSG:3857',
-            requestEncoding: 'REST'});
+      var options = ol.source.WMTS.optionsFromCapabilities(capabilities, {
+        layer: 'BlueMarbleNextGeneration',
+        projection: 'EPSG:3857',
+        requestEncoding: 'REST'
+      });
 
       expect(options.matrixSet).to.be.eql('google3857');
     });
@@ -176,7 +178,7 @@ describe('ol.source.WMTS', function() {
           expect(options.urls).to.be.an('array');
           expect(options.urls).to.have.length(1);
           expect(options.urls[0]).to.be.eql(
-             'http://services.arcgisonline.com/arcgis/rest/services/' +
+             'https://services.arcgisonline.com/arcgis/rest/services/' +
              'Demographics/USA_Population_Density/MapServer/WMTS?');
         });
 
@@ -191,7 +193,7 @@ describe('ol.source.WMTS', function() {
           expect(options.urls).to.be.an('array');
           expect(options.urls).to.have.length(1);
           expect(options.urls[0]).to.be.eql(
-             'http://services.arcgisonline.com/arcgis/rest/services/' +
+             'https://services.arcgisonline.com/arcgis/rest/services/' +
              'Demographics/USA_Population_Density/MapServer/WMTS/' +
              'tile/1.0.0/Demographics_USA_Population_Density/' +
              '{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png');

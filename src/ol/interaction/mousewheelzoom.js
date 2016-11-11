@@ -38,6 +38,12 @@ ol.interaction.MouseWheelZoom = function(opt_options) {
 
   /**
    * @private
+   * @type {number}
+   */
+  this.timeout_ = options.timeout !== undefined ? options.timeout : 80;
+
+  /**
+   * @private
    * @type {boolean}
    */
   this.useAnchor_ = options.useAnchor !== undefined ? options.useAnchor : true;
@@ -109,8 +115,7 @@ ol.interaction.MouseWheelZoom.handleEvent = function(mapBrowserEvent) {
       this.startTime_ = Date.now();
     }
 
-    var duration = ol.MOUSEWHEELZOOM_TIMEOUT_DURATION;
-    var timeLeft = Math.max(duration - (Date.now() - this.startTime_), 0);
+    var timeLeft = Math.max(this.timeout_ - (Date.now() - this.startTime_), 0);
 
     clearTimeout(this.timeoutId_);
     this.timeoutId_ = setTimeout(
@@ -128,13 +133,14 @@ ol.interaction.MouseWheelZoom.handleEvent = function(mapBrowserEvent) {
  * @param {ol.Map} map Map.
  */
 ol.interaction.MouseWheelZoom.prototype.doZoom_ = function(map) {
-  var maxDelta = ol.MOUSEWHEELZOOM_MAXDELTA;
-  var delta = ol.math.clamp(this.delta_, -maxDelta, maxDelta);
-
   var view = map.getView();
 
-  ol.interaction.Interaction.zoomByDelta(map, view, -delta, this.lastAnchor_,
-      this.duration_);
+  if (!view.getAnimating()) {
+    var maxDelta = ol.MOUSEWHEELZOOM_MAXDELTA;
+    var delta = ol.math.clamp(this.delta_, -maxDelta, maxDelta);
+    ol.interaction.Interaction.zoomByDelta(map, view, -delta, this.lastAnchor_,
+        this.duration_);
+  }
 
   this.delta_ = 0;
   this.lastAnchor_ = null;

@@ -60,6 +60,12 @@ ol.render.canvas.Replay = function(tolerance, maxExtent, resolution, overlaps) {
 
   /**
    * @private
+   * @type {ol.Coordinate}
+   */
+  this.fillOrigin_;
+
+  /**
+   * @private
    * @type {Array.<*>}
    */
   this.beginGeometryInstruction1_ = null;
@@ -110,7 +116,7 @@ ol.render.canvas.Replay = function(tolerance, maxExtent, resolution, overlaps) {
    * @private
    * @type {ol.Transform}
    */
-  this.tmpLocalTransformInv_ = ol.transform.create();
+  this.resetTransform_ = ol.transform.create();
 };
 ol.inherits(ol.render.canvas.Replay, ol.render.VectorContext);
 
@@ -188,6 +194,24 @@ ol.render.canvas.Replay.prototype.beginGeometry = function(geometry, feature) {
 /**
  * @private
  * @param {CanvasRenderingContext2D} context Context.
+ * @param {number} rotation Rotation.
+ */
+ol.render.canvas.Replay.prototype.fill_ = function(context, rotation) {
+  if (this.fillOrigin_) {
+    var origin = ol.transform.apply(this.renderedTransform_, this.fillOrigin_.slice());
+    context.translate(origin[0], origin[1]);
+    context.rotate(rotation);
+  }
+  context.fill();
+  if (this.fillOrigin_) {
+    context.setTransform.apply(context, this.resetTransform_);
+  }
+};
+
+
+/**
+ * @private
+ * @param {CanvasRenderingContext2D} context Context.
  * @param {number} pixelRatio Pixel ratio.
  * @param {ol.Transform} transform Transform.
  * @param {number} viewRotation View rotation.
@@ -222,7 +246,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
   var d = 0; // data index
   var dd; // end of per-instruction data
   var localTransform = this.tmpLocalTransform_;
-  var localTransformInv = this.tmpLocalTransformInv_;
+  var resetTransform = this.resetTransform_;
   var prevX, prevY, roundX, roundY;
   var pendingFill = 0;
   var pendingStroke = 0;
@@ -250,7 +274,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         break;
       case ol.render.canvas.Instruction.BEGIN_PATH:
         if (pendingFill > batchSize) {
-          context.fill();
+          this.fill_(context, viewRotation);
           pendingFill = 0;
         }
         if (pendingStroke > batchSize) {
@@ -317,7 +341,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
             var centerY = y + anchorY;
             ol.transform.compose(localTransform,
                 centerX, centerY, scale, scale, rotation, -centerX, -centerY);
-            context.transform.apply(context, localTransform);
+            context.setTransform.apply(context, localTransform);
           }
           var alpha = context.globalAlpha;
           if (opacity != 1) {
@@ -334,8 +358,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
             context.globalAlpha = alpha;
           }
           if (scale != 1 || rotation !== 0) {
-            ol.transform.invert(ol.transform.setFromArray(localTransformInv, localTransform));
-            context.transform.apply(context, localTransformInv);
+            context.setTransform.apply(context, resetTransform);
           }
         }
         ++i;
@@ -377,7 +400,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
           y = pixelCoordinates[d + 1] + offsetY;
           if (scale != 1 || rotation !== 0) {
             ol.transform.compose(localTransform, x, y, scale, scale, rotation, -x, -y);
-            context.transform.apply(context, localTransform);
+            context.setTransform.apply(context, localTransform);
           }
 
           // Support multiple lines separated by \n
@@ -408,8 +431,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
           }
 
           if (scale != 1 || rotation !== 0) {
-            ol.transform.invert(ol.transform.setFromArray(localTransformInv, localTransform));
-            context.transform.apply(context, localTransformInv);
+            context.setTransform.apply(context, resetTransform);
           }
         }
         ++i;
@@ -429,7 +451,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         if (batchSize) {
           pendingFill++;
         } else {
-          context.fill();
+          this.fill_(context, viewRotation);
         }
         ++i;
         break;
@@ -467,8 +489,10 @@ ol.render.canvas.Replay.prototype.replay_ = function(
             ol.colorlike.isColorLike(instruction[1]),
             '2nd instruction should be a string, ' +
             'CanvasPattern, or CanvasGradient');
+        this.fillOrigin_ = instruction[2];
+
         if (pendingFill) {
-          context.fill();
+          this.fill_(context, viewRotation);
           pendingFill = 0;
         }
 
@@ -534,7 +558,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
     }
   }
   if (pendingFill) {
-    context.fill();
+    this.fill_(context, viewRotation);
   }
   if (pendingStroke) {
     context.stroke();

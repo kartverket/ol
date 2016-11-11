@@ -41,7 +41,7 @@ goog.require('ol.transform');
  * @const
  * @type {string}
  */
-ol.OL3_URL = 'http://openlayers.org/';
+ol.OL3_URL = 'https://openlayers.org/';
 
 
 /**
@@ -442,7 +442,8 @@ ol.Map = function(options) {
        * @param {ol.Collection.Event} event Collection event.
        */
       function(event) {
-        var id = event.element.getId();
+        var overlay = /** @type {ol.Overlay} */ (event.element);
+        var id = overlay.getId();
         if (id !== undefined) {
           delete this.overlayIdIndex_[id.toString()];
         }
@@ -511,6 +512,7 @@ ol.Map.prototype.addOverlayInternal_ = function(overlay) {
 
 
 /**
+ * Deprecated (use {@link ol.View#animate} instead).
  * Add functions to be called before rendering. This can be used for attaching
  * animations before updating the map's view.  The {@link ol.animation}
  * namespace provides several static methods for creating prerender functions.
@@ -518,6 +520,7 @@ ol.Map.prototype.addOverlayInternal_ = function(overlay) {
  * @api
  */
 ol.Map.prototype.beforeRender = function(var_args) {
+  ol.DEBUG && console.warn('map.beforeRender() is deprecated.  Use view.animate() instead.');
   this.render();
   Array.prototype.push.apply(this.preRenderFunctions_, arguments);
 };

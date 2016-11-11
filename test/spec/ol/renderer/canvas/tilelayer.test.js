@@ -8,11 +8,25 @@ goog.require('ol.source.XYZ');
 
 
 describe('ol.renderer.canvas.TileLayer', function() {
+  var img = null;
+  beforeEach(function(done) {
+    img = new Image(1, 1);
+    img.onload = function() {
+      done();
+    };
+    img.src = 'data:image/gif;base64,' +
+      'R0lGODlhAQABAPAAAP8AAP///yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==';
+  });
+  afterEach(function() {
+    img = null;
+  });
 
   describe('#composeFrame()', function() {
     it('uses correct draw scale when rotating (HiDPI)', function() {
       var layer = new ol.layer.Tile({
-        source: new ol.source.XYZ()
+        source: new ol.source.XYZ({
+          tileSize: 1
+        })
       });
       var renderer = new ol.renderer.canvas.TileLayer(layer);
       renderer.renderedTiles = [];
@@ -40,6 +54,14 @@ describe('ol.renderer.canvas.TileLayer', function() {
         canvas: canvas,
         drawImage: sinon.spy()
       };
+      renderer.renderedTiles = [{
+        getTileCoord: function() {
+          return [0, 0, 0];
+        },
+        getImage: function() {
+          return img;
+        }
+      }];
       renderer.composeFrame(frameState, layerState, context);
       expect(context.drawImage.firstCall.args[0].width).to.be(112);
     });

@@ -6,7 +6,7 @@ goog.require('ol.extent');
 goog.require('ol.proj');
 goog.require('ol.proj.Units');
 goog.require('ol.layer.VectorTile');
-goog.require('ol.render.EventType');
+goog.require('ol.render.Event');
 goog.require('ol.render.ReplayType');
 goog.require('ol.render.canvas');
 goog.require('ol.render.canvas.ReplayGroup');
@@ -15,26 +15,6 @@ goog.require('ol.renderer.canvas.TileLayer');
 goog.require('ol.renderer.vector');
 goog.require('ol.size');
 goog.require('ol.transform');
-
-
-/**
- * @const
- * @type {!Object.<string, Array.<ol.render.ReplayType>>}
- */
-ol.renderer.canvas.IMAGE_REPLAYS = {
-  'image': ol.render.replay.ORDER,
-  'hybrid': [ol.render.ReplayType.POLYGON, ol.render.ReplayType.LINE_STRING]
-};
-
-
-/**
- * @const
- * @type {!Object.<string, Array.<ol.render.ReplayType>>}
- */
-ol.renderer.canvas.VECTOR_REPLAYS = {
-  'hybrid': [ol.render.ReplayType.IMAGE, ol.render.ReplayType.TEXT],
-  'vector': ol.render.replay.ORDER
-};
 
 
 /**
@@ -64,6 +44,26 @@ ol.renderer.canvas.VectorTileLayer = function(layer) {
 
 };
 ol.inherits(ol.renderer.canvas.VectorTileLayer, ol.renderer.canvas.TileLayer);
+
+
+/**
+ * @const
+ * @type {!Object.<string, Array.<ol.render.ReplayType>>}
+ */
+ol.renderer.canvas.VectorTileLayer.IMAGE_REPLAYS = {
+  'image': ol.render.replay.ORDER,
+  'hybrid': [ol.render.ReplayType.POLYGON, ol.render.ReplayType.LINE_STRING]
+};
+
+
+/**
+ * @const
+ * @type {!Object.<string, Array.<ol.render.ReplayType>>}
+ */
+ol.renderer.canvas.VectorTileLayer.VECTOR_REPLAYS = {
+  'hybrid': [ol.render.ReplayType.IMAGE, ol.render.ReplayType.TEXT],
+  'vector': ol.render.replay.ORDER
+};
 
 
 /**
@@ -107,7 +107,7 @@ ol.renderer.canvas.VectorTileLayer.prototype.renderTileReplays_ = function(
     context, frameState, layerState) {
 
   var layer = this.getLayer();
-  var replays = ol.renderer.canvas.VECTOR_REPLAYS[layer.getRenderMode()];
+  var replays = ol.renderer.canvas.VectorTileLayer.VECTOR_REPLAYS[layer.getRenderMode()];
   var pixelRatio = frameState.pixelRatio;
   var skippedFeatureUids = layerState.managed ?
       frameState.skippedFeatureUids : {};
@@ -123,7 +123,7 @@ ol.renderer.canvas.VectorTileLayer.prototype.renderTileReplays_ = function(
   var transform = this.getTransform(frameState, 0);
 
   var replayContext;
-  if (layer.hasListener(ol.render.EventType.RENDER)) {
+  if (layer.hasListener(ol.render.Event.Type.RENDER)) {
     // resize and clear
     this.context.canvas.width = context.canvas.width;
     this.context.canvas.height = context.canvas.height;
@@ -393,7 +393,7 @@ ol.renderer.canvas.VectorTileLayer.prototype.renderFeature = function(feature, s
 ol.renderer.canvas.VectorTileLayer.prototype.renderTileImage_ = function(
     tile, frameState, layerState, skippedFeatures) {
   var layer = this.getLayer();
-  var replays = ol.renderer.canvas.IMAGE_REPLAYS[layer.getRenderMode()];
+  var replays = ol.renderer.canvas.VectorTileLayer.IMAGE_REPLAYS[layer.getRenderMode()];
   if (!replays) {
     // do not create an image in 'vector' mode
     return;

@@ -1,20 +1,10 @@
 // FIXME factor out key precondition (shift et. al)
 
 goog.provide('ol.interaction.Interaction');
-goog.provide('ol.interaction.InteractionProperty');
 
 goog.require('ol');
 goog.require('ol.Object');
-goog.require('ol.animation');
 goog.require('ol.easing');
-
-
-/**
- * @enum {string}
- */
-ol.interaction.InteractionProperty = {
-  ACTIVE: 'active'
-};
 
 
 /**
@@ -63,7 +53,7 @@ ol.inherits(ol.interaction.Interaction, ol.Object);
  */
 ol.interaction.Interaction.prototype.getActive = function() {
   return /** @type {boolean} */ (
-      this.get(ol.interaction.InteractionProperty.ACTIVE));
+      this.get(ol.interaction.Interaction.Property.ACTIVE));
 };
 
 
@@ -84,7 +74,7 @@ ol.interaction.Interaction.prototype.getMap = function() {
  * @api
  */
 ol.interaction.Interaction.prototype.setActive = function(active) {
-  this.set(ol.interaction.InteractionProperty.ACTIVE, active);
+  this.set(ol.interaction.Interaction.Property.ACTIVE, active);
 };
 
 
@@ -108,16 +98,17 @@ ol.interaction.Interaction.prototype.setMap = function(map) {
 ol.interaction.Interaction.pan = function(map, view, delta, opt_duration) {
   var currentCenter = view.getCenter();
   if (currentCenter) {
-    if (opt_duration && opt_duration > 0) {
-      map.beforeRender(ol.animation.pan({
-        source: currentCenter,
-        duration: opt_duration,
-        easing: ol.easing.linear
-      }));
-    }
     var center = view.constrainCenter(
         [currentCenter[0] + delta[0], currentCenter[1] + delta[1]]);
-    view.setCenter(center);
+    if (opt_duration) {
+      view.animate({
+        duration: opt_duration,
+        easing: ol.easing.linear,
+        center: center
+      });
+    } else {
+      view.setCenter(center);
+    }
   }
 };
 
@@ -147,22 +138,16 @@ ol.interaction.Interaction.rotateWithoutConstraints = function(map, view, rotati
   if (rotation !== undefined) {
     var currentRotation = view.getRotation();
     var currentCenter = view.getCenter();
-    if (currentRotation !== undefined && currentCenter &&
-        opt_duration && opt_duration > 0) {
-      map.beforeRender(ol.animation.rotate({
-        rotation: currentRotation,
+    if (currentRotation !== undefined && currentCenter && opt_duration > 0) {
+      view.animate({
+        rotation: rotation,
+        anchor: opt_anchor,
         duration: opt_duration,
         easing: ol.easing.easeOut
-      }));
-      if (opt_anchor) {
-        map.beforeRender(ol.animation.pan({
-          source: currentCenter,
-          duration: opt_duration,
-          easing: ol.easing.easeOut
-        }));
-      }
+      });
+    } else {
+      view.rotate(rotation, opt_anchor);
     }
-    view.rotate(rotation, opt_anchor);
   }
 };
 
@@ -216,25 +201,27 @@ ol.interaction.Interaction.zoomWithoutConstraints = function(map, view, resoluti
     var currentResolution = view.getResolution();
     var currentCenter = view.getCenter();
     if (currentResolution !== undefined && currentCenter &&
-        resolution !== currentResolution &&
-        opt_duration && opt_duration > 0) {
-      map.beforeRender(ol.animation.zoom({
-        resolution: currentResolution,
+        resolution !== currentResolution && opt_duration) {
+      view.animate({
+        resolution: resolution,
+        anchor: opt_anchor,
         duration: opt_duration,
         easing: ol.easing.easeOut
-      }));
+      });
+    } else {
       if (opt_anchor) {
-        map.beforeRender(ol.animation.pan({
-          source: currentCenter,
-          duration: opt_duration,
-          easing: ol.easing.easeOut
-        }));
+        var center = view.calculateCenterZoom(resolution, opt_anchor);
+        view.setCenter(center);
       }
+      view.setResolution(resolution);
     }
-    if (opt_anchor) {
-      var center = view.calculateCenterZoom(resolution, opt_anchor);
-      view.setCenter(center);
-    }
-    view.setResolution(resolution);
   }
+};
+
+
+/**
+ * @enum {string}
+ */
+ol.interaction.Interaction.Property = {
+  ACTIVE: 'active'
 };

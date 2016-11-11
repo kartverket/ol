@@ -1,8 +1,62 @@
 ## Upgrade notes
 
+### Next release
+
+#### Use `view.animate()` instead of `map.beforeRender()` and `ol.animation` functions
+
+The `map.beforeRender()` and `ol.animation` functions have been deprecated in favor of a new `view.animate()` function.  Use of the deprecated functions will result in a warning during development.  These functions are subject to removal in an upcoming release.
+
+For details on the `view.animate()` method, see the API docs and the view animation example.  Upgrading should be relatively straightforward.  For example, if you wanted to have an animated pan, zoom, and rotation previously, you might have done this:
+
+```js
+var zoom = ol.animation.zoom({
+  resolution: view.getResolution()
+});
+var pan = ol.animation.pan({
+  source: view.getCenter()
+});
+var rotate = ol.animation.rotate({
+  rotation: view.getRotation()
+});
+
+map.beforeRender(zoom, pan, rotate);
+
+map.setZoom(1);
+map.setCenter([0, 0]);
+map.setRotation(Math.PI);
+```
+
+Now, the same can be accomplished with this:
+```js
+view.animate({
+  zoom: 1,
+  center: [0, 0],
+  rotation: Math.PI
+});
+```
+
+### v3.19.1
+
+#### `ol.style.Fill` with `CanvasGradient` or `CanvasPattern`
+
+The origin for gradients and patterns has changed from `[0, 0]` to the top-left
+corner of the extent of the geometry being filled.
+
+### v3.19.0
+
+#### `ol.style.Fill` with `CanvasGradient` or `CanvasPattern`
+
+Previously, gradients and patterns were aligned with the canvas, so they did not
+move and rotate with the map. This was changed to a more expected behavior by anchoring the fill to the map origin (usually at map coordinate `[0, 0]`).
+
 #### `goog.DEBUG` define was renamed to `ol.DEBUG`
 
 As last step in the removal of the dependency on Google Closure Library, the `goog.DEBUG` compiler define was renamed to `ol.DEBUG`. Please change accordingly in your custom build configuration json files.
+
+#### `ol.format.ogc.filter` namespace was renamed to `ol.format.filter`
+
+`ol.format.ogc.filter` was simplified to `ol.format.filter`; to upgrade your code, simply remove the `ogc` string from the name.
+For example: `ol.format.ogc.filter.and` to `ol.format.filter.and`.
 
 #### Changes only relevant to those who compile their applications together with the Closure Compiler
 
@@ -17,6 +71,7 @@ A number of internal types have been renamed.  This will not affect those who us
  * rename `ol.OverlayProperty` to `ol.Overlay.Property`
  * rename `ol.control.MousePositionProperty` to `ol.control.MousePosition.Property`
  * rename `ol.format.IGCZ` to `ol.format.IGC.Z`
+ * rename `ol.interaction.InteractionProperty` to `ol.interaction.Interaction.Property`
  * rename `ol.interaction.DrawMode` to `ol.interaction.Draw.Mode`
  * rename `ol.interaction.DrawEvent` to `ol.interaction.Draw.Event`
  * rename `ol.interaction.DrawEventType` to `ol.interaction.Draw.EventType`
@@ -37,6 +92,7 @@ A number of internal types have been renamed.  This will not affect those who us
  * rename `ol.MapProperty` to `ol.Map.Property`
  * rename `ol.ModifyEventType` to `ol.interaction.Modify.EventType`
  * rename `ol.RendererType` to `ol.renderer.Type`
+ * rename `ol.render.EventType` to `ol.render.Event.Type`
  * rename `ol.source.ImageEvent` to `ol.source.Image.Event`
  * rename `ol.source.ImageEventType` to `ol.source.Image.EventType`
  * rename `ol.source.RasterEvent` to `ol.source.Raster.Event`
@@ -58,7 +114,7 @@ The DOM renderer has been removed.  Instead, the Canvas renderer should be used.
 
 #### Changes in the way assertions are handled
 
-Previously, minified builds of the library did not have any assertions. This caused applications to fail silently or with cryptic stack traces. Starting with this release, developers get notified of many runtime errors through the new `ol.AssertionError`. This error has a `code` property. The meaning of the code can be found on http://openlayers.org/en/latest/doc/errors/. There are additional console assertion checks in debug mode when the `goog.DEBUG` compiler flag is `true`. As this is `true` by default, it is recommended that those creating custom builds set this to `false` so these assertions are stripped.'
+Previously, minified builds of the library did not have any assertions. This caused applications to fail silently or with cryptic stack traces. Starting with this release, developers get notified of many runtime errors through the new `ol.AssertionError`. This error has a `code` property. The meaning of the code can be found on https://openlayers.org/en/latest/doc/errors/. There are additional console assertion checks in debug mode when the `goog.DEBUG` compiler flag is `true`. As this is `true` by default, it is recommended that those creating custom builds set this to `false` so these assertions are stripped.'
 
 #### Removal of `ol.ENABLE_NAMED_COLORS`
 
@@ -167,7 +223,7 @@ var v3source = new ol.source.TileUTFGrid({
 
 #### Internet Explorer 9 support
 
-As of this release, OpenLayers requires a `classList` polyfill for IE 9 support. See http://cdn.polyfill.io/v2/docs/features#Element_prototype_classList.
+As of this release, OpenLayers requires a `classList` polyfill for IE 9 support. See https://cdn.polyfill.io/v2/docs/features#Element_prototype_classList.
 
 #### Immediate rendering API
 
@@ -216,7 +272,7 @@ The default cache size is `2048`.
 
 #### Internet Explorer 9 support
 
-As of this release, OpenLayers requires a `requestAnimationFrame`/`cancelAnimationFrame` polyfill for IE 9 support. See http://cdn.polyfill.io/v2/docs/features/#requestAnimationFrame.
+As of this release, OpenLayers requires a `requestAnimationFrame`/`cancelAnimationFrame` polyfill for IE 9 support. See https://cdn.polyfill.io/v2/docs/features/#requestAnimationFrame.
 
 #### Layer pre-/postcompose event changes
 
@@ -534,7 +590,7 @@ now specify an `extent` instead of `widths`. These settings are used to restrict
   });
   ```
 
-  See http://openlayers.org/en/master/examples/vector-layer.html for a real example.
+  See https://openlayers.org/en/master/examples/vector-layer.html for a real example.
 
   Note that you no longer need to set a `projection` on the source!
 
@@ -556,7 +612,7 @@ now specify an `extent` instead of `widths`. These settings are used to restrict
 
   The above code uses jQuery to send an Ajax request, but you can obviously use any Ajax library.
 
-  See http://openlayers.org/en/master/examples/igc.html for a real example.
+  See https://openlayers.org/en/master/examples/igc.html for a real example.
 
 * Note about KML
 
@@ -614,9 +670,9 @@ now specify an `extent` instead of `widths`. These settings are used to restrict
   });
   ```
 
-  See http://openlayers.org/en/master/examples/vector-osm.html for a real example.
+  See https://openlayers.org/en/master/examples/vector-osm.html for a real example.
 
-* The experimental `ol.loadingstrategy.createTile` function has been renamed to `ol.loadingstrategy.tile`. The signature of the function hasn't changed. See http://openlayers.org/en/master/examples/vector-osm.html for an example.
+* The experimental `ol.loadingstrategy.createTile` function has been renamed to `ol.loadingstrategy.tile`. The signature of the function hasn't changed. See https://openlayers.org/en/master/examples/vector-osm.html for an example.
 
 #### Change to `ol.style.Icon`
 
