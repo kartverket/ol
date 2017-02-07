@@ -117,27 +117,6 @@ describe('ol.structs.RBush', function() {
 
     });
 
-    describe('#insert', function() {
-
-      it('throws an exception if called while iterating over all values',
-          function() {
-            expect(function() {
-              rBush.forEach(function(value) {
-                rBush.insert([0, 0, 1, 1], {});
-              });
-            }).to.throwException();
-          });
-
-      it('throws an exception if called while iterating over an extent',
-          function() {
-            expect(function() {
-              rBush.forEachInExtent([-10, -10, 10, 10], function(value) {
-                rBush.insert([0, 0, 1, 1], {});
-              });
-            }).to.throwException();
-          });
-    });
-
     describe('#isEmpty', function() {
 
       it('returns false', function() {
@@ -157,45 +136,6 @@ describe('ol.structs.RBush', function() {
         }
       });
 
-      it('throws an exception if called while iterating over all values',
-          function() {
-            expect(function() {
-              rBush.forEach(function(value) {
-                rBush.remove(value);
-              });
-            }).to.throwException();
-          });
-
-      it('throws an exception if called while iterating over an extent',
-          function() {
-            expect(function() {
-              rBush.forEachInExtent([-10, -10, 10, 10], function(value) {
-                rBush.remove(value);
-              });
-            }).to.throwException();
-          });
-
-    });
-
-    describe('#update', function() {
-
-      it('throws an exception if called while iterating over all values',
-          function() {
-            expect(function() {
-              rBush.forEach(function(value) {
-                rBush.update([0, 0, 1, 1], objs[1]);
-              });
-            }).to.throwException();
-          });
-
-      it('throws an exception if called while iterating over an extent',
-          function() {
-            expect(function() {
-              rBush.forEachInExtent([-10, -10, 10, 10], function(value) {
-                rBush.update([0, 0, 1, 1], objs[1]);
-              });
-            }).to.throwException();
-          });
     });
 
   });
@@ -300,8 +240,10 @@ describe('ol.structs.RBush', function() {
         var i;
         for (i = 0; i < 1000; ++i) {
           var min = [Math.random() * 10000, Math.random() * 10000];
-          var max = [min[0] + Math.random() * 500,
-                     min[1] + Math.random() * 500];
+          var max = [
+            min[0] + Math.random() * 500,
+            min[1] + Math.random() * 500
+          ];
           var extent = [min[0], min[1], max[0], max[1]];
           n += rBush.getInExtent(extent).length;
         }
@@ -312,10 +254,8 @@ describe('ol.structs.RBush', function() {
         var n = 0;
         var i;
         for (i = 0; i < 1000; ++i) {
-          var min = [-(Math.random() * 10000 + 501),
-                -(Math.random() * 10000 + 501)];
-          var max = [min[0] + Math.random() * 500,
-                     min[1] + Math.random() * 500];
+          var min = [-(Math.random() * 10000 + 501), -(Math.random() * 10000 + 501)];
+          var max = [min[0] + Math.random() * 500, min[1] + Math.random() * 500];
           var extent = [min[0], min[1], max[0], max[1]];
           n += rBush.getInExtent(extent).length;
         }
@@ -330,8 +270,7 @@ describe('ol.structs.RBush', function() {
         var i;
         for (i = 1000; i < 2000; ++i) {
           var min = [Math.random() * 10000, Math.random() * 10000];
-          var max = [min[0] + Math.random() * 500,
-                     min[1] + Math.random() * 500];
+          var max = [min[0] + Math.random() * 500, min[1] + Math.random() * 500];
           var extent = [min[0], min[1], max[0], max[1]];
           rBush.insert(extent, {id: i});
         }

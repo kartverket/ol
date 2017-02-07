@@ -53,10 +53,9 @@ ol.format.MVT = function(opt_options) {
 
   /**
    * @private
-   * @type {string}
+   * @type {string|undefined}
    */
-  this.geometryName_ = options.geometryName ?
-      options.geometryName : 'geometry';
+  this.geometryName_ = options.geometryName;
 
   /**
    * @private
@@ -95,15 +94,15 @@ ol.format.MVT.prototype.readFeature_ = function(
   var id = rawFeature.id;
   var values = rawFeature.properties;
   values[this.layerName_] = layer;
+  if (this.geometryName_) {
+    feature.setGeometryName(this.geometryName_);
+  }
   var geometry = ol.format.Feature.transformWithOptions(
       ol.format.MVT.readGeometry_(rawFeature), false,
       this.adaptOptions(opt_options));
-  if (geometry) {
-    values[this.geometryName_] = geometry;
-  }
+  feature.setGeometry(geometry);
   feature.setId(id);
   feature.setProperties(values);
-  feature.setGeometryName(this.geometryName_);
   return feature;
 };
 
@@ -254,3 +253,38 @@ ol.format.MVT.readGeometry_ = function(rawFeature) {
 
   return geom;
 };
+
+
+/**
+ * Not implemented.
+ * @override
+ */
+ol.format.MVT.prototype.readFeature = function() {};
+
+
+/**
+ * Not implemented.
+ * @override
+ */
+ol.format.MVT.prototype.readGeometry = function() {};
+
+
+/**
+ * Not implemented.
+ * @override
+ */
+ol.format.MVT.prototype.writeFeature = function() {};
+
+
+/**
+ * Not implemented.
+ * @override
+ */
+ol.format.MVT.prototype.writeGeometry = function() {};
+
+
+/**
+ * Not implemented.
+ * @override
+ */
+ol.format.MVT.prototype.writeFeatures = function() {};

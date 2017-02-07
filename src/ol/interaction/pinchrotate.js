@@ -1,7 +1,7 @@
 goog.provide('ol.interaction.PinchRotate');
 
 goog.require('ol');
-goog.require('ol.View');
+goog.require('ol.ViewHint');
 goog.require('ol.functions');
 goog.require('ol.interaction.Interaction');
 goog.require('ol.interaction.Pointer');
@@ -15,7 +15,7 @@ goog.require('ol.interaction.Pointer');
  * @constructor
  * @extends {ol.interaction.Pointer}
  * @param {olx.interaction.PinchRotateOptions=} opt_options Options.
- * @api stable
+ * @api
  */
 ol.interaction.PinchRotate = function(opt_options) {
 
@@ -73,8 +73,6 @@ ol.inherits(ol.interaction.PinchRotate, ol.interaction.Pointer);
  * @private
  */
 ol.interaction.PinchRotate.handleDragEvent_ = function(mapBrowserEvent) {
-  ol.DEBUG && console.assert(this.targetPointers.length >= 2,
-      'length of this.targetPointers should be greater than or equal to 2');
   var rotationDelta = 0.0;
 
   var touch0 = this.targetPointers[0];
@@ -112,7 +110,7 @@ ol.interaction.PinchRotate.handleDragEvent_ = function(mapBrowserEvent) {
     var view = map.getView();
     var rotation = view.getRotation();
     map.render();
-    ol.interaction.Interaction.rotateWithoutConstraints(map, view,
+    ol.interaction.Interaction.rotateWithoutConstraints(view,
         rotation + rotationDelta, this.anchor_);
   }
 };
@@ -128,11 +126,11 @@ ol.interaction.PinchRotate.handleUpEvent_ = function(mapBrowserEvent) {
   if (this.targetPointers.length < 2) {
     var map = mapBrowserEvent.map;
     var view = map.getView();
-    view.setHint(ol.View.Hint.INTERACTING, -1);
+    view.setHint(ol.ViewHint.INTERACTING, -1);
     if (this.rotating_) {
       var rotation = view.getRotation();
       ol.interaction.Interaction.rotate(
-          map, view, rotation, this.anchor_, this.duration_);
+          view, rotation, this.anchor_, this.duration_);
     }
     return false;
   } else {
@@ -155,9 +153,8 @@ ol.interaction.PinchRotate.handleDownEvent_ = function(mapBrowserEvent) {
     this.rotating_ = false;
     this.rotationDelta_ = 0.0;
     if (!this.handlingDownUpSequence) {
-      map.getView().setHint(ol.View.Hint.INTERACTING, 1);
+      map.getView().setHint(ol.ViewHint.INTERACTING, 1);
     }
-    map.render();
     return true;
   } else {
     return false;

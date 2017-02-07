@@ -105,8 +105,10 @@ describe('ol.array', function() {
     );
 
     describe('default comparison on array of Number(s)', function() {
-      var d = [-897123.9, -321434.58758, -1321.3124, -324, -9, -3, 0, 0, 0,
-               0.31255, 5, 142.88888708, 334, 342, 453, 54254];
+      var d = [
+        -897123.9, -321434.58758, -1321.3124, -324, -9, -3, 0, 0, 0,
+        0.31255, 5, 142.88888708, 334, 342, 453, 54254
+      ];
       it('should find -897123.9 at index 0', function() {
         expect(ol.array.binarySearch(d, -897123.9)).to.be(0);
       });
@@ -150,8 +152,10 @@ describe('ol.array', function() {
 
     describe('custom comparison function, which reverse orders numbers',
       function() {
-        var e = [54254, 453, 342, 334, 142.88888708, 5, 0.31255, 0, 0, 0, -3,
-                 -9, -324, -1321.3124, -321434.58758, -897123.9];
+        var e = [
+          54254, 453, 342, 334, 142.88888708, 5, 0.31255, 0, 0, 0, -3,
+          -9, -324, -1321.3124, -321434.58758, -897123.9
+        ];
         it('should find 54254 at index 0', function() {
           var pos = ol.array.binarySearch(e, 54254, revNumCompare);
           expect(pos).to.be(0);
@@ -420,16 +424,6 @@ describe('ol.array', function() {
         return val > 100;
       });
       expect(b).to.be(-1);
-    });
-  });
-
-  describe('flatten', function() {
-    it('flattens different kinds of nested arrays', function() {
-      expect(ol.array.flatten([1, 2])).to.eql([1, 2]);
-      expect(ol.array.flatten([1, [2, [3, [4, 5]]]])).to.eql([1, 2, 3, 4, 5]);
-      expect(ol.array.flatten([[[[1], 2], 3], 4])).to.eql([1, 2, 3, 4]);
-      expect(ol.array.flatten([[1]])).to.eql([1]);
-      expect(ol.array.flatten([])).to.eql([]);
     });
   });
 

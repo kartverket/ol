@@ -19,9 +19,15 @@ goog.require('ol.tilegrid');
  * @constructor
  * @extends {ol.source.TileImage}
  * @param {olx.source.BingMapsOptions} options Bing Maps options.
- * @api stable
+ * @api
  */
 ol.source.BingMaps = function(options) {
+
+  /**
+   * @private
+   * @type {boolean}
+   */
+  this.hidpi_ = options.hidpi !== undefined ? options.hidpi : false;
 
   ol.source.TileImage.call(this, {
     cacheSize: options.cacheSize,
@@ -31,6 +37,7 @@ ol.source.BingMaps = function(options) {
     reprojectionErrorThreshold: options.reprojectionErrorThreshold,
     state: ol.source.State.LOADING,
     tileLoadFunction: options.tileLoadFunction,
+    tilePixelRatio: this.hidpi_ ? 2 : 1,
     wrapX: options.wrapX !== undefined ? options.wrapX : true
   });
 
@@ -46,9 +53,21 @@ ol.source.BingMaps = function(options) {
    */
   this.maxZoom_ = options.maxZoom !== undefined ? options.maxZoom : -1;
 
+  /**
+   * @private
+   * @type {string}
+   */
+  this.apiKey_ = options.key;
+
+  /**
+   * @private
+   * @type {string}
+   */
+  this.imagerySet_ = options.imagerySet;
+
   var url = 'https://dev.virtualearth.net/REST/v1/Imagery/Metadata/' +
-      options.imagerySet +
-      '?uriScheme=https&include=ImageryProviders&key=' + options.key;
+      this.imagerySet_ +
+      '?uriScheme=https&include=ImageryProviders&key=' + this.apiKey_;
 
   ol.net.jsonp(url, this.handleImageryMetadataResponse.bind(this), undefined,
       'jsonp');
@@ -72,10 +91,31 @@ ol.source.BingMaps.TOS_ATTRIBUTION = new ol.Attribution({
 
 
 /**
+ * Get the api key used for this source.
+ *
+ * @return {string} The api key.
+ * @api
+ */
+ol.source.BingMaps.prototype.getApiKey = function() {
+  return this.apiKey_;
+};
+
+
+/**
+ * Get the imagery set associated with this source.
+ *
+ * @return {string} The imagery set.
+ * @api
+ */
+ol.source.BingMaps.prototype.getImagerySet = function() {
+  return this.imagerySet_;
+};
+
+
+/**
  * @param {BingMapsImageryMetadataResponse} response Response.
  */
 ol.source.BingMaps.prototype.handleImageryMetadataResponse = function(response) {
-
   if (response.statusCode != 200 ||
       response.statusDescription != 'OK' ||
       response.authenticationResultCode != 'ValidCredentials' ||
@@ -91,8 +131,6 @@ ol.source.BingMaps.prototype.handleImageryMetadataResponse = function(response) 
   }
   //var copyright = response.copyright;  // FIXME do we need to display this?
   var resource = response.resourceSets[0].resources[0];
-  ol.DEBUG && console.assert(resource.imageWidth == resource.imageHeight,
-      'resource has imageWidth equal to imageHeight, i.e. is square');
   var maxZoom = this.maxZoom_ == -1 ? resource.zoomMax : this.maxZoom_;
 
   var sourceProjection = this.getProjection();
@@ -103,11 +141,12 @@ ol.source.BingMaps.prototype.handleImageryMetadataResponse = function(response) 
     extent: extent,
     minZoom: resource.zoomMin,
     maxZoom: maxZoom,
-    tileSize: tileSize
+    tileSize: tileSize / this.getTilePixelRatio()
   });
   this.tileGrid = tileGrid;
 
   var culture = this.culture_;
+  var hidpi = this.hidpi_;
   this.tileUrlFunction = ol.TileUrlFunction.createFromTileUrlFunctions(
       resource.imageUrlSubdomains.map(function(subdomain) {
         var quadKeyTileCoord = [0, 0, 0];
@@ -122,15 +161,16 @@ ol.source.BingMaps.prototype.handleImageryMetadataResponse = function(response) 
              * @return {string|undefined} Tile URL.
              */
             function(tileCoord, pixelRatio, projection) {
-              ol.DEBUG && console.assert(ol.proj.equivalent(
-                  projection, sourceProjection),
-                  'projections are equivalent');
               if (!tileCoord) {
                 return undefined;
               } else {
                 ol.tilecoord.createOrUpdate(tileCoord[0], tileCoord[1],
                     -tileCoord[2] - 1, quadKeyTileCoord);
-                return imageUrl.replace('{quadkey}', ol.tilecoord.quadKey(
+                var url = imageUrl;
+                if (hidpi) {
+                  url += '&dpi=d1&device=mobile';
+                }
+                return url.replace('{quadkey}', ol.tilecoord.quadKey(
                     quadKeyTileCoord));
               }
             });
@@ -170,5 +210,4 @@ ol.source.BingMaps.prototype.handleImageryMetadataResponse = function(response) 
   this.setLogo(brandLogoUri);
 
   this.setState(ol.source.State.READY);
-
 };

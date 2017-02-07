@@ -1,6 +1,7 @@
 goog.provide('ol.format.Feature');
 
 goog.require('ol.geom.Geometry');
+goog.require('ol.obj');
 goog.require('ol.proj');
 
 
@@ -14,7 +15,8 @@ goog.require('ol.proj');
  * file formats.  See the documentation for each format for more details.
  *
  * @constructor
- * @api stable
+ * @abstract
+ * @api
  */
 ol.format.Feature = function() {
 
@@ -24,14 +26,13 @@ ol.format.Feature = function() {
    */
   this.defaultDataProjection = null;
 
+  /**
+   * @protected
+   * @type {ol.proj.Projection}
+   */
+  this.defaultFeatureProjection = null;
+
 };
-
-
-/**
- * @abstract
- * @return {Array.<string>} Extensions.
- */
-ol.format.Feature.prototype.getExtensions = function() {};
 
 
 /**
@@ -64,19 +65,10 @@ ol.format.Feature.prototype.getReadOptions = function(source, opt_options) {
  *     Updated options.
  */
 ol.format.Feature.prototype.adaptOptions = function(options) {
-  var updatedOptions;
-  if (options) {
-    updatedOptions = {
-      featureProjection: options.featureProjection,
-      dataProjection: options.dataProjection ?
-          options.dataProjection : this.defaultDataProjection,
-      rightHanded: options.rightHanded
-    };
-    if (options.decimals) {
-      updatedOptions.decimals = options.decimals;
-    }
-  }
-  return updatedOptions;
+  return ol.obj.assign({
+    dataProjection: this.defaultDataProjection,
+    featureProjection: this.defaultFeatureProjection
+  }, options);
 };
 
 

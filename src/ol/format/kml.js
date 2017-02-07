@@ -17,7 +17,6 @@ goog.require('ol.geom.GeometryCollection');
 goog.require('ol.geom.GeometryLayout');
 goog.require('ol.geom.GeometryType');
 goog.require('ol.geom.LineString');
-goog.require('ol.geom.LinearRing');
 goog.require('ol.geom.MultiLineString');
 goog.require('ol.geom.MultiPoint');
 goog.require('ol.geom.MultiPolygon');
@@ -27,6 +26,8 @@ goog.require('ol.math');
 goog.require('ol.proj');
 goog.require('ol.style.Fill');
 goog.require('ol.style.Icon');
+goog.require('ol.style.IconAnchorUnits');
+goog.require('ol.style.IconOrigin');
 goog.require('ol.style.Stroke');
 goog.require('ol.style.Style');
 goog.require('ol.style.Text');
@@ -43,13 +44,17 @@ goog.require('ol.xml');
  * @constructor
  * @extends {ol.format.XMLFeature}
  * @param {olx.format.KMLOptions=} opt_options Options.
- * @api stable
+ * @api
  */
 ol.format.KML = function(opt_options) {
 
   var options = opt_options ? opt_options : {};
 
   ol.format.XMLFeature.call(this);
+
+  if (!ol.format.KML.DEFAULT_STYLE_ARRAY_) {
+    ol.format.KML.createStyleDefaults_();
+  }
 
   /**
    * @inheritDoc
@@ -61,8 +66,7 @@ ol.format.KML = function(opt_options) {
    * @type {Array.<ol.style.Style>}
    */
   this.defaultStyle_ = options.defaultStyle ?
-      options.defaultStyle :
-      (ol.format.KML.DEFAULT_STYLE_ARRAY_ || ol.format.KML.createStyleDefaults_());
+      options.defaultStyle : ol.format.KML.DEFAULT_STYLE_ARRAY_;
 
   /**
    * @private
@@ -93,14 +97,6 @@ ol.format.KML = function(opt_options) {
 
 };
 ol.inherits(ol.format.KML, ol.format.XMLFeature);
-
-
-/**
- * @const
- * @type {Array.<string>}
- * @private
- */
-ol.format.KML.EXTENSIONS_ = ['.kml'];
 
 
 /**
@@ -166,19 +162,19 @@ ol.format.KML.createStyleDefaults_ = function() {
 
   /**
    * @const
-   * @type {ol.style.Icon.AnchorUnits}
+   * @type {ol.style.IconAnchorUnits}
    * @private
    */
   ol.format.KML.DEFAULT_IMAGE_STYLE_ANCHOR_X_UNITS_ =
-      ol.style.Icon.AnchorUnits.PIXELS;
+      ol.style.IconAnchorUnits.PIXELS;
 
   /**
    * @const
-   * @type {ol.style.Icon.AnchorUnits}
+   * @type {ol.style.IconAnchorUnits}
    * @private
    */
   ol.format.KML.DEFAULT_IMAGE_STYLE_ANCHOR_Y_UNITS_ =
-      ol.style.Icon.AnchorUnits.PIXELS;
+      ol.style.IconAnchorUnits.PIXELS;
 
   /**
    * @const
@@ -209,7 +205,7 @@ ol.format.KML.createStyleDefaults_ = function() {
    */
   ol.format.KML.DEFAULT_IMAGE_STYLE_ = new ol.style.Icon({
     anchor: ol.format.KML.DEFAULT_IMAGE_STYLE_ANCHOR_,
-    anchorOrigin: ol.style.Icon.Origin.BOTTOM_LEFT,
+    anchorOrigin: ol.style.IconOrigin.BOTTOM_LEFT,
     anchorXUnits: ol.format.KML.DEFAULT_IMAGE_STYLE_ANCHOR_X_UNITS_,
     anchorYUnits: ol.format.KML.DEFAULT_IMAGE_STYLE_ANCHOR_Y_UNITS_,
     crossOrigin: 'anonymous',
@@ -284,12 +280,12 @@ ol.format.KML.createStyleDefaults_ = function() {
 
 /**
  * @const
- * @type {Object.<string, ol.style.Icon.AnchorUnits>}
+ * @type {Object.<string, ol.style.IconAnchorUnits>}
  * @private
  */
 ol.format.KML.ICON_ANCHOR_UNITS_MAP_ = {
-  'fraction': ol.style.Icon.AnchorUnits.FRACTION,
-  'pixels': ol.style.Icon.AnchorUnits.PIXELS
+  'fraction': ol.style.IconAnchorUnits.FRACTION,
+  'pixels': ol.style.IconAnchorUnits.PIXELS
 };
 
 
@@ -308,11 +304,8 @@ ol.format.KML.createNameStyleFunction_ = function(foundStyle, name) {
     if (imageSize === null) {
       imageSize = ol.format.KML.DEFAULT_IMAGE_STYLE_SIZE_;
     }
-    var imageScale = foundStyle.getImage().getScale();
-    if (isNaN(imageScale)) {
-      imageScale = ol.format.KML.DEFAULT_IMAGE_SCALE_MULTIPLIER_;
-    }
     if (imageSize.length == 2) {
+      var imageScale = foundStyle.getImage().getScale();
       // Offset the label to be centered to the right of the icon, if there is
       // one.
       textOffset[0] = imageScale * imageSize[0] / 2;
@@ -540,18 +533,12 @@ ol.format.KML.readStyleMapValue_ = function(node, objectStack) {
   return ol.xml.pushParseAndPop(undefined,
       ol.format.KML.STYLE_MAP_PARSERS_, node, objectStack);
 };
-
-
-/**
+ /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
  * @private
  */
 ol.format.KML.IconStyleParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be an ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'IconStyle',
-      'localName should be IconStyle');
   // FIXME refreshMode
   // FIXME refreshInterval
   // FIXME viewRefreshTime
@@ -587,8 +574,8 @@ ol.format.KML.IconStyleParser_ = function(node, objectStack) {
     anchorYUnits = ol.format.KML.DEFAULT_IMAGE_STYLE_ANCHOR_Y_UNITS_;
   } else if (/^http:\/\/maps\.(?:google|gstatic)\.com\//.test(src)) {
     anchor = [0.5, 0];
-    anchorXUnits = ol.style.Icon.AnchorUnits.FRACTION;
-    anchorYUnits = ol.style.Icon.AnchorUnits.FRACTION;
+    anchorXUnits = ol.style.IconAnchorUnits.FRACTION;
+    anchorYUnits = ol.style.IconAnchorUnits.FRACTION;
   }
 
   var offset;
@@ -618,11 +605,6 @@ ol.format.KML.IconStyleParser_ = function(node, objectStack) {
 
   var scale = /** @type {number|undefined} */
       (object['scale']);
-  if (isNaN(scale) || scale === undefined) {
-    scale = ol.format.KML.DEFAULT_IMAGE_SCALE_MULTIPLIER_;
-  } else {
-    scale = scale * ol.format.KML.DEFAULT_IMAGE_SCALE_MULTIPLIER_;
-  }
 
   if (drawIcon) {
     if (src == ol.format.KML.DEFAULT_IMAGE_STYLE_SRC_) {
@@ -634,12 +616,12 @@ ol.format.KML.IconStyleParser_ = function(node, objectStack) {
 
     var imageStyle = new ol.style.Icon({
       anchor: anchor,
-      anchorOrigin: ol.style.Icon.Origin.BOTTOM_LEFT,
+      anchorOrigin: ol.style.IconOrigin.BOTTOM_LEFT,
       anchorXUnits: anchorXUnits,
       anchorYUnits: anchorYUnits,
       crossOrigin: 'anonymous', // FIXME should this be configurable?
       offset: offset,
-      offsetOrigin: ol.style.Icon.Origin.BOTTOM_LEFT,
+      offsetOrigin: ol.style.IconOrigin.BOTTOM_LEFT,
       rotation: rotation,
       scale: scale,
       size: size,
@@ -659,10 +641,6 @@ ol.format.KML.IconStyleParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.LabelStyleParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'LabelStyle',
-      'localName should be LabelStyle');
   // FIXME colorMode
   var object = ol.xml.pushParseAndPop(
       {}, ol.format.KML.LABEL_STYLE_PARSERS_, node, objectStack);
@@ -688,10 +666,6 @@ ol.format.KML.LabelStyleParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.LineStyleParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'LineStyle',
-      'localName should be LineStyle');
   // FIXME colorMode
   // FIXME gx:outerColor
   // FIXME gx:outerWidth
@@ -718,10 +692,6 @@ ol.format.KML.LineStyleParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.PolyStyleParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'PolyStyle',
-      'localName should be PolyStyle');
   // FIXME colorMode
   var object = ol.xml.pushParseAndPop(
       {}, ol.format.KML.POLY_STYLE_PARSERS_, node, objectStack);
@@ -753,10 +723,6 @@ ol.format.KML.PolyStyleParser_ = function(node, objectStack) {
  * @return {Array.<number>} LinearRing flat coordinates.
  */
 ol.format.KML.readFlatLinearRing_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'LinearRing',
-      'localName should be LinearRing');
   return ol.xml.pushParseAndPop(null,
       ol.format.KML.FLAT_LINEAR_RING_PARSERS_, node, objectStack);
 };
@@ -768,12 +734,6 @@ ol.format.KML.readFlatLinearRing_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.gxCoordParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(ol.array.includes(
-      ol.format.KML.GX_NAMESPACE_URIS_, node.namespaceURI),
-      'namespaceURI of the node should be known to the KML parser');
-  ol.DEBUG && console.assert(node.localName == 'coord', 'localName should be coord');
   var gxTrackObject = /** @type {ol.KMLGxTrackObject_} */
       (objectStack[objectStack.length - 1]);
   var flatCoordinates = gxTrackObject.flatCoordinates;
@@ -799,13 +759,6 @@ ol.format.KML.gxCoordParser_ = function(node, objectStack) {
  * @return {ol.geom.MultiLineString|undefined} MultiLineString.
  */
 ol.format.KML.readGxMultiTrack_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(ol.array.includes(
-      ol.format.KML.GX_NAMESPACE_URIS_, node.namespaceURI),
-      'namespaceURI of the node should be known to the KML parser');
-  ol.DEBUG && console.assert(node.localName == 'MultiTrack',
-      'localName should be MultiTrack');
   var lineStrings = ol.xml.pushParseAndPop([],
       ol.format.KML.GX_MULTITRACK_GEOMETRY_PARSERS_, node, objectStack);
   if (!lineStrings) {
@@ -824,12 +777,6 @@ ol.format.KML.readGxMultiTrack_ = function(node, objectStack) {
  * @return {ol.geom.LineString|undefined} LineString.
  */
 ol.format.KML.readGxTrack_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(ol.array.includes(
-      ol.format.KML.GX_NAMESPACE_URIS_, node.namespaceURI),
-      'namespaceURI of the node should be known to the KML parser');
-  ol.DEBUG && console.assert(node.localName == 'Track', 'localName should be Track');
   var gxTrackObject = ol.xml.pushParseAndPop(
       /** @type {ol.KMLGxTrackObject_} */ ({
         flatCoordinates: [],
@@ -840,9 +787,6 @@ ol.format.KML.readGxTrack_ = function(node, objectStack) {
   }
   var flatCoordinates = gxTrackObject.flatCoordinates;
   var whens = gxTrackObject.whens;
-  ol.DEBUG && console.assert(flatCoordinates.length / 4 == whens.length,
-      'the length of the flatCoordinates array divided by 4 should be the ' +
-      'length of the whens array');
   var i, ii;
   for (i = 0, ii = Math.min(flatCoordinates.length, whens.length); i < ii;
        ++i) {
@@ -861,9 +805,6 @@ ol.format.KML.readGxTrack_ = function(node, objectStack) {
  * @return {Object} Icon object.
  */
 ol.format.KML.readIcon_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Icon', 'localName should be Icon');
   var iconObject = ol.xml.pushParseAndPop(
       {}, ol.format.KML.ICON_PARSERS_, node, objectStack);
   if (iconObject) {
@@ -881,8 +822,6 @@ ol.format.KML.readIcon_ = function(node, objectStack) {
  * @return {Array.<number>} Flat coordinates.
  */
 ol.format.KML.readFlatCoordinatesFromNode_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
   return ol.xml.pushParseAndPop(null,
       ol.format.KML.GEOMETRY_FLAT_COORDINATES_PARSERS_, node, objectStack);
 };
@@ -895,10 +834,6 @@ ol.format.KML.readFlatCoordinatesFromNode_ = function(node, objectStack) {
  * @return {ol.geom.LineString|undefined} LineString.
  */
 ol.format.KML.readLineString_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'LineString',
-      'localName should be LineString');
   var properties = ol.xml.pushParseAndPop({},
       ol.format.KML.EXTRUDE_AND_ALTITUDE_MODE_PARSERS_, node,
       objectStack);
@@ -922,10 +857,6 @@ ol.format.KML.readLineString_ = function(node, objectStack) {
  * @return {ol.geom.Polygon|undefined} Polygon.
  */
 ol.format.KML.readLinearRing_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'LinearRing',
-      'localName should be LinearRing');
   var properties = ol.xml.pushParseAndPop({},
       ol.format.KML.EXTRUDE_AND_ALTITUDE_MODE_PARSERS_, node,
       objectStack);
@@ -950,10 +881,6 @@ ol.format.KML.readLinearRing_ = function(node, objectStack) {
  * @return {ol.geom.Geometry} Geometry.
  */
 ol.format.KML.readMultiGeometry_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'MultiGeometry',
-      'localName should be MultiGeometry');
   var geometries = ol.xml.pushParseAndPop([],
       ol.format.KML.MULTI_GEOMETRY_PARSERS_, node, objectStack);
   if (!geometries) {
@@ -983,8 +910,6 @@ ol.format.KML.readMultiGeometry_ = function(node, objectStack) {
       flatCoordinates = point.getFlatCoordinates();
       for (i = 1, ii = geometries.length; i < ii; ++i) {
         geometry = geometries[i];
-        ol.DEBUG && console.assert(geometry.getLayout() == layout,
-            'geometry layout should be consistent');
         ol.array.extend(flatCoordinates, geometry.getFlatCoordinates());
       }
       multiGeometry = new ol.geom.MultiPoint(null);
@@ -1017,9 +942,6 @@ ol.format.KML.readMultiGeometry_ = function(node, objectStack) {
  * @return {ol.geom.Point|undefined} Point.
  */
 ol.format.KML.readPoint_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Point', 'localName should be Point');
   var properties = ol.xml.pushParseAndPop({},
       ol.format.KML.EXTRUDE_AND_ALTITUDE_MODE_PARSERS_, node,
       objectStack);
@@ -1027,8 +949,6 @@ ol.format.KML.readPoint_ = function(node, objectStack) {
       ol.format.KML.readFlatCoordinatesFromNode_(node, objectStack);
   if (flatCoordinates) {
     var point = new ol.geom.Point(null);
-    ol.DEBUG && console.assert(flatCoordinates.length == 3,
-        'flatCoordinates should have a length of 3');
     point.setFlatCoordinates(ol.geom.GeometryLayout.XYZ, flatCoordinates);
     point.setProperties(properties);
     return point;
@@ -1045,10 +965,6 @@ ol.format.KML.readPoint_ = function(node, objectStack) {
  * @return {ol.geom.Polygon|undefined} Polygon.
  */
 ol.format.KML.readPolygon_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Polygon',
-      'localName should be Polygon');
   var properties = ol.xml.pushParseAndPop(/** @type {Object<string,*>} */ ({}),
       ol.format.KML.EXTRUDE_AND_ALTITUDE_MODE_PARSERS_, node,
       objectStack);
@@ -1080,9 +996,6 @@ ol.format.KML.readPolygon_ = function(node, objectStack) {
  * @return {Array.<ol.style.Style>} Style.
  */
 ol.format.KML.readStyle_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Style', 'localName should be Style');
   var styleObject = ol.xml.pushParseAndPop(
       {}, ol.format.KML.STYLE_PARSERS_, node, objectStack);
   if (!styleObject) {
@@ -1159,18 +1072,14 @@ ol.format.KML.setCommonGeometryProperties_ = function(multiGeometry,
  * @private
  */
 ol.format.KML.DataParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Data', 'localName should be Data');
   var name = node.getAttribute('name');
+  ol.xml.parseNode(ol.format.KML.DATA_PARSERS_, node, objectStack);
+  var featureObject =
+    /** @type {Object} */ (objectStack[objectStack.length - 1]);
   if (name !== null) {
-    var data = ol.xml.pushParseAndPop(
-        undefined, ol.format.KML.DATA_PARSERS_, node, objectStack);
-    if (data) {
-      var featureObject =
-          /** @type {Object} */ (objectStack[objectStack.length - 1]);
-      featureObject[name] = data;
-    }
+    featureObject[name] = featureObject.value;
+  } else if (featureObject.displayName !== null) {
+    featureObject[featureObject.displayName] = featureObject.value;
   }
 };
 
@@ -1181,13 +1090,17 @@ ol.format.KML.DataParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.ExtendedDataParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'ExtendedData',
-      'localName should be ExtendedData');
   ol.xml.parseNode(ol.format.KML.EXTENDED_DATA_PARSERS_, node, objectStack);
 };
 
+/**
+ * @param {Node} node Node.
+ * @param {Array.<*>} objectStack Object stack.
+ * @private
+ */
+ol.format.KML.RegionParser_ = function(node, objectStack) {
+  ol.xml.parseNode(ol.format.KML.REGION_PARSERS_, node, objectStack);
+};
 
 /**
  * @param {Node} node Node.
@@ -1195,9 +1108,6 @@ ol.format.KML.ExtendedDataParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.PairDataParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Pair', 'localName should be Pair');
   var pairObject = ol.xml.pushParseAndPop(
       {}, ol.format.KML.PAIR_PARSERS_, node, objectStack);
   if (!pairObject) {
@@ -1226,10 +1136,6 @@ ol.format.KML.PairDataParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.PlacemarkStyleMapParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'StyleMap',
-      'localName should be StyleMap');
   var styleMapValue = ol.format.KML.readStyleMapValue_(node, objectStack);
   if (!styleMapValue) {
     return;
@@ -1251,10 +1157,6 @@ ol.format.KML.PlacemarkStyleMapParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.SchemaDataParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'SchemaData',
-      'localName should be SchemaData');
   ol.xml.parseNode(ol.format.KML.SCHEMA_DATA_PARSERS_, node, objectStack);
 };
 
@@ -1265,10 +1167,6 @@ ol.format.KML.SchemaDataParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.SimpleDataParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'SimpleData',
-      'localName should be SimpleData');
   var name = node.getAttribute('name');
   if (name !== null) {
     var data = ol.format.XSD.readString(node);
@@ -1284,21 +1182,55 @@ ol.format.KML.SimpleDataParser_ = function(node, objectStack) {
  * @param {Array.<*>} objectStack Object stack.
  * @private
  */
+ol.format.KML.LatLonAltBoxParser_ = function(node, objectStack) {
+  var object = ol.xml.pushParseAndPop({}, ol.format.KML.LAT_LON_ALT_BOX_PARSERS_, node, objectStack);
+  if (!object) {
+    return;
+  }
+  var regionObject = /** @type {Object} */ (objectStack[objectStack.length - 1]);
+  var extent = [
+    parseFloat(object['west']),
+    parseFloat(object['south']),
+    parseFloat(object['east']),
+    parseFloat(object['north'])
+  ];
+  regionObject['extent'] = extent;
+  regionObject['altitudeMode'] = object['altitudeMode'];
+  regionObject['minAltitude'] = parseFloat(object['minAltitude']);
+  regionObject['maxAltitude'] = parseFloat(object['maxAltitude']);
+};
+
+
+/**
+ * @param {Node} node Node.
+ * @param {Array.<*>} objectStack Object stack.
+ * @private
+ */
+ol.format.KML.LodParser_ = function(node, objectStack) {
+  var object = ol.xml.pushParseAndPop({}, ol.format.KML.LOD_PARSERS_, node, objectStack);
+  if (!object) {
+    return;
+  }
+  var lodObject = /** @type {Object} */ (objectStack[objectStack.length - 1]);
+  lodObject['minLodPixels'] = parseFloat(object['minLodPixels']);
+  lodObject['maxLodPixels'] = parseFloat(object['maxLodPixels']);
+  lodObject['minFadeExtent'] = parseFloat(object['minFadeExtent']);
+  lodObject['maxFadeExtent'] = parseFloat(object['maxFadeExtent']);
+};
+
+
+/**
+ * @param {Node} node Node.
+ * @param {Array.<*>} objectStack Object stack.
+ * @private
+ */
 ol.format.KML.innerBoundaryIsParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'innerBoundaryIs',
-      'localName should be innerBoundaryIs');
   /** @type {Array.<number>|undefined} */
   var flatLinearRing = ol.xml.pushParseAndPop(undefined,
       ol.format.KML.INNER_BOUNDARY_IS_PARSERS_, node, objectStack);
   if (flatLinearRing) {
     var flatLinearRings = /** @type {Array.<Array.<number>>} */
         (objectStack[objectStack.length - 1]);
-    ol.DEBUG && console.assert(Array.isArray(flatLinearRings),
-        'flatLinearRings should be an array');
-    ol.DEBUG && console.assert(flatLinearRings.length > 0,
-        'flatLinearRings array should not be empty');
     flatLinearRings.push(flatLinearRing);
   }
 };
@@ -1310,20 +1242,12 @@ ol.format.KML.innerBoundaryIsParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.outerBoundaryIsParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'outerBoundaryIs',
-      'localName should be outerBoundaryIs');
   /** @type {Array.<number>|undefined} */
   var flatLinearRing = ol.xml.pushParseAndPop(undefined,
       ol.format.KML.OUTER_BOUNDARY_IS_PARSERS_, node, objectStack);
   if (flatLinearRing) {
     var flatLinearRings = /** @type {Array.<Array.<number>>} */
         (objectStack[objectStack.length - 1]);
-    ol.DEBUG && console.assert(Array.isArray(flatLinearRings),
-        'flatLinearRings should be an array');
-    ol.DEBUG && console.assert(flatLinearRings.length > 0,
-        'flatLinearRings array should not be empty');
     flatLinearRings[0] = flatLinearRing;
   }
 };
@@ -1335,9 +1259,6 @@ ol.format.KML.outerBoundaryIsParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.LinkParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Link', 'localName should be Link');
   ol.xml.parseNode(ol.format.KML.LINK_PARSERS_, node, objectStack);
 };
 
@@ -1348,9 +1269,6 @@ ol.format.KML.LinkParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.whenParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'when', 'localName should be when');
   var gxTrackObject = /** @type {ol.KMLGxTrackObject_} */
       (objectStack[objectStack.length - 1]);
   var whens = gxTrackObject.whens;
@@ -1367,7 +1285,8 @@ ol.format.KML.whenParser_ = function(node, objectStack) {
  */
 ol.format.KML.DATA_PARSERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
-      'value': ol.xml.makeReplacer(ol.format.XSD.readString)
+      'displayName': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
+      'value': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString)
     });
 
 
@@ -1380,6 +1299,49 @@ ol.format.KML.EXTENDED_DATA_PARSERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
       'Data': ol.format.KML.DataParser_,
       'SchemaData': ol.format.KML.SchemaDataParser_
+    });
+
+
+/**
+ * @const
+ * @type {Object.<string, Object.<string, ol.XmlParser>>}
+ * @private
+ */
+ol.format.KML.REGION_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.KML.NAMESPACE_URIS_, {
+      'LatLonAltBox': ol.format.KML.LatLonAltBoxParser_,
+      'Lod': ol.format.KML.LodParser_
+    });
+
+
+/**
+ * @const
+ * @type {Object.<string, Object.<string, ol.XmlParser>>}
+ * @private
+ */
+ol.format.KML.LAT_LON_ALT_BOX_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.KML.NAMESPACE_URIS_, {
+      'altitudeMode': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
+      'minAltitude': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'maxAltitude': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'north': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'south': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'east': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'west': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal)
+    });
+
+
+/**
+ * @const
+ * @type {Object.<string, Object.<string, ol.XmlParser>>}
+ * @private
+ */
+ol.format.KML.LOD_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.KML.NAMESPACE_URIS_, {
+      'minLodPixels': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'maxLodPixels': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'minFadeExtent': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal),
+      'maxFadeExtent': ol.xml.makeObjectPropertySetter(ol.format.XSD.readDecimal)
     });
 
 
@@ -1543,6 +1505,7 @@ ol.format.KML.GX_MULTITRACK_GEOMETRY_PARSERS_ = ol.xml.makeStructureNS(
 ol.format.KML.NETWORK_LINK_PARSERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
       'ExtendedData': ol.format.KML.ExtendedDataParser_,
+      'Region': ol.format.KML.RegionParser_,
       'Link': ol.format.KML.LinkParser_,
       'address': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
       'description': ol.xml.makeObjectPropertySetter(ol.format.XSD.readString),
@@ -1596,6 +1559,7 @@ ol.format.KML.PAIR_PARSERS_ = ol.xml.makeStructureNS(
 ol.format.KML.PLACEMARK_PARSERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
       'ExtendedData': ol.format.KML.ExtendedDataParser_,
+      'Region': ol.format.KML.RegionParser_,
       'MultiGeometry': ol.xml.makeObjectPropertySetter(
           ol.format.KML.readMultiGeometry_, 'geometry'),
       'LineString': ol.xml.makeObjectPropertySetter(
@@ -1675,25 +1639,12 @@ ol.format.KML.STYLE_MAP_PARSERS_ = ol.xml.makeStructureNS(
 
 
 /**
- * @inheritDoc
- */
-ol.format.KML.prototype.getExtensions = function() {
-  return ol.format.KML.EXTENSIONS_;
-};
-
-
-/**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
  * @private
  * @return {Array.<ol.Feature>|undefined} Features.
  */
 ol.format.KML.prototype.readDocumentOrFolder_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  var localName = node.localName;
-  ol.DEBUG && console.assert(localName == 'Document' || localName == 'Folder',
-      'localName should be Document or Folder');
   // FIXME use scope somehow
   var parsersNS = ol.xml.makeStructureNS(
       ol.format.KML.NAMESPACE_URIS_, {
@@ -1720,10 +1671,6 @@ ol.format.KML.prototype.readDocumentOrFolder_ = function(node, objectStack) {
  * @return {ol.Feature|undefined} Feature.
  */
 ol.format.KML.prototype.readPlacemark_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Placemark',
-      'localName should be Placemark');
   var object = ol.xml.pushParseAndPop({'geometry': null},
       ol.format.KML.PLACEMARK_PARSERS_, node, objectStack);
   if (!object) {
@@ -1767,9 +1714,6 @@ ol.format.KML.prototype.readPlacemark_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.prototype.readSharedStyle_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Style', 'localName should be Style');
   var id = node.getAttribute('id');
   if (id !== null) {
     var style = ol.format.KML.readStyle_(node, objectStack);
@@ -1793,10 +1737,6 @@ ol.format.KML.prototype.readSharedStyle_ = function(node, objectStack) {
  * @private
  */
 ol.format.KML.prototype.readSharedStyleMap_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'StyleMap',
-      'localName should be StyleMap');
   var id = node.getAttribute('id');
   if (id === null) {
     return;
@@ -1825,7 +1765,7 @@ ol.format.KML.prototype.readSharedStyleMap_ = function(node, objectStack) {
  * @param {Document|Node|Object|string} source Source.
  * @param {olx.format.ReadOptions=} opt_options Read options.
  * @return {ol.Feature} Feature.
- * @api stable
+ * @api
  */
 ol.format.KML.prototype.readFeature;
 
@@ -1834,13 +1774,9 @@ ol.format.KML.prototype.readFeature;
  * @inheritDoc
  */
 ol.format.KML.prototype.readFeatureFromNode = function(node, opt_options) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
   if (!ol.array.includes(ol.format.KML.NAMESPACE_URIS_, node.namespaceURI)) {
     return null;
   }
-  ol.DEBUG && console.assert(node.localName == 'Placemark',
-      'localName should be Placemark');
   var feature = this.readPlacemark_(
       node, [this.getReadOptions(node, opt_options)]);
   if (feature) {
@@ -1860,7 +1796,7 @@ ol.format.KML.prototype.readFeatureFromNode = function(node, opt_options) {
  * @param {Document|Node|Object|string} source Source.
  * @param {olx.format.ReadOptions=} opt_options Read options.
  * @return {Array.<ol.Feature>} Features.
- * @api stable
+ * @api
  */
 ol.format.KML.prototype.readFeatures;
 
@@ -1869,8 +1805,6 @@ ol.format.KML.prototype.readFeatures;
  * @inheritDoc
  */
 ol.format.KML.prototype.readFeaturesFromNode = function(node, opt_options) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
   if (!ol.array.includes(ol.format.KML.NAMESPACE_URIS_, node.namespaceURI)) {
     return [];
   }
@@ -1913,7 +1847,7 @@ ol.format.KML.prototype.readFeaturesFromNode = function(node, opt_options) {
  *
  * @param {Document|Node|string} source Souce.
  * @return {string|undefined} Name.
- * @api stable
+ * @api
  */
 ol.format.KML.prototype.readName = function(source) {
   if (ol.xml.isDocument(source)) {
@@ -2042,12 +1976,78 @@ ol.format.KML.prototype.readNetworkLinksFromNode = function(node) {
 
 
 /**
+ * Read the regions of the KML.
+ *
+ * @param {Document|Node|string} source Source.
+ * @return {Array.<Object>} Regions.
+ * @api
+ */
+ol.format.KML.prototype.readRegion = function(source) {
+  var regions = [];
+  if (ol.xml.isDocument(source)) {
+    ol.array.extend(regions, this.readRegionFromDocument(
+        /** @type {Document} */ (source)));
+  } else if (ol.xml.isNode(source)) {
+    ol.array.extend(regions, this.readRegionFromNode(
+        /** @type {Node} */ (source)));
+  } else if (typeof source === 'string') {
+    var doc = ol.xml.parse(source);
+    ol.array.extend(regions, this.readRegionFromDocument(doc));
+  }
+  return regions;
+};
+
+
+/**
+ * @param {Document} doc Document.
+ * @return {Array.<Object>} Region.
+ */
+ol.format.KML.prototype.readRegionFromDocument = function(doc) {
+  var n, regions = [];
+  for (n = doc.firstChild; n; n = n.nextSibling) {
+    if (n.nodeType == Node.ELEMENT_NODE) {
+      ol.array.extend(regions, this.readRegionFromNode(n));
+    }
+  }
+  return regions;
+};
+
+
+/**
+ * @param {Node} node Node.
+ * @return {Array.<Object>} Region.
+ * @api
+ */
+ol.format.KML.prototype.readRegionFromNode = function(node) {
+  var n, regions = [];
+  for (n = node.firstElementChild; n; n = n.nextElementSibling) {
+    if (ol.array.includes(ol.format.KML.NAMESPACE_URIS_, n.namespaceURI) &&
+        n.localName == 'Region') {
+      var obj = ol.xml.pushParseAndPop({}, ol.format.KML.REGION_PARSERS_,
+          n, []);
+      regions.push(obj);
+    }
+  }
+  for (n = node.firstElementChild; n; n = n.nextElementSibling) {
+    var localName = n.localName;
+    if (ol.array.includes(ol.format.KML.NAMESPACE_URIS_, n.namespaceURI) &&
+        (localName == 'Document' ||
+         localName == 'Folder' ||
+         localName == 'kml')) {
+      ol.array.extend(regions, this.readRegionFromNode(n));
+    }
+  }
+  return regions;
+};
+
+
+/**
  * Read the projection from a KML source.
  *
  * @function
  * @param {Document|Node|Object|string} source Source.
  * @return {ol.proj.Projection} Projection.
- * @api stable
+ * @api
  */
 ol.format.KML.prototype.readProjection;
 
@@ -2114,6 +2114,54 @@ ol.format.KML.writeCoordinatesTextNode_ = function(node, coordinates, objectStac
 
 /**
  * @param {Node} node Node.
+ * @param {{name: *, value: *}} pair Name value pair.
+ * @param {Array.<*>} objectStack Object stack.
+ * @private
+ */
+ol.format.KML.writeDataNode_ = function(node, pair, objectStack) {
+  node.setAttribute('name', pair.name);
+  var /** @type {ol.XmlNodeStackItem} */ context = {node: node};
+  var value = pair.value;
+
+  if (typeof value == 'object') {
+    if (value !== null && value.displayName) {
+      ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
+        ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value.displayName], objectStack, ['displayName']);
+    }
+
+    if (value !== null && value.value) {
+      ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
+        ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value.value], objectStack, ['value']);
+    }
+  } else {
+    ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
+     ol.xml.OBJECT_PROPERTY_NODE_FACTORY, [value], objectStack, ['value']);
+  }
+};
+
+
+/**
+ * @param {Node} node Node to append a TextNode with the name to.
+ * @param {string} name DisplayName.
+ * @private
+ */
+ol.format.KML.writeDataNodeName_ = function(node, name) {
+  ol.format.XSD.writeCDATASection(node, name);
+};
+
+
+/**
+ * @param {Node} node Node to append a CDATA Section with the value to.
+ * @param {string} value Value.
+ * @private
+ */
+ol.format.KML.writeDataNodeValue_ = function(node, value) {
+  ol.format.XSD.writeStringTextNode(node, value);
+};
+
+
+/**
+ * @param {Node} node Node.
  * @param {Array.<ol.Feature>} features Features.
  * @param {Array.<*>} objectStack Object stack.
  * @this {ol.format.KML}
@@ -2124,6 +2172,24 @@ ol.format.KML.writeDocument_ = function(node, features, objectStack) {
   ol.xml.pushSerializeAndPop(context, ol.format.KML.DOCUMENT_SERIALIZERS_,
       ol.format.KML.DOCUMENT_NODE_FACTORY_, features, objectStack, undefined,
       this);
+};
+
+
+/**
+ * @param {Node} node Node.
+ * @param {{names: Array<string>, values: (Array<*>)}} namesAndValues Names and values.
+ * @param {Array.<*>} objectStack Object stack.
+ * @private
+ */
+ol.format.KML.writeExtendedData_ = function(node, namesAndValues, objectStack) {
+  var /** @type {ol.XmlNodeStackItem} */ context = {node: node};
+  var names = namesAndValues.names, values = namesAndValues.values;
+  var length = names.length;
+
+  for (var i = 0; i < length; i++) {
+    ol.xml.pushSerializeAndPop(context, ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_,
+      ol.format.KML.DATA_NODE_FACTORY_, [{name: names[i], value: values[i]}], objectStack);
+  }
 };
 
 
@@ -2179,9 +2245,9 @@ ol.format.KML.writeIconStyle_ = function(node, style, objectStack) {
     if (anchor && anchor[0] !== 0 && anchor[1] !== size[1]) {
       var /** @type {ol.KMLVec2_} */ hotSpot = {
         x: anchor[0],
-        xunits: ol.style.Icon.AnchorUnits.PIXELS,
+        xunits: ol.style.IconAnchorUnits.PIXELS,
         y: size[1] - anchor[1],
-        yunits: ol.style.Icon.AnchorUnits.PIXELS
+        yunits: ol.style.IconAnchorUnits.PIXELS
       };
       properties['hotSpot'] = hotSpot;
     }
@@ -2324,6 +2390,21 @@ ol.format.KML.writePlacemark_ = function(node, feature, objectStack) {
   // serialize properties (properties unknown to KML are not serialized)
   var properties = feature.getProperties();
 
+  // don't export these to ExtendedData
+  var filter = {'address': 1, 'description': 1, 'name': 1, 'open': 1,
+    'phoneNumber': 1, 'styleUrl': 1, 'visibility': 1};
+  filter[feature.getGeometryName()] = 1;
+  var keys = Object.keys(properties || {}).sort().filter(function(v) {
+    return !filter[v];
+  });
+
+  if (keys.length > 0) {
+    var sequence = ol.xml.makeSequence(properties, keys);
+    var namesAndValues = {names: keys, values: sequence};
+    ol.xml.pushSerializeAndPop(context, ol.format.KML.PLACEMARK_SERIALIZERS_,
+      ol.format.KML.EXTENDEDDATA_NODE_FACTORY_, [namesAndValues], objectStack);
+  }
+
   var styleFunction = feature.getStyleFunction();
   if (styleFunction) {
     // FIXME the styles returned by the style function are supposed to be
@@ -2365,12 +2446,6 @@ ol.format.KML.writePlacemark_ = function(node, feature, objectStack) {
  * @private
  */
 ol.format.KML.writePrimitiveGeometry_ = function(node, geometry, objectStack) {
-  ol.DEBUG && console.assert(
-      (geometry instanceof ol.geom.Point) ||
-      (geometry instanceof ol.geom.LineString) ||
-      (geometry instanceof ol.geom.LinearRing),
-      'geometry should be one of ol.geom.Point, ol.geom.LineString ' +
-      'or ol.geom.LinearRing');
   var flatCoordinates = geometry.getFlatCoordinates();
   var /** @type {ol.XmlNodeStackItem} */ context = {node: node};
   context['layout'] = geometry.getLayout();
@@ -2390,8 +2465,6 @@ ol.format.KML.writePrimitiveGeometry_ = function(node, geometry, objectStack) {
  */
 ol.format.KML.writePolygon_ = function(node, polygon, objectStack) {
   var linearRings = polygon.getLinearRings();
-  ol.DEBUG && console.assert(linearRings.length > 0,
-      'linearRings should not be empty');
   var outerRing = linearRings.shift();
   var /** @type {ol.XmlNodeStackItem} */ context = {node: node};
   // inner rings
@@ -2428,7 +2501,7 @@ ol.format.KML.writePolyStyle_ = function(node, style, objectStack) {
 ol.format.KML.writeScaleTextNode_ = function(node, scale) {
   // the Math is to remove any excess decimals created by float arithmetic
   ol.format.XSD.writeDecimalTextNode(node,
-      Math.round(scale * scale * 1e6) / 1e6);
+      Math.round(scale * 1e6) / 1e6);
 };
 
 
@@ -2509,6 +2582,19 @@ ol.format.KML.KML_SERIALIZERS_ = ol.xml.makeStructureNS(
 ol.format.KML.DOCUMENT_SERIALIZERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
       'Placemark': ol.xml.makeChildAppender(ol.format.KML.writePlacemark_)
+    });
+
+
+/**
+ * @const
+ * @type {Object.<string, Object.<string, ol.XmlSerializer>>}
+ * @private
+ */
+ol.format.KML.EXTENDEDDATA_NODE_SERIALIZERS_ = ol.xml.makeStructureNS(
+    ol.format.KML.NAMESPACE_URIS_, {
+      'Data': ol.xml.makeChildAppender(ol.format.KML.writeDataNode_),
+      'value': ol.xml.makeChildAppender(ol.format.KML.writeDataNodeValue_),
+      'displayName': ol.xml.makeChildAppender(ol.format.KML.writeDataNodeName_)
     });
 
 
@@ -2679,6 +2765,8 @@ ol.format.KML.PLACEMARK_SEQUENCE_ = ol.xml.makeStructureNS(
  */
 ol.format.KML.PLACEMARK_SERIALIZERS_ = ol.xml.makeStructureNS(
     ol.format.KML.NAMESPACE_URIS_, {
+      'ExtendedData': ol.xml.makeChildAppender(
+          ol.format.KML.writeExtendedData_),
       'MultiGeometry': ol.xml.makeChildAppender(
           ol.format.KML.writeMultiGeometry_),
       'LineString': ol.xml.makeChildAppender(
@@ -2789,8 +2877,6 @@ ol.format.KML.GX_NODE_FACTORY_ = function(value, objectStack, opt_nodeName) {
 ol.format.KML.DOCUMENT_NODE_FACTORY_ = function(value, objectStack,
     opt_nodeName) {
   var parentNode = objectStack[objectStack.length - 1].node;
-  ol.DEBUG && console.assert(ol.xml.isNode(parentNode),
-      'parentNode should be an XML node');
   return ol.xml.createElementNS(parentNode.namespaceURI, 'Placemark');
 };
 
@@ -2807,8 +2893,6 @@ ol.format.KML.GEOMETRY_NODE_FACTORY_ = function(value, objectStack,
     opt_nodeName) {
   if (value) {
     var parentNode = objectStack[objectStack.length - 1].node;
-    ol.DEBUG && console.assert(ol.xml.isNode(parentNode),
-        'parentNode should be an XML node');
     return ol.xml.createElementNS(parentNode.namespaceURI,
         ol.format.KML.GEOMETRY_TYPE_TO_NODENAME_[/** @type {ol.geom.Geometry} */ (value).getType()]);
   }
@@ -2832,6 +2916,26 @@ ol.format.KML.COLOR_NODE_FACTORY_ = ol.xml.makeSimpleNodeFactory('color');
  */
 ol.format.KML.COORDINATES_NODE_FACTORY_ =
     ol.xml.makeSimpleNodeFactory('coordinates');
+
+
+/**
+ * A factory for creating Data nodes.
+ * @const
+ * @type {function(*, Array.<*>): (Node|undefined)}
+ * @private
+ */
+ol.format.KML.DATA_NODE_FACTORY_ =
+    ol.xml.makeSimpleNodeFactory('Data');
+
+
+/**
+ * A factory for creating ExtendedData nodes.
+ * @const
+ * @type {function(*, Array.<*>): (Node|undefined)}
+ * @private
+ */
+ol.format.KML.EXTENDEDDATA_NODE_FACTORY_ =
+    ol.xml.makeSimpleNodeFactory('ExtendedData');
 
 
 /**
@@ -2902,7 +3006,7 @@ ol.format.KML.OUTER_BOUNDARY_NODE_FACTORY_ =
  * @param {Array.<ol.Feature>} features Features.
  * @param {olx.format.WriteOptions=} opt_options Options.
  * @return {string} Result.
- * @api stable
+ * @api
  */
 ol.format.KML.prototype.writeFeatures;
 
@@ -2914,6 +3018,7 @@ ol.format.KML.prototype.writeFeatures;
  * @param {Array.<ol.Feature>} features Features.
  * @param {olx.format.WriteOptions=} opt_options Options.
  * @return {Node} Node.
+ * @override
  * @api
  */
 ol.format.KML.prototype.writeFeaturesNode = function(features, opt_options) {

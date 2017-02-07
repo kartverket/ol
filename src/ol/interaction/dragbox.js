@@ -32,7 +32,7 @@ ol.DRAG_BOX_HYSTERESIS_PIXELS_SQUARED =
  * @extends {ol.interaction.Pointer}
  * @fires ol.interaction.DragBox.Event
  * @param {olx.interaction.DragBoxOptions=} opt_options Options.
- * @api stable
+ * @api
  */
 ol.interaction.DragBox = function(opt_options) {
 
@@ -103,7 +103,7 @@ ol.interaction.DragBox.handleDragEvent_ = function(mapBrowserEvent) {
 
   this.box_.setPixels(this.startPixel_, mapBrowserEvent.pixel);
 
-  this.dispatchEvent(new ol.interaction.DragBox.Event(ol.interaction.DragBox.EventType.BOXDRAG,
+  this.dispatchEvent(new ol.interaction.DragBox.Event(ol.interaction.DragBox.EventType_.BOXDRAG,
     mapBrowserEvent.coordinate, mapBrowserEvent));
 };
 
@@ -111,7 +111,7 @@ ol.interaction.DragBox.handleDragEvent_ = function(mapBrowserEvent) {
 /**
  * Returns geometry of last drawn box.
  * @return {ol.geom.Polygon} Geometry.
- * @api stable
+ * @api
  */
 ol.interaction.DragBox.prototype.getGeometry = function() {
   return this.box_.getGeometry();
@@ -143,7 +143,7 @@ ol.interaction.DragBox.handleUpEvent_ = function(mapBrowserEvent) {
   if (this.boxEndCondition_(mapBrowserEvent,
       this.startPixel_, mapBrowserEvent.pixel)) {
     this.onBoxEnd(mapBrowserEvent);
-    this.dispatchEvent(new ol.interaction.DragBox.Event(ol.interaction.DragBox.EventType.BOXEND,
+    this.dispatchEvent(new ol.interaction.DragBox.Event(ol.interaction.DragBox.EventType_.BOXEND,
         mapBrowserEvent.coordinate, mapBrowserEvent));
   }
   return false;
@@ -166,7 +166,7 @@ ol.interaction.DragBox.handleDownEvent_ = function(mapBrowserEvent) {
     this.startPixel_ = mapBrowserEvent.pixel;
     this.box_.setMap(mapBrowserEvent.map);
     this.box_.setPixels(this.startPixel_, this.startPixel_);
-    this.dispatchEvent(new ol.interaction.DragBox.Event(ol.interaction.DragBox.EventType.BOXSTART,
+    this.dispatchEvent(new ol.interaction.DragBox.Event(ol.interaction.DragBox.EventType_.BOXSTART,
         mapBrowserEvent.coordinate, mapBrowserEvent));
     return true;
   } else {
@@ -177,12 +177,13 @@ ol.interaction.DragBox.handleDownEvent_ = function(mapBrowserEvent) {
 
 /**
  * @enum {string}
+ * @private
  */
-ol.interaction.DragBox.EventType = {
+ol.interaction.DragBox.EventType_ = {
   /**
    * Triggered upon drag box start.
    * @event ol.interaction.DragBox.Event#boxstart
-   * @api stable
+   * @api
    */
   BOXSTART: 'boxstart',
 
@@ -196,7 +197,7 @@ ol.interaction.DragBox.EventType = {
   /**
    * Triggered upon drag box end.
    * @event ol.interaction.DragBox.Event#boxend
-   * @api stable
+   * @api
    */
   BOXEND: 'boxend'
 };
@@ -221,7 +222,7 @@ ol.interaction.DragBox.Event = function(type, coordinate, mapBrowserEvent) {
    * The coordinate of the drag event.
    * @const
    * @type {ol.Coordinate}
-   * @api stable
+   * @api
    */
   this.coordinate = coordinate;
 

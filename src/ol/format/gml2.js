@@ -100,9 +100,6 @@ ol.format.GML2.prototype.readFlatCoordinates_ = function(node, objectStack) {
  * @return {ol.Extent|undefined} Envelope.
  */
 ol.format.GML2.prototype.readBox_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'Box', 'localName should be Box');
   /** @type {Array.<number>} */
   var flatCoordinates = ol.xml.pushParseAndPop([null],
       this.BOX_PARSERS_, node, objectStack, this);
@@ -118,20 +115,12 @@ ol.format.GML2.prototype.readBox_ = function(node, objectStack) {
  * @private
  */
 ol.format.GML2.prototype.innerBoundaryIsParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'innerBoundaryIs',
-      'localName should be innerBoundaryIs');
   /** @type {Array.<number>|undefined} */
   var flatLinearRing = ol.xml.pushParseAndPop(undefined,
       this.RING_PARSERS, node, objectStack, this);
   if (flatLinearRing) {
     var flatLinearRings = /** @type {Array.<Array.<number>>} */
         (objectStack[objectStack.length - 1]);
-    ol.DEBUG && console.assert(Array.isArray(flatLinearRings),
-        'flatLinearRings should be an array');
-    ol.DEBUG && console.assert(flatLinearRings.length > 0,
-        'flatLinearRings should have an array length larger than 0');
     flatLinearRings.push(flatLinearRing);
   }
 };
@@ -143,20 +132,12 @@ ol.format.GML2.prototype.innerBoundaryIsParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.GML2.prototype.outerBoundaryIsParser_ = function(node, objectStack) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'outerBoundaryIs',
-      'localName should be outerBoundaryIs');
   /** @type {Array.<number>|undefined} */
   var flatLinearRing = ol.xml.pushParseAndPop(undefined,
       this.RING_PARSERS, node, objectStack, this);
   if (flatLinearRing) {
     var flatLinearRings = /** @type {Array.<Array.<number>>} */
         (objectStack[objectStack.length - 1]);
-    ol.DEBUG && console.assert(Array.isArray(flatLinearRings),
-        'flatLinearRings should be an array');
-    ol.DEBUG && console.assert(flatLinearRings.length > 0,
-        'flatLinearRings should have an array length larger than 0');
     flatLinearRings[0] = flatLinearRing;
   }
 };
@@ -168,7 +149,7 @@ ol.format.GML2.prototype.outerBoundaryIsParser_ = function(node, objectStack) {
  * @private
  */
 ol.format.GML2.prototype.GEOMETRY_FLAT_COORDINATES_PARSERS_ = {
-  'http://www.opengis.net/gml' : {
+  'http://www.opengis.net/gml': {
     'coordinates': ol.xml.makeReplacer(
         ol.format.GML2.prototype.readFlatCoordinates_)
   }
@@ -181,7 +162,7 @@ ol.format.GML2.prototype.GEOMETRY_FLAT_COORDINATES_PARSERS_ = {
  * @private
  */
 ol.format.GML2.prototype.FLAT_LINEAR_RINGS_PARSERS_ = {
-  'http://www.opengis.net/gml' : {
+  'http://www.opengis.net/gml': {
     'innerBoundaryIs': ol.format.GML2.prototype.innerBoundaryIsParser_,
     'outerBoundaryIs': ol.format.GML2.prototype.outerBoundaryIsParser_
   }
@@ -194,7 +175,7 @@ ol.format.GML2.prototype.FLAT_LINEAR_RINGS_PARSERS_ = {
  * @private
  */
 ol.format.GML2.prototype.BOX_PARSERS_ = {
-  'http://www.opengis.net/gml' : {
+  'http://www.opengis.net/gml': {
     'coordinates': ol.xml.makeArrayPusher(
         ol.format.GML2.prototype.readFlatCoordinates_)
   }
@@ -207,7 +188,7 @@ ol.format.GML2.prototype.BOX_PARSERS_ = {
  * @private
  */
 ol.format.GML2.prototype.GEOMETRY_PARSERS_ = {
-  'http://www.opengis.net/gml' : {
+  'http://www.opengis.net/gml': {
     'Point': ol.xml.makeReplacer(ol.format.GMLBase.prototype.readPoint),
     'MultiPoint': ol.xml.makeReplacer(
         ol.format.GMLBase.prototype.readMultiPoint),
@@ -215,7 +196,7 @@ ol.format.GML2.prototype.GEOMETRY_PARSERS_ = {
         ol.format.GMLBase.prototype.readLineString),
     'MultiLineString': ol.xml.makeReplacer(
         ol.format.GMLBase.prototype.readMultiLineString),
-    'LinearRing' : ol.xml.makeReplacer(
+    'LinearRing': ol.xml.makeReplacer(
         ol.format.GMLBase.prototype.readLinearRing),
     'Polygon': ol.xml.makeReplacer(ol.format.GMLBase.prototype.readPolygon),
     'MultiPolygon': ol.xml.makeReplacer(

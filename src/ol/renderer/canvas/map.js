@@ -7,21 +7,13 @@ goog.require('ol');
 goog.require('ol.array');
 goog.require('ol.css');
 goog.require('ol.dom');
-goog.require('ol.layer.Image');
 goog.require('ol.layer.Layer');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.layer.VectorTile');
 goog.require('ol.render.Event');
 goog.require('ol.render.EventType');
 goog.require('ol.render.canvas');
 goog.require('ol.render.canvas.Immediate');
 goog.require('ol.renderer.Map');
 goog.require('ol.renderer.Type');
-goog.require('ol.renderer.canvas.ImageLayer');
-goog.require('ol.renderer.canvas.TileLayer');
-goog.require('ol.renderer.canvas.VectorLayer');
-goog.require('ol.renderer.canvas.VectorTileLayer');
 goog.require('ol.source.State');
 
 
@@ -49,6 +41,7 @@ ol.renderer.canvas.Map = function(container, map) {
 
   this.canvas_.style.width = '100%';
   this.canvas_.style.height = '100%';
+  this.canvas_.style.display = 'block';
   this.canvas_.className = ol.css.CLASS_UNSELECTABLE;
   container.insertBefore(this.canvas_, container.childNodes[0] || null);
 
@@ -66,25 +59,6 @@ ol.renderer.canvas.Map = function(container, map) {
 
 };
 ol.inherits(ol.renderer.canvas.Map, ol.renderer.Map);
-
-
-/**
- * @inheritDoc
- */
-ol.renderer.canvas.Map.prototype.createLayerRenderer = function(layer) {
-  if (ol.ENABLE_IMAGE && layer instanceof ol.layer.Image) {
-    return new ol.renderer.canvas.ImageLayer(layer);
-  } else if (ol.ENABLE_TILE && layer instanceof ol.layer.Tile) {
-    return new ol.renderer.canvas.TileLayer(layer);
-  } else if (ol.ENABLE_VECTOR_TILE && layer instanceof ol.layer.VectorTile) {
-    return new ol.renderer.canvas.VectorTileLayer(layer);
-  } else if (ol.ENABLE_VECTOR && layer instanceof ol.layer.Vector) {
-    return new ol.renderer.canvas.VectorLayer(layer);
-  } else {
-    ol.DEBUG && console.assert(false, 'unexpected layer configuration');
-    return null;
-  }
-};
 
 
 /**
@@ -200,4 +174,37 @@ ol.renderer.canvas.Map.prototype.renderFrame = function(frameState) {
 
   this.scheduleRemoveUnusedLayerRenderers(frameState);
   this.scheduleExpireIconCache(frameState);
+};
+
+
+/**
+ * @inheritDoc
+ */
+ol.renderer.canvas.Map.prototype.forEachLayerAtPixel = function(pixel, frameState, callback, thisArg,
+        layerFilter, thisArg2) {
+  var result;
+  var viewState = frameState.viewState;
+  var viewResolution = viewState.resolution;
+
+  var layerStates = frameState.layerStatesArray;
+  var numLayers = layerStates.length;
+
+  var coordinate = ol.transform.apply(
+      frameState.pixelToCoordinateTransform, pixel.slice());
+
+  var i;
+  for (i = numLayers - 1; i >= 0; --i) {
+    var layerState = layerStates[i];
+    var layer = layerState.layer;
+    if (ol.layer.Layer.visibleAtResolution(layerState, viewResolution) &&
+        layerFilter.call(thisArg2, layer)) {
+      var layerRenderer = /** @type {ol.renderer.canvas.Layer} */ (this.getLayerRenderer(layer));
+      result = layerRenderer.forEachLayerAtCoordinate(
+          coordinate, frameState, callback, thisArg);
+      if (result) {
+        return result;
+      }
+    }
+  }
+  return undefined;
 };

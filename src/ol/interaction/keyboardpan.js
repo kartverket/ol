@@ -23,7 +23,7 @@ goog.require('ol.interaction.Interaction');
  * @constructor
  * @extends {ol.interaction.Interaction}
  * @param {olx.interaction.KeyboardPanOptions=} opt_options Options.
- * @api stable
+ * @api
  */
 ol.interaction.KeyboardPan = function(opt_options) {
 
@@ -100,7 +100,7 @@ ol.interaction.KeyboardPan.handleEvent = function(mapBrowserEvent) {
       }
       var delta = [deltaX, deltaY];
       ol.coordinate.rotate(delta, view.getRotation());
-      ol.interaction.Interaction.pan(map, view, delta, this.duration_);
+      ol.interaction.Interaction.pan(view, delta, this.duration_);
       mapBrowserEvent.preventDefault();
       stopEvent = true;
     }

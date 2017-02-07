@@ -2,7 +2,7 @@ goog.provide('ol.source.Zoomify');
 
 goog.require('ol');
 goog.require('ol.ImageTile');
-goog.require('ol.Tile');
+goog.require('ol.TileState');
 goog.require('ol.asserts');
 goog.require('ol.dom');
 goog.require('ol.extent');
@@ -17,7 +17,7 @@ goog.require('ol.tilegrid.TileGrid');
  * @constructor
  * @extends {ol.source.TileImage}
  * @param {olx.source.ZoomifyOptions=} opt_options Options.
- * @api stable
+ * @api
  */
 ol.source.Zoomify = function(opt_options) {
 
@@ -26,7 +26,7 @@ ol.source.Zoomify = function(opt_options) {
   var size = options.size;
   var tierSizeCalculation = options.tierSizeCalculation !== undefined ?
       options.tierSizeCalculation :
-      ol.source.Zoomify.TierSizeCalculation.DEFAULT;
+      ol.source.Zoomify.TierSizeCalculation_.DEFAULT;
 
   var imageWidth = size[0];
   var imageHeight = size[1];
@@ -34,7 +34,7 @@ ol.source.Zoomify = function(opt_options) {
   var tileSize = ol.DEFAULT_TILE_SIZE;
 
   switch (tierSizeCalculation) {
-    case ol.source.Zoomify.TierSizeCalculation.DEFAULT:
+    case ol.source.Zoomify.TierSizeCalculation_.DEFAULT:
       while (imageWidth > tileSize || imageHeight > tileSize) {
         tierSizeInTiles.push([
           Math.ceil(imageWidth / tileSize),
@@ -43,7 +43,7 @@ ol.source.Zoomify = function(opt_options) {
         tileSize += tileSize;
       }
       break;
-    case ol.source.Zoomify.TierSizeCalculation.TRUNCATED:
+    case ol.source.Zoomify.TierSizeCalculation_.TRUNCATED:
       var width = imageWidth;
       var height = imageHeight;
       while (width > tileSize || height > tileSize) {
@@ -113,6 +113,7 @@ ol.source.Zoomify = function(opt_options) {
     cacheSize: options.cacheSize,
     crossOrigin: options.crossOrigin,
     logo: options.logo,
+    projection: options.projection,
     reprojectionErrorThreshold: options.reprojectionErrorThreshold,
     tileClass: ol.source.Zoomify.Tile_,
     tileGrid: tileGrid,
@@ -127,7 +128,7 @@ ol.inherits(ol.source.Zoomify, ol.source.TileImage);
  * @constructor
  * @extends {ol.ImageTile}
  * @param {ol.TileCoord} tileCoord Tile coordinate.
- * @param {ol.Tile.State} state State.
+ * @param {ol.TileState} state State.
  * @param {string} src Image source URI.
  * @param {?string} crossOrigin Cross origin.
  * @param {ol.TileLoadFunctionType} tileLoadFunction Tile load function.
@@ -157,7 +158,7 @@ ol.source.Zoomify.Tile_.prototype.getImage = function() {
   }
   var tileSize = ol.DEFAULT_TILE_SIZE;
   var image = ol.ImageTile.prototype.getImage.call(this);
-  if (this.state == ol.Tile.State.LOADED) {
+  if (this.state == ol.TileState.LOADED) {
     if (image.width == tileSize && image.height == tileSize) {
       this.zoomifyImage_ = image;
       return image;
@@ -175,8 +176,9 @@ ol.source.Zoomify.Tile_.prototype.getImage = function() {
 
 /**
  * @enum {string}
+ * @private
  */
-ol.source.Zoomify.TierSizeCalculation = {
+ol.source.Zoomify.TierSizeCalculation_ = {
   DEFAULT: 'default',
   TRUNCATED: 'truncated'
 };

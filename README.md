@@ -1,16 +1,17 @@
-# OpenLayers 3
+# OpenLayers
 
-[![Travis CI Status](https://secure.travis-ci.org/openlayers/ol3.svg)](http://travis-ci.org/#!/openlayers/ol3)
-[![Coverage Status](https://coveralls.io/repos/openlayers/ol3/badge.svg?branch=master)](https://coveralls.io/r/openlayers/ol3?branch=master)
+[![Travis CI Status](https://secure.travis-ci.org/openlayers/openlayers.svg)](http://travis-ci.org/#!/openlayers/openlayers)
+[![Greenkeeper badge](https://badges.greenkeeper.io/openlayers/openlayers.svg)](https://greenkeeper.io/)
+[![Coverage Status](https://coveralls.io/repos/github/openlayers/openlayers/badge.svg?branch=master)](https://coveralls.io/github/openlayers/openlayers?branch=master)
 [![OSGeo Project](https://img.shields.io/badge/OSGeo-Project-brightgreen.svg)](http://osgeo.org/)
 
-[OpenLayers 3](http://openlayers.org/) is a high-performance, feature-packed library for creating interactive maps on the web. It can display map tiles, vector data and markers loaded from any source on any web page. OpenLayers has been developed to further the use of geographic information of all kinds. It is completely free, Open Source JavaScript, released under the 2-clause BSD License (also known as the FreeBSD).
+[OpenLayers](https://openlayers.org/) is a high-performance, feature-packed library for creating interactive maps on the web. It can display map tiles, vector data and markers loaded from any source on any web page. OpenLayers has been developed to further the use of geographic information of all kinds. It is completely free, Open Source JavaScript, released under the 2-clause BSD License (also known as the FreeBSD).
 
 ## Getting Started
 
-- Download the [latest release](http://openlayers.org/download/)
+- Download the [latest release](https://openlayers.org/download/)
 - Install with npm: `npm install openlayers`
-- Clone the repo: `git clone git@github.com:openlayers/ol3.git`
+- Clone the repo: `git clone git@github.com:openlayers/openlayers.git`
 
 ## Supported Browsers
 
@@ -18,11 +19,11 @@ OpenLayers runs on all modern browsers that support [HTML5](https://html.spec.wh
 
 ## Documentation
 
-Check out the [hosted examples](http://openlayers.org/en/latest/examples/), the [workshop](http://openlayers.org/workshop/) or the [API documentation](http://openlayers.org/en/latest/apidoc/).
+Check out the [hosted examples](https://openlayers.org/en/latest/examples/), the [workshop](https://openlayers.org/workshop/) or the [API documentation](https://openlayers.org/en/latest/apidoc/).
 
 ## Bugs
 
-Please use the [GitHub issue tracker](https://github.com/openlayers/ol3/issues) for all bugs and feature requests. Before creating a new issue, do a quick search to see if the problem has been reported already.
+Please use the [GitHub issue tracker](https://github.com/openlayers/openlayers/issues) for all bugs and feature requests. Before creating a new issue, do a quick search to see if the problem has been reported already.
 
 ## Contributing
 
