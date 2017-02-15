@@ -15,7 +15,8 @@ goog.require('ol.proj');
  * file formats.  See the documentation for each format for more details.
  *
  * @constructor
- * @api stable
+ * @abstract
+ * @api
  */
 ol.format.Feature = function() {
 
@@ -32,13 +33,6 @@ ol.format.Feature = function() {
   this.defaultFeatureProjection = null;
 
 };
-
-
-/**
- * @abstract
- * @return {Array.<string>} Extensions.
- */
-ol.format.Feature.prototype.getExtensions = function() {};
 
 
 /**

@@ -1,11 +1,10 @@
 goog.provide('ol.source.VectorTile');
 
 goog.require('ol');
-goog.require('ol.Tile');
+goog.require('ol.TileState');
 goog.require('ol.VectorTile');
 goog.require('ol.events');
 goog.require('ol.events.EventType');
-goog.require('ol.featureloader');
 goog.require('ol.size');
 goog.require('ol.source.UrlTile');
 
@@ -38,7 +37,7 @@ ol.source.VectorTile = function(options) {
     state: options.state,
     tileGrid: options.tileGrid,
     tileLoadFunction: options.tileLoadFunction ?
-        options.tileLoadFunction : ol.source.VectorTile.defaultTileLoadFunction,
+        options.tileLoadFunction : ol.VectorTile.defaultLoadFunction,
     tileUrlFunction: options.tileUrlFunction,
     tilePixelRatio: options.tilePixelRatio,
     url: options.url,
@@ -60,7 +59,7 @@ ol.source.VectorTile = function(options) {
 
   /**
    * @protected
-   * @type {function(new: ol.VectorTile, ol.TileCoord, ol.Tile.State, string,
+   * @type {function(new: ol.VectorTile, ol.TileCoord, ol.TileState, string,
    *        ol.format.Feature, ol.TileLoadFunctionType)}
    */
   this.tileClass = options.tileClass ? options.tileClass : ol.VectorTile;
@@ -92,7 +91,7 @@ ol.source.VectorTile.prototype.getTile = function(z, x, y, pixelRatio, projectio
         this.tileUrlFunction(urlTileCoord, pixelRatio, projection) : undefined;
     var tile = new this.tileClass(
         tileCoord,
-        tileUrl !== undefined ? ol.Tile.State.IDLE : ol.Tile.State.EMPTY,
+        tileUrl !== undefined ? ol.TileState.IDLE : ol.TileState.EMPTY,
         tileUrl !== undefined ? tileUrl : '',
         this.format_, this.tileLoadFunction);
     ol.events.listen(tile, ol.events.EventType.CHANGE,
@@ -120,13 +119,4 @@ ol.source.VectorTile.prototype.getTilePixelRatio = function(opt_pixelRatio) {
 ol.source.VectorTile.prototype.getTilePixelSize = function(z, pixelRatio, projection) {
   var tileSize = ol.size.toSize(this.tileGrid.getTileSize(z));
   return [Math.round(tileSize[0] * pixelRatio), Math.round(tileSize[1] * pixelRatio)];
-};
-
-
-/**
- * @param {ol.VectorTile} vectorTile Vector tile.
- * @param {string} url URL.
- */
-ol.source.VectorTile.defaultTileLoadFunction = function(vectorTile, url) {
-  vectorTile.setLoader(ol.featureloader.tile(url, vectorTile.getFormat()));
 };

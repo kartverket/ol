@@ -6,6 +6,7 @@ goog.require('ol.events.Event');
 goog.require('ol.functions');
 goog.require('ol.array');
 goog.require('ol.interaction.Pointer');
+goog.require('ol.interaction.TranslateEventType');
 
 
 /**
@@ -71,6 +72,12 @@ ol.interaction.Translate = function(opt_options) {
   this.layerFilter_ = layerFilter;
 
   /**
+   * @private
+   * @type {number}
+   */
+  this.hitTolerance_ = options.hitTolerance ? options.hitTolerance : 0;
+
+  /**
    * @type {ol.Feature}
    * @private
    */
@@ -95,7 +102,7 @@ ol.interaction.Translate.handleDownEvent_ = function(event) {
 
     this.dispatchEvent(
         new ol.interaction.Translate.Event(
-            ol.interaction.Translate.EventType.TRANSLATESTART, features,
+            ol.interaction.TranslateEventType.TRANSLATESTART, features,
             event.coordinate));
     return true;
   }
@@ -118,7 +125,7 @@ ol.interaction.Translate.handleUpEvent_ = function(event) {
 
     this.dispatchEvent(
         new ol.interaction.Translate.Event(
-            ol.interaction.Translate.EventType.TRANSLATEEND, features,
+            ol.interaction.TranslateEventType.TRANSLATEEND, features,
             event.coordinate));
     return true;
   }
@@ -148,7 +155,7 @@ ol.interaction.Translate.handleDragEvent_ = function(event) {
     this.lastCoordinate_ = newCoordinate;
     this.dispatchEvent(
         new ol.interaction.Translate.Event(
-            ol.interaction.Translate.EventType.TRANSLATING, features,
+            ol.interaction.TranslateEventType.TRANSLATING, features,
             newCoordinate));
   }
 };
@@ -165,7 +172,8 @@ ol.interaction.Translate.handleMoveEvent_ = function(event) {
   // Change the cursor to grab/grabbing if hovering any of the features managed
   // by the interaction
   if (this.featuresAtPixel_(event.pixel, event.map)) {
-    this.previousCursor_ = elem.style.cursor;
+    this.previousCursor_ = this.previousCursor_ !== undefined ?
+        this.previousCursor_ : elem.style.cursor;
     // WebKit browsers don't support the grab icons without a prefix
     elem.style.cursor = this.lastCoordinate_ ?
         '-webkit-grabbing' : '-webkit-grab';
@@ -173,9 +181,8 @@ ol.interaction.Translate.handleMoveEvent_ = function(event) {
     // Thankfully, attempting to set the standard ones will silently fail,
     // keeping the prefixed icons
     elem.style.cursor = this.lastCoordinate_ ?  'grabbing' : 'grab';
-  } else {
-    elem.style.cursor = this.previousCursor_ !== undefined ?
-        this.previousCursor_ : '';
+  } else if (this.previousCursor_ !== undefined) {
+    elem.style.cursor = this.previousCursor_;
     this.previousCursor_ = undefined;
   }
 };
@@ -197,7 +204,32 @@ ol.interaction.Translate.prototype.featuresAtPixel_ = function(pixel, map) {
             ol.array.includes(this.features_.getArray(), feature)) {
           return feature;
         }
-      }, this, this.layerFilter_);
+      }.bind(this), {
+        layerFilter: this.layerFilter_,
+        hitTolerance: this.hitTolerance_
+      });
+};
+
+
+/**
+ * Returns the Hit-detection tolerance.
+ * @returns {number} Hit tolerance in pixels.
+ * @api
+ */
+ol.interaction.Translate.prototype.getHitTolerance = function() {
+  return this.hitTolerance_;
+};
+
+
+/**
+ * Hit-detection tolerance. Pixels inside the radius around the given position
+ * will be checked for features. This only works for the canvas renderer and
+ * not for WebGL.
+ * @param {number} hitTolerance Hit tolerance in pixels.
+ * @api
+ */
+ol.interaction.Translate.prototype.setHitTolerance = function(hitTolerance) {
+  this.hitTolerance_ = hitTolerance;
 };
 
 
@@ -209,7 +241,7 @@ ol.interaction.Translate.prototype.featuresAtPixel_ = function(pixel, map) {
  * @constructor
  * @extends {ol.events.Event}
  * @implements {oli.interaction.TranslateEvent}
- * @param {ol.interaction.Translate.EventType} type Type.
+ * @param {ol.interaction.TranslateEventType} type Type.
  * @param {ol.Collection.<ol.Feature>} features The features translated.
  * @param {ol.Coordinate} coordinate The event coordinate.
  */
@@ -233,28 +265,3 @@ ol.interaction.Translate.Event = function(type, features, coordinate) {
   this.coordinate = coordinate;
 };
 ol.inherits(ol.interaction.Translate.Event, ol.events.Event);
-
-
-/**
- * @enum {string}
- */
-ol.interaction.Translate.EventType = {
-  /**
-   * Triggered upon feature translation start.
-   * @event ol.interaction.Translate.Event#translatestart
-   * @api
-   */
-  TRANSLATESTART: 'translatestart',
-  /**
-   * Triggered upon feature translation.
-   * @event ol.interaction.Translate.Event#translating
-   * @api
-   */
-  TRANSLATING: 'translating',
-  /**
-   * Triggered upon feature translation end.
-   * @event ol.interaction.Translate.Event#translateend
-   * @api
-   */
-  TRANSLATEEND: 'translateend'
-};

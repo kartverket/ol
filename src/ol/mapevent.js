@@ -23,7 +23,7 @@ ol.MapEvent = function(type, map, opt_frameState) {
   /**
    * The map where the event occurred.
    * @type {ol.Map}
-   * @api stable
+   * @api
    */
   this.map = map;
 
@@ -36,25 +36,3 @@ ol.MapEvent = function(type, map, opt_frameState) {
 
 };
 ol.inherits(ol.MapEvent, ol.events.Event);
-
-
-/**
- * @enum {string}
- */
-ol.MapEvent.Type = {
-
-  /**
-   * Triggered after a map frame is rendered.
-   * @event ol.MapEvent#postrender
-   * @api
-   */
-  POSTRENDER: 'postrender',
-
-  /**
-   * Triggered after the map is moved.
-   * @event ol.MapEvent#moveend
-   * @api stable
-   */
-  MOVEEND: 'moveend'
-
-};

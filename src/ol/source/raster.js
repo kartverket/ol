@@ -1,8 +1,6 @@
 goog.provide('ol.source.Raster');
-goog.provide('ol.RasterOperationType');
 
 goog.require('ol');
-goog.require('ol.transform');
 goog.require('ol.ImageCanvas');
 goog.require('ol.TileQueue');
 goog.require('ol.dom');
@@ -17,18 +15,10 @@ goog.require('ol.obj');
 goog.require('ol.renderer.canvas.ImageLayer');
 goog.require('ol.renderer.canvas.TileLayer');
 goog.require('ol.source.Image');
+goog.require('ol.source.RasterOperationType');
 goog.require('ol.source.State');
 goog.require('ol.source.Tile');
-
-
-/**
- * Raster operation type. Supported values are `'pixel'` and `'image'`.
- * @enum {string}
- */
-ol.RasterOperationType = {
-  PIXEL: 'pixel',
-  IMAGE: 'image'
-};
+goog.require('ol.transform');
 
 
 /**
@@ -53,10 +43,10 @@ ol.source.Raster = function(options) {
 
   /**
    * @private
-   * @type {ol.RasterOperationType}
+   * @type {ol.source.RasterOperationType}
    */
   this.operationType_ = options.operationType !== undefined ?
-      options.operationType : ol.RasterOperationType.PIXEL;
+      options.operationType : ol.source.RasterOperationType.PIXEL;
 
   /**
    * @private
@@ -160,7 +150,7 @@ ol.inherits(ol.source.Raster, ol.source.Image);
 ol.source.Raster.prototype.setOperation = function(operation, opt_lib) {
   this.worker_ = new ol.ext.pixelworks.Processor({
     operation: operation,
-    imageOps: this.operationType_ === ol.RasterOperationType.IMAGE,
+    imageOps: this.operationType_ === ol.source.RasterOperationType.IMAGE,
     queue: 1,
     lib: opt_lib,
     threads: this.threads_
@@ -298,16 +288,19 @@ ol.source.Raster.prototype.composeFrame_ = function(frameState, callback) {
       imageDatas[i] = imageData;
     } else {
       // image not yet ready
-      return;
+      imageDatas = null;
+      break;
     }
   }
 
-  var data = {};
-  this.dispatchEvent(new ol.source.Raster.Event(
-      ol.source.Raster.EventType.BEFOREOPERATIONS, frameState, data));
+  if (imageDatas) {
+    var data = {};
+    this.dispatchEvent(new ol.source.Raster.Event(
+        ol.source.Raster.EventType_.BEFOREOPERATIONS, frameState, data));
 
-  this.worker_.process(imageDatas, data,
-      this.onWorkerComplete_.bind(this, frameState, callback));
+    this.worker_.process(imageDatas, data,
+        this.onWorkerComplete_.bind(this, frameState, callback));
+  }
 
   frameState.tileQueue.loadMoreTiles(16, 16);
 };
@@ -333,7 +326,7 @@ ol.source.Raster.prototype.onWorkerComplete_ = function(frameState, callback, er
   }
 
   this.dispatchEvent(new ol.source.Raster.Event(
-      ol.source.Raster.EventType.AFTEROPERATIONS, frameState, data));
+      ol.source.Raster.EventType_.AFTEROPERATIONS, frameState, data));
 
   var resolution = frameState.viewState.resolution / frameState.pixelRatio;
   if (!this.isDirty_(frameState.extent, resolution)) {
@@ -422,8 +415,6 @@ ol.source.Raster.createRenderer_ = function(source) {
     renderer = ol.source.Raster.createTileRenderer_(source);
   } else if (source instanceof ol.source.Image) {
     renderer = ol.source.Raster.createImageRenderer_(source);
-  } else {
-    ol.DEBUG && console.assert(false, 'Unsupported source type: ' + source);
   }
   return renderer;
 };
@@ -495,9 +486,18 @@ ol.inherits(ol.source.Raster.Event, ol.events.Event);
 
 
 /**
- * @enum {string}
+ * @override
  */
-ol.source.Raster.EventType = {
+ol.source.Raster.prototype.getImageInternal = function() {
+  return null; // not implemented
+};
+
+
+/**
+ * @enum {string}
+ * @private
+ */
+ol.source.Raster.EventType_ = {
   /**
    * Triggered before operations are run.
    * @event ol.source.Raster.Event#beforeoperations

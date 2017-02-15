@@ -25,7 +25,7 @@ var vector = new ol.layer.Vector({
 var raster = new ol.layer.Tile({
   source: new ol.source.BingMaps({
     imagerySet: 'Aerial',
-    key: 'AkGbxXx6tDWf1swIhPJyoAVp06H0s0gDTYslNWWHZ6RoPqMpB9ld5FY1WutX8UoF'
+    key: 'As1HiMj1PvLPlqc_gtM7AqZfBL8ZL3VrjaS3zIb22Uvb9WKhuJObROC-qUpa81U5'
   })
 });
 
@@ -61,5 +61,5 @@ fetch('https://ahocevar.com/geoserver/wfs', {
 }).then(function(json) {
   var features = new ol.format.GeoJSON().readFeatures(json);
   vectorSource.addFeatures(features);
-  map.getView().fit(vectorSource.getExtent(), /** @type {ol.Size} */ (map.getSize()));
+  map.getView().fit(vectorSource.getExtent());
 });

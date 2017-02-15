@@ -3,7 +3,7 @@
 goog.provide('ol.control.ZoomSlider');
 
 goog.require('ol');
-goog.require('ol.View');
+goog.require('ol.ViewHint');
 goog.require('ol.control.Control');
 goog.require('ol.css');
 goog.require('ol.easing');
@@ -26,7 +26,7 @@ goog.require('ol.pointer.PointerEventHandler');
  * @constructor
  * @extends {ol.control.Control}
  * @param {olx.control.ZoomSliderOptions=} opt_options Zoom slider options.
- * @api stable
+ * @api
  */
 ol.control.ZoomSlider = function(opt_options) {
 
@@ -42,24 +42,18 @@ ol.control.ZoomSlider = function(opt_options) {
 
   /**
    * The direction of the slider. Will be determined from actual display of the
-   * container and defaults to ol.control.ZoomSlider.direction.VERTICAL.
+   * container and defaults to ol.control.ZoomSlider.Direction_.VERTICAL.
    *
-   * @type {ol.control.ZoomSlider.direction}
+   * @type {ol.control.ZoomSlider.Direction_}
    * @private
    */
-  this.direction_ = ol.control.ZoomSlider.direction.VERTICAL;
+  this.direction_ = ol.control.ZoomSlider.Direction_.VERTICAL;
 
   /**
    * @type {boolean}
    * @private
    */
   this.dragging_;
-
-  /**
-   * @type {!Array.<ol.EventsKey>}
-   * @private
-   */
-  this.dragListenerKeys_ = [];
 
   /**
    * @type {number}
@@ -154,8 +148,9 @@ ol.control.ZoomSlider.prototype.disposeInternal = function() {
  * The enum for available directions.
  *
  * @enum {number}
+ * @private
  */
-ol.control.ZoomSlider.direction = {
+ol.control.ZoomSlider.Direction_ = {
   VERTICAL: 0,
   HORIZONTAL: 1
 };
@@ -196,10 +191,10 @@ ol.control.ZoomSlider.prototype.initSlider_ = function() {
   this.thumbSize_ = [thumbWidth, thumbHeight];
 
   if (containerSize.width > containerSize.height) {
-    this.direction_ = ol.control.ZoomSlider.direction.HORIZONTAL;
+    this.direction_ = ol.control.ZoomSlider.Direction_.HORIZONTAL;
     this.widthLimit_ = containerSize.width - thumbWidth;
   } else {
-    this.direction_ = ol.control.ZoomSlider.direction.VERTICAL;
+    this.direction_ = ol.control.ZoomSlider.Direction_.VERTICAL;
     this.heightLimit_ = containerSize.height - thumbHeight;
   }
   this.sliderInitialized_ = true;
@@ -254,25 +249,11 @@ ol.control.ZoomSlider.prototype.handleContainerClick_ = function(event) {
  * @private
  */
 ol.control.ZoomSlider.prototype.handleDraggerStart_ = function(event) {
-  if (!this.dragging_ &&
-      event.originalEvent.target === this.element.firstElementChild) {
-    this.getMap().getView().setHint(ol.View.Hint.INTERACTING, 1);
+  if (!this.dragging_ && event.originalEvent.target === this.element.firstElementChild) {
+    this.getMap().getView().setHint(ol.ViewHint.INTERACTING, 1);
     this.previousX_ = event.clientX;
     this.previousY_ = event.clientY;
     this.dragging_ = true;
-
-    if (this.dragListenerKeys_.length === 0) {
-      var drag = this.handleDraggerDrag_;
-      var end = this.handleDraggerEnd_;
-      this.dragListenerKeys_.push(
-        ol.events.listen(document, ol.events.EventType.MOUSEMOVE, drag, this),
-        ol.events.listen(document, ol.events.EventType.TOUCHMOVE, drag, this),
-        ol.events.listen(document, ol.pointer.EventType.POINTERMOVE, drag, this),
-        ol.events.listen(document, ol.events.EventType.MOUSEUP, end, this),
-        ol.events.listen(document, ol.events.EventType.TOUCHEND, end, this),
-        ol.events.listen(document, ol.pointer.EventType.POINTERUP, end, this)
-      );
-    }
   }
 };
 
@@ -306,7 +287,7 @@ ol.control.ZoomSlider.prototype.handleDraggerDrag_ = function(event) {
 ol.control.ZoomSlider.prototype.handleDraggerEnd_ = function(event) {
   if (this.dragging_) {
     var view = this.getMap().getView();
-    view.setHint(ol.View.Hint.INTERACTING, -1);
+    view.setHint(ol.ViewHint.INTERACTING, -1);
 
     view.animate({
       resolution: view.constrainResolution(this.currentResolution_),
@@ -317,8 +298,6 @@ ol.control.ZoomSlider.prototype.handleDraggerEnd_ = function(event) {
     this.dragging_ = false;
     this.previousX_ = undefined;
     this.previousY_ = undefined;
-    this.dragListenerKeys_.forEach(ol.events.unlistenByKey);
-    this.dragListenerKeys_.length = 0;
   }
 };
 
@@ -333,7 +312,7 @@ ol.control.ZoomSlider.prototype.setThumbPosition_ = function(res) {
   var position = this.getPositionForResolution_(res);
   var thumb = this.element.firstElementChild;
 
-  if (this.direction_ == ol.control.ZoomSlider.direction.HORIZONTAL) {
+  if (this.direction_ == ol.control.ZoomSlider.Direction_.HORIZONTAL) {
     thumb.style.left = this.widthLimit_ * position + 'px';
   } else {
     thumb.style.top = this.heightLimit_ * position + 'px';
@@ -353,7 +332,7 @@ ol.control.ZoomSlider.prototype.setThumbPosition_ = function(res) {
  */
 ol.control.ZoomSlider.prototype.getRelativePosition_ = function(x, y) {
   var amount;
-  if (this.direction_ === ol.control.ZoomSlider.direction.HORIZONTAL) {
+  if (this.direction_ === ol.control.ZoomSlider.Direction_.HORIZONTAL) {
     amount = x / this.widthLimit_;
   } else {
     amount = y / this.heightLimit_;

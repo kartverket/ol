@@ -2,14 +2,12 @@ goog.provide('ol.render.canvas.Replay');
 
 goog.require('ol');
 goog.require('ol.array');
-goog.require('ol.colorlike');
 goog.require('ol.extent');
 goog.require('ol.extent.Relationship');
 goog.require('ol.geom.flat.transform');
 goog.require('ol.has');
 goog.require('ol.obj');
 goog.require('ol.render.VectorContext');
-goog.require('ol.render.canvas');
 goog.require('ol.render.canvas.Instruction');
 goog.require('ol.transform');
 
@@ -90,7 +88,7 @@ ol.render.canvas.Replay = function(tolerance, maxExtent, resolution, overlaps) {
 
   /**
    * @private
-   * @type {ol.Transform}
+   * @type {!ol.Transform}
    */
   this.renderedTransform_ = ol.transform.create();
 
@@ -104,17 +102,17 @@ ol.render.canvas.Replay = function(tolerance, maxExtent, resolution, overlaps) {
    * @private
    * @type {Array.<number>}
    */
-  this.pixelCoordinates_ = [];
+  this.pixelCoordinates_ = null;
 
   /**
    * @private
-   * @type {ol.Transform}
+   * @type {!ol.Transform}
    */
   this.tmpLocalTransform_ = ol.transform.create();
 
   /**
    * @private
-   * @type {ol.Transform}
+   * @type {!ol.Transform}
    */
   this.resetTransform_ = ol.transform.create();
 };
@@ -230,15 +228,16 @@ ol.render.canvas.Replay.prototype.replay_ = function(
     instructions, featureCallback, opt_hitExtent) {
   /** @type {Array.<number>} */
   var pixelCoordinates;
-  if (ol.array.equals(transform, this.renderedTransform_)) {
+  if (this.pixelCoordinates_ && ol.array.equals(transform, this.renderedTransform_)) {
     pixelCoordinates = this.pixelCoordinates_;
   } else {
+    if (!this.pixelCoordinates_) {
+      this.pixelCoordinates_ = [];
+    }
     pixelCoordinates = ol.geom.flat.transform.transform2D(
         this.coordinates, 0, this.coordinates.length, 2,
         transform, this.pixelCoordinates_);
     ol.transform.setFromArray(this.renderedTransform_, transform);
-    ol.DEBUG && console.assert(pixelCoordinates === this.pixelCoordinates_,
-        'pixelCoordinates should be the same as this.pixelCoordinates_');
   }
   var skipFeatures = !ol.obj.isEmpty(skippedFeaturesHash);
   var i = 0; // instruction index
@@ -283,12 +282,11 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         }
         if (!pendingFill && !pendingStroke) {
           context.beginPath();
+          prevX = prevY = NaN;
         }
         ++i;
         break;
       case ol.render.canvas.Instruction.CIRCLE:
-        ol.DEBUG && console.assert(typeof instruction[1] === 'number',
-            'second instruction should be a number');
         d = /** @type {number} */ (instruction[1]);
         var x1 = pixelCoordinates[d];
         var y1 = pixelCoordinates[d + 1];
@@ -306,11 +304,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         ++i;
         break;
       case ol.render.canvas.Instruction.DRAW_IMAGE:
-        ol.DEBUG && console.assert(typeof instruction[1] === 'number',
-            'second instruction should be a number');
         d = /** @type {number} */ (instruction[1]);
-        ol.DEBUG && console.assert(typeof instruction[2] === 'number',
-            'third instruction should be a number');
         dd = /** @type {number} */ (instruction[2]);
         var image =  /** @type {HTMLCanvasElement|HTMLVideoElement|Image} */
             (instruction[3]);
@@ -364,32 +358,14 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         ++i;
         break;
       case ol.render.canvas.Instruction.DRAW_TEXT:
-        ol.DEBUG && console.assert(typeof instruction[1] === 'number',
-            '2nd instruction should be a number');
         d = /** @type {number} */ (instruction[1]);
-        ol.DEBUG && console.assert(typeof instruction[2] === 'number',
-            '3rd instruction should be a number');
         dd = /** @type {number} */ (instruction[2]);
-        ol.DEBUG && console.assert(typeof instruction[3] === 'string',
-            '4th instruction should be a string');
         text = /** @type {string} */ (instruction[3]);
-        ol.DEBUG && console.assert(typeof instruction[4] === 'number',
-            '5th instruction should be a number');
         var offsetX = /** @type {number} */ (instruction[4]) * pixelRatio;
-        ol.DEBUG && console.assert(typeof instruction[5] === 'number',
-            '6th instruction should be a number');
         var offsetY = /** @type {number} */ (instruction[5]) * pixelRatio;
-        ol.DEBUG && console.assert(typeof instruction[6] === 'number',
-            '7th instruction should be a number');
         rotation = /** @type {number} */ (instruction[6]);
-        ol.DEBUG && console.assert(typeof instruction[7] === 'number',
-            '8th instruction should be a number');
         scale = /** @type {number} */ (instruction[7]) * pixelRatio;
-        ol.DEBUG && console.assert(typeof instruction[8] === 'boolean',
-            '9th instruction should be a boolean');
         fill = /** @type {boolean} */ (instruction[8]);
-        ol.DEBUG && console.assert(typeof instruction[9] === 'boolean',
-            '10th instruction should be a boolean');
         stroke = /** @type {boolean} */ (instruction[9]);
         rotateWithView = /** @type {boolean} */ (instruction[10]);
         if (rotateWithView) {
@@ -456,11 +432,7 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         ++i;
         break;
       case ol.render.canvas.Instruction.MOVE_TO_LINE_TO:
-        ol.DEBUG && console.assert(typeof instruction[1] === 'number',
-            '2nd instruction should be a number');
         d = /** @type {number} */ (instruction[1]);
-        ol.DEBUG && console.assert(typeof instruction[2] === 'number',
-            '3rd instruction should be a number');
         dd = /** @type {number} */ (instruction[2]);
         x = pixelCoordinates[d];
         y = pixelCoordinates[d + 1];
@@ -485,35 +457,25 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         ++i;
         break;
       case ol.render.canvas.Instruction.SET_FILL_STYLE:
-        ol.DEBUG && console.assert(
-            ol.colorlike.isColorLike(instruction[1]),
-            '2nd instruction should be a string, ' +
-            'CanvasPattern, or CanvasGradient');
         this.fillOrigin_ = instruction[2];
 
         if (pendingFill) {
           this.fill_(context, viewRotation);
           pendingFill = 0;
+          if (pendingStroke) {
+            context.stroke();
+            pendingStroke = 0;
+          }
         }
 
         context.fillStyle = /** @type {ol.ColorLike} */ (instruction[1]);
         ++i;
         break;
       case ol.render.canvas.Instruction.SET_STROKE_STYLE:
-        ol.DEBUG && console.assert(ol.colorlike.isColorLike(instruction[1]),
-            '2nd instruction should be a string, CanvasPattern, or CanvasGradient');
-        ol.DEBUG && console.assert(typeof instruction[2] === 'number',
-            '3rd instruction should be a number');
-        ol.DEBUG && console.assert(typeof instruction[3] === 'string',
-            '4rd instruction should be a string');
-        ol.DEBUG && console.assert(typeof instruction[4] === 'string',
-            '5th instruction should be a string');
-        ol.DEBUG && console.assert(typeof instruction[5] === 'number',
-            '6th instruction should be a number');
-        ol.DEBUG && console.assert(instruction[6],
-            '7th instruction should not be null');
-        var usePixelRatio = instruction[7] !== undefined ?
-            instruction[7] : true;
+        var usePixelRatio = instruction[8] !== undefined ?
+            instruction[8] : true;
+        var renderedPixelRatio = instruction[9];
+
         var lineWidth = /** @type {number} */ (instruction[2]);
         if (pendingStroke) {
           context.stroke();
@@ -525,19 +487,23 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         context.lineJoin = /** @type {string} */ (instruction[4]);
         context.miterLimit = /** @type {number} */ (instruction[5]);
         if (ol.has.CANVAS_LINE_DASH) {
-          context.setLineDash(/** @type {Array.<number>} */ (instruction[6]));
+          var lineDash = /** @type {Array.<number>} */ (instruction[6]);
+          var lineDashOffset = /** @type {number} */ (instruction[7]);
+          if (usePixelRatio && pixelRatio !== renderedPixelRatio) {
+            lineDash = lineDash.map(function(dash) {
+              return dash * pixelRatio / renderedPixelRatio;
+            });
+            lineDashOffset *= pixelRatio / renderedPixelRatio;
+            instruction[6] = lineDash;
+            instruction[7] = lineDashOffset;
+            instruction[9] = pixelRatio;
+          }
+          context.lineDashOffset = lineDashOffset;
+          context.setLineDash(lineDash);
         }
-        prevX = NaN;
-        prevY = NaN;
         ++i;
         break;
       case ol.render.canvas.Instruction.SET_TEXT_STYLE:
-        ol.DEBUG && console.assert(typeof instruction[1] === 'string',
-            '2nd instruction should be a string');
-        ol.DEBUG && console.assert(typeof instruction[2] === 'string',
-            '3rd instruction should be a string');
-        ol.DEBUG && console.assert(typeof instruction[3] === 'string',
-            '4th instruction should be a string');
         context.font = /** @type {string} */ (instruction[1]);
         context.textAlign = /** @type {string} */ (instruction[2]);
         context.textBaseline = /** @type {string} */ (instruction[3]);
@@ -552,7 +518,6 @@ ol.render.canvas.Replay.prototype.replay_ = function(
         ++i;
         break;
       default:
-        ol.DEBUG && console.assert(false, 'Unknown canvas render instruction');
         ++i; // consume the instruction anyway, to avoid an infinite loop
         break;
     }
@@ -563,9 +528,6 @@ ol.render.canvas.Replay.prototype.replay_ = function(
   if (pendingStroke) {
     context.stroke();
   }
-  // assert that all instructions were consumed
-  ol.DEBUG && console.assert(i == instructions.length,
-      'all instructions should be consumed');
   return undefined;
 };
 
@@ -625,12 +587,9 @@ ol.render.canvas.Replay.prototype.reverseHitDetectionInstructions = function() {
     instruction = hitDetectionInstructions[i];
     type = /** @type {ol.render.canvas.Instruction} */ (instruction[0]);
     if (type == ol.render.canvas.Instruction.END_GEOMETRY) {
-      ol.DEBUG && console.assert(begin == -1, 'begin should be -1');
       begin = i;
     } else if (type == ol.render.canvas.Instruction.BEGIN_GEOMETRY) {
       instruction[2] = i;
-      ol.DEBUG && console.assert(begin >= 0,
-          'begin should be larger than or equal to 0');
       ol.array.reverseSubArray(this.hitDetectionInstructions, begin, i);
       begin = -1;
     }
@@ -643,12 +602,8 @@ ol.render.canvas.Replay.prototype.reverseHitDetectionInstructions = function() {
  * @param {ol.Feature|ol.render.Feature} feature Feature.
  */
 ol.render.canvas.Replay.prototype.endGeometry = function(geometry, feature) {
-  ol.DEBUG && console.assert(this.beginGeometryInstruction1_,
-      'this.beginGeometryInstruction1_ should not be null');
   this.beginGeometryInstruction1_[2] = this.instructions.length;
   this.beginGeometryInstruction1_ = null;
-  ol.DEBUG && console.assert(this.beginGeometryInstruction2_,
-      'this.beginGeometryInstruction2_ should not be null');
   this.beginGeometryInstruction2_[2] = this.hitDetectionInstructions.length;
   this.beginGeometryInstruction2_ = null;
   var endGeometryInstruction =

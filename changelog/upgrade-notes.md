@@ -2,6 +2,40 @@
 
 ### Next release
 
+#### Removal of deprecated methods
+
+The deprecated `ol.animation` functions and `map.beforeRender()` method have been removed.  Use `view.animate()` instead.
+
+#### Simplified `ol.View#fit()` API
+
+In most cases, it is no longer necessary to provide an `ol.Size` (previously the 2nd argument) to `ol.View#fit()`. By default, the size of the first map that uses the view will be used. If you want to specify a different size, it goes in the options now (previously the 3rd argument, now the 2nd).
+
+Most common use case - old API:
+```js
+map.getView().fit(extent, map.getSize());
+```
+Most common use case - new API:
+```js
+map.getView().fit(extent);
+```
+Advanced use - old API:
+```js
+map.getView().fit(extent, [200, 100], {padding: 10});
+```
+Advanced use - new API:
+```js
+map.getView().fit(extent, {size: [200, 100], padding 10});
+```
+
+#### Removed build flags (`@define`)
+
+The `ol.DEBUG`, `ol.ENABLE_TILE`, `ol.ENABLE_IMAGE`, `ol.ENABLE_VECTOR`, and `ol.ENABLE_VECTOR_TILE` build flags are no longer necessary and have been removed.  If you were using these in a `define` array for a custom build, you can remove them.
+
+If you leave `ol.ENABLE_WEBGL` set to `true` in your build, you should set `ol.DEBUG_WEBGL` to `false` to avoid including debuggable shader sources.
+
+
+### v3.20.0
+
 #### Use `view.animate()` instead of `map.beforeRender()` and `ol.animation` functions
 
 The `map.beforeRender()` and `ol.animation` functions have been deprecated in favor of a new `view.animate()` function.  Use of the deprecated functions will result in a warning during development.  These functions are subject to removal in an upcoming release.
@@ -34,6 +68,59 @@ view.animate({
   rotation: Math.PI
 });
 ```
+
+#### `ol.Map#forEachFeatureAtPixel` and `ol.Map#hasFeatureAtPixel` parameters have changed
+
+If you are using the layer filter of one of these methods, please note that you now have to pass in the layer filter via an `ol.AtPixelOptions` object. If you are not using the layer filter the usage has not changed.
+
+Old syntax:
+```js
+map.forEachFeatureAtPixel(pixel, callback, callbackThis, layerFilterFn, layerFilterThis);
+
+map.hasFeatureAtPixel(pixel, layerFilterFn, layerFilterThis);
+```
+
+New syntax:
+```js
+map.forEachFeatureAtPixel(pixel, callback.bind(callbackThis), {
+  layerFilter: layerFilterFn.bind(layerFilterThis)
+});
+
+map.hasFeatureAtPixel(pixel, {
+  layerFilter: layerFilterFn.bind(layerFilterThis)
+});
+```
+
+This change is due to the introduction of the `hitTolerance` parameter which can be passed in via this `ol.AtPixelOptions` object, too.
+
+#### Use `ol.proj.getPointResolution()` instead of `projection.getPointResolution()`
+
+The experimental `getPointResolution` method has been removed from `ol.Projection` instances.  Since the implementation of this method required an inverse transform (function for transforming projected coordinates to geographic coordinates) and `ol.Projection` instances are not constructed with forward or inverse transforms, it does not make sense that a projection instance can always calculate the point resolution.
+
+As a substitute for the `projection.getPointResolution()` function, a `ol.proj.getPointResolution()` function has been added.  To upgrade, you will need to change things like this:
+```js
+projection.getPointResolution(resolution, point);
+```
+
+into this:
+```js
+ol.proj.getPointResolution(projection, resolution, point);
+```
+
+Note that if you were previously creating a projection with a `getPointResolution` function in the constructor (or calling `projection.setGetPointResolution()` after construction), this function will be used by `ol.proj.getPointResolution()`.
+
+#### `ol.interaction.PinchZoom` no longer zooms to a whole-number zoom level after the gesture ends
+
+The old behavior of `ol.interaction.PinchZoom` was to zoom to the next integer zoom level after the user ends the gesture.
+
+Now the pinch zoom keeps the user selected zoom level even if it is a fractional zoom.
+
+To get the old behavior set the new `constrainResolution` parameter to `true` like this:
+```js
+new ol.interaction.PinchZoom({constrainResolution: true})
+```
+
+See the new `pinch-zoom` example for a complete implementation.
 
 ### v3.19.1
 
@@ -150,7 +237,7 @@ A number of internal types have been renamed.  This will not affect those who us
 
 #### `ol.source.MapQuest` removal
 
-Because of changes at MapQuest (see: https://lists.openstreetmap.org/pipermail/talk/2016-June/076106.html) we had to remove the MapQuest source for now (see https://github.com/openlayers/ol3/issues/5484 for details).
+Because of changes at MapQuest (see: https://lists.openstreetmap.org/pipermail/talk/2016-June/076106.html) we had to remove the MapQuest source for now (see https://github.com/openlayers/openlayers/issues/5484 for details).
 
 #### `ol.interaction.ModifyEvent` changes
 
@@ -531,7 +618,7 @@ When single clicking a line or boundary within the `pixelTolerance`, a vertex is
 #### `ol.interaction.Draw` changes
 
 * The `minPointsPerRing` config option has been renamed to `minPoints`. It is now also available for linestring drawing, not only for polygons.
-* The `ol.DrawEvent` and `ol.DrawEventType` types were renamed to `ol.interaction.DrawEvent` and `ol.interaction.DrawEventType`. This has an impact on your code only if your code is compiled together with ol3.
+* The `ol.DrawEvent` and `ol.DrawEventType` types were renamed to `ol.interaction.DrawEvent` and `ol.interaction.DrawEventType`. This has an impact on your code only if your code is compiled together with OpenLayers.
 
 #### `ol.tilegrid` changes
 
@@ -545,7 +632,7 @@ now specify an `extent` instead of `widths`. These settings are used to restrict
 
 #### `ol.Object` and `bindTo`
 
-* The following experimental methods have been removed from `ol.Object`: `bindTo`, `unbind`, and `unbindAll`.  If you want to get notification about `ol.Object` property changes, you can listen for the `'propertychange'` event (e.g. `object.on('propertychange', listener)`).  Two-way binding can be set up at the application level using property change listeners.  See [#3472](https://github.com/openlayers/ol3/pull/3472) for details on the change.
+* The following experimental methods have been removed from `ol.Object`: `bindTo`, `unbind`, and `unbindAll`.  If you want to get notification about `ol.Object` property changes, you can listen for the `'propertychange'` event (e.g. `object.on('propertychange', listener)`).  Two-way binding can be set up at the application level using property change listeners.  See [#3472](https://github.com/openlayers/openlayers/pull/3472) for details on the change.
 
 * The experimental `ol.dom.Input` component has been removed.  If you need to synchronize the state of a dom Input element with an `ol.Object`, this can be accomplished using listeners for change events.  For example, you might bind the state of a checkbox type input with a layer's visibility like this:
 
@@ -698,7 +785,7 @@ There should be nothing special required when upgrading from v3.3.0 to v3.4.0.
 
 ### v3.3.0
 
-* The `ol.events.condition.mouseMove` function was replaced by `ol.events.condition.pointerMove` (see [#3281](https://github.com/openlayers/ol3/pull/3281)). For example, if you use `ol.events.condition.mouseMove` as the condition in a `Select` interaction then you now need to use `ol.events.condition.pointerMove`:
+* The `ol.events.condition.mouseMove` function was replaced by `ol.events.condition.pointerMove` (see [#3281](https://github.com/openlayers/openlayers/pull/3281)). For example, if you use `ol.events.condition.mouseMove` as the condition in a `Select` interaction then you now need to use `ol.events.condition.pointerMove`:
 
   ```js
   var selectInteraction = new ol.interaction.Select({

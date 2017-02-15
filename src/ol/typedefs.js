@@ -284,8 +284,8 @@ ol.ImageLoadFunctionType;
 
 
 /**
- * @typedef {{x: number, xunits: (ol.style.Icon.AnchorUnits|undefined),
- *            y: number, yunits: (ol.style.Icon.AnchorUnits|undefined)}}
+ * @typedef {{x: number, xunits: (ol.style.IconAnchorUnits|undefined),
+ *            y: number, yunits: (ol.style.IconAnchorUnits|undefined)}}
  */
 ol.KMLVec2_;
 
@@ -309,6 +309,20 @@ ol.KMLGxTrackObject_;
  *            minResolution: number}}
  */
 ol.LayerState;
+
+
+/**
+ * @typedef {{hasZ: (boolean|undefined), hasM: (boolean|undefined)}}
+ */
+ol.LayoutOptions;
+
+
+/**
+ * @typedef {{prev: (ol.LinkedListItem|undefined),
+ *            next: (ol.LinkedListItem|undefined),
+ *            data: ?}}
+ */
+ol.LinkedListItem;
 
 
 /**
@@ -346,7 +360,7 @@ ol.MapOptionsInternal;
 /**
  * An array representing an affine 2d transformation for use with
  * {@link ol.transform} functions. The array has 6 elements.
- * @typedef {Array.<number>}
+ * @typedef {!Array.<number>}
  */
 ol.Transform;
 
@@ -356,7 +370,8 @@ ol.Transform;
  *            feature: ol.Feature,
  *            geometry: ol.geom.SimpleGeometry,
  *            index: (number),
- *            segment: Array.<ol.Extent>}}
+ *            segment: Array.<ol.Extent>,
+ *            featureSegments: (Array.<ol.ModifySegmentDataType>|undefined)}}
  */
 ol.ModifySegmentDataType;
 
@@ -619,8 +634,7 @@ ol.TilePriorityFunction;
  *     renderedRenderOrder: (null|function(ol.Feature, ol.Feature):number),
  *     renderedTileRevision: number,
  *     renderedRevision: number,
- *     replayGroup: ol.render.ReplayGroup,
- *     skippedFeatures: Array.<string>}}
+ *     replayGroup: ol.render.ReplayGroup}}
  */
 ol.TileReplayState;
 
@@ -678,6 +692,21 @@ ol.ViewAnimation;
  *            buffer: WebGLBuffer}}
  */
 ol.WebglBufferCacheEntry;
+
+
+/**
+ * @typedef {{p0: ol.WebglPolygonVertex,
+ *            p1: ol.WebglPolygonVertex}}
+ */
+ol.WebglPolygonSegment;
+
+/**
+ * @typedef {{x: number,
+ *            y: number,
+ *            i: number,
+ *            reflex: (boolean|undefined)}}
+ */
+ol.WebglPolygonVertex;
 
 
 /**

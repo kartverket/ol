@@ -2,14 +2,16 @@ goog.provide('ol.VectorTile');
 
 goog.require('ol');
 goog.require('ol.Tile');
+goog.require('ol.TileState');
 goog.require('ol.dom');
+goog.require('ol.featureloader');
 
 
 /**
  * @constructor
  * @extends {ol.Tile}
  * @param {ol.TileCoord} tileCoord Tile coordinate.
- * @param {ol.Tile.State} state State.
+ * @param {ol.TileState} state State.
  * @param {string} src Data source url.
  * @param {ol.format.Feature} format Feature format.
  * @param {ol.TileLoadFunctionType} tileLoadFunction Tile load function.
@@ -58,8 +60,7 @@ ol.VectorTile = function(tileCoord, state, src, format, tileLoadFunction) {
     renderedRenderOrder: null,
     renderedRevision: -1,
     renderedTileRevision: -1,
-    replayGroup: null,
-    skippedFeatures: []
+    replayGroup: null
   };
 
   /**
@@ -87,7 +88,7 @@ ol.VectorTile.prototype.getContext = function() {
 
 
 /**
- * @inheritDoc
+ * @override
  */
 ol.VectorTile.prototype.getImage = function() {
   return this.replayState_.renderedTileRevision == -1 ?
@@ -138,14 +139,33 @@ ol.VectorTile.prototype.getProjection = function() {
 
 
 /**
- * Load the tile.
+ * @inheritDoc
  */
 ol.VectorTile.prototype.load = function() {
-  if (this.state == ol.Tile.State.IDLE) {
-    this.setState(ol.Tile.State.LOADING);
+  if (this.state == ol.TileState.IDLE) {
+    this.setState(ol.TileState.LOADING);
     this.tileLoadFunction_(this, this.url_);
     this.loader_(null, NaN, null);
   }
+};
+
+
+/**
+ * Handler for successful tile load.
+ * @param {Array.<ol.Feature>} features The loaded features.
+ * @param {ol.proj.Projection} dataProjection Data projection.
+ */
+ol.VectorTile.prototype.onLoad_ = function(features, dataProjection) {
+  this.setProjection(dataProjection);
+  this.setFeatures(features);
+};
+
+
+/**
+ * Handler for tile load errors.
+ */
+ol.VectorTile.prototype.onError_ = function() {
+  this.setState(ol.TileState.ERROR);
 };
 
 
@@ -155,7 +175,7 @@ ol.VectorTile.prototype.load = function() {
  */
 ol.VectorTile.prototype.setFeatures = function(features) {
   this.features_ = features;
-  this.setState(ol.Tile.State.LOADED);
+  this.setState(ol.TileState.LOADED);
 };
 
 
@@ -170,7 +190,7 @@ ol.VectorTile.prototype.setProjection = function(projection) {
 
 
 /**
- * @param {ol.Tile.State} tileState Tile state.
+ * @param {ol.TileState} tileState Tile state.
  */
 ol.VectorTile.prototype.setState = function(tileState) {
   this.state = tileState;
@@ -185,4 +205,17 @@ ol.VectorTile.prototype.setState = function(tileState) {
  */
 ol.VectorTile.prototype.setLoader = function(loader) {
   this.loader_ = loader;
+};
+
+
+/**
+ * Sets the loader for a tile.
+ * @param {ol.VectorTile} tile Vector tile.
+ * @param {string} url URL.
+ */
+ol.VectorTile.defaultLoadFunction = function(tile, url) {
+  var loader = ol.featureloader.loadFeaturesXhr(
+      url, tile.getFormat(), tile.onLoad_.bind(tile), tile.onError_.bind(tile));
+
+  tile.setLoader(loader);
 };

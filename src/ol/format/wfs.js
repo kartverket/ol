@@ -24,7 +24,7 @@ goog.require('ol.xml');
  * @param {olx.format.WFSOptions=} opt_options
  *     Optional configuration object.
  * @extends {ol.format.XMLFeature}
- * @api stable
+ * @api
  */
 ol.format.WFS = function(opt_options) {
   var options = opt_options ? opt_options : {};
@@ -103,7 +103,7 @@ ol.format.WFS.SCHEMA_LOCATION = 'http://www.opengis.net/wfs ' +
  * @param {Document|Node|Object|string} source Source.
  * @param {olx.format.ReadOptions=} opt_options Read options.
  * @return {Array.<ol.Feature>} Features.
- * @api stable
+ * @api
  */
 ol.format.WFS.prototype.readFeatures;
 
@@ -137,7 +137,7 @@ ol.format.WFS.prototype.readFeaturesFromNode = function(node, opt_options) {
  *
  * @param {Document|Node|Object|string} source Source.
  * @return {ol.WFSTransactionResponse|undefined} Transaction response.
- * @api stable
+ * @api
  */
 ol.format.WFS.prototype.readTransactionResponse = function(source) {
   if (ol.xml.isDocument(source)) {
@@ -160,7 +160,7 @@ ol.format.WFS.prototype.readTransactionResponse = function(source) {
  * @param {Document|Node|Object|string} source Source.
  * @return {ol.WFSFeatureCollectionMetadata|undefined}
  *     FeatureCollection metadata.
- * @api stable
+ * @api
  */
 ol.format.WFS.prototype.readFeatureCollectionMetadata = function(source) {
   if (ol.xml.isDocument(source)) {
@@ -184,8 +184,6 @@ ol.format.WFS.prototype.readFeatureCollectionMetadata = function(source) {
  *     FeatureCollection metadata.
  */
 ol.format.WFS.prototype.readFeatureCollectionMetadataFromDocument = function(doc) {
-  ol.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
-      'doc.nodeType should be DOCUMENT');
   for (var n = doc.firstChild; n; n = n.nextSibling) {
     if (n.nodeType == Node.ELEMENT_NODE) {
       return this.readFeatureCollectionMetadataFromNode(n);
@@ -214,10 +212,6 @@ ol.format.WFS.FEATURE_COLLECTION_PARSERS_ = {
  *     FeatureCollection metadata.
  */
 ol.format.WFS.prototype.readFeatureCollectionMetadataFromNode = function(node) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'FeatureCollection',
-      'localName should be FeatureCollection');
   var result = {};
   var value = ol.format.XSD.readNonNegativeIntegerString(
       node.getAttribute('numberOfFeatures'));
@@ -325,8 +319,6 @@ ol.format.WFS.TRANSACTION_RESPONSE_PARSERS_ = {
  * @return {ol.WFSTransactionResponse|undefined} Transaction response.
  */
 ol.format.WFS.prototype.readTransactionResponseFromDocument = function(doc) {
-  ol.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
-      'doc.nodeType should be DOCUMENT');
   for (var n = doc.firstChild; n; n = n.nextSibling) {
     if (n.nodeType == Node.ELEMENT_NODE) {
       return this.readTransactionResponseFromNode(n);
@@ -341,10 +333,6 @@ ol.format.WFS.prototype.readTransactionResponseFromDocument = function(doc) {
  * @return {ol.WFSTransactionResponse|undefined} Transaction response.
  */
 ol.format.WFS.prototype.readTransactionResponseFromNode = function(node) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should  be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'TransactionResponse',
-      'localName should be TransactionResponse');
   return ol.xml.pushParseAndPop(
       /** @type {ol.WFSTransactionResponse} */({}),
       ol.format.WFS.TRANSACTION_RESPONSE_PARSERS_, node, []);
@@ -611,23 +599,19 @@ ol.format.WFS.writeWithinFilter_ = function(node, filter, objectStack) {
 
 /**
  * @param {Node} node Node.
- * @param {ol.format.filter.LogicalBinary} filter Filter.
+ * @param {ol.format.filter.LogicalNary} filter Filter.
  * @param {Array.<*>} objectStack Node stack.
  * @private
  */
 ol.format.WFS.writeLogicalFilter_ = function(node, filter, objectStack) {
   /** @type {ol.XmlNodeStackItem} */
   var item = {node: node};
-  var conditionA = filter.conditionA;
-  ol.xml.pushSerializeAndPop(item,
-      ol.format.WFS.GETFEATURE_SERIALIZERS_,
-      ol.xml.makeSimpleNodeFactory(conditionA.getTagName()),
-      [conditionA], objectStack);
-  var conditionB = filter.conditionB;
-  ol.xml.pushSerializeAndPop(item,
-      ol.format.WFS.GETFEATURE_SERIALIZERS_,
-      ol.xml.makeSimpleNodeFactory(conditionB.getTagName()),
-      [conditionB], objectStack);
+  filter.conditions.forEach(function(condition) {
+    ol.xml.pushSerializeAndPop(item,
+        ol.format.WFS.GETFEATURE_SERIALIZERS_,
+        ol.xml.makeSimpleNodeFactory(condition.getTagName()),
+        [condition], objectStack);
+  });
 };
 
 
@@ -794,7 +778,7 @@ ol.format.WFS.writeGetFeature_ = function(node, featureTypes, objectStack) {
  *
  * @param {olx.format.WFSWriteGetFeatureOptions} options Options.
  * @return {Node} Result.
- * @api stable
+ * @api
  */
 ol.format.WFS.prototype.writeGetFeature = function(options) {
   var node = ol.xml.createElementNS(ol.format.WFS.WFSNS, 'GetFeature');
@@ -861,7 +845,7 @@ ol.format.WFS.prototype.writeGetFeature = function(options) {
  * @param {Array.<ol.Feature>} deletes The features to delete.
  * @param {olx.format.WFSWriteTransactionOptions} options Write options.
  * @return {Node} Result.
- * @api stable
+ * @api
  */
 ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
     options) {
@@ -926,7 +910,7 @@ ol.format.WFS.prototype.writeTransaction = function(inserts, updates, deletes,
  * @function
  * @param {Document|Node|Object|string} source Source.
  * @return {?ol.proj.Projection} Projection.
- * @api stable
+ * @api
  */
 ol.format.WFS.prototype.readProjection;
 
@@ -935,8 +919,6 @@ ol.format.WFS.prototype.readProjection;
  * @inheritDoc
  */
 ol.format.WFS.prototype.readProjectionFromDocument = function(doc) {
-  ol.DEBUG && console.assert(doc.nodeType == Node.DOCUMENT_NODE,
-      'doc.nodeType should be a DOCUMENT');
   for (var n = doc.firstChild; n; n = n.nextSibling) {
     if (n.nodeType == Node.ELEMENT_NODE) {
       return this.readProjectionFromNode(n);
@@ -950,11 +932,6 @@ ol.format.WFS.prototype.readProjectionFromDocument = function(doc) {
  * @inheritDoc
  */
 ol.format.WFS.prototype.readProjectionFromNode = function(node) {
-  ol.DEBUG && console.assert(node.nodeType == Node.ELEMENT_NODE,
-      'node.nodeType should be ELEMENT');
-  ol.DEBUG && console.assert(node.localName == 'FeatureCollection',
-      'localName should be FeatureCollection');
-
   if (node.firstElementChild &&
       node.firstElementChild.firstElementChild) {
     node = node.firstElementChild.firstElementChild;

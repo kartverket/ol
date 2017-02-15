@@ -251,9 +251,6 @@ ol.render.canvas.Immediate.prototype.drawImages_ = function(flatCoordinates, off
   if (!this.image_) {
     return;
   }
-  ol.DEBUG && console.assert(offset === 0, 'offset should be 0');
-  ol.DEBUG && console.assert(end == flatCoordinates.length,
-      'end should be equal to the length of flatCoordinates');
   var pixelCoordinates = ol.geom.flat.transform.transform2D(
       flatCoordinates, offset, end, 2, this.transform_,
       this.pixelCoordinates_);
@@ -316,9 +313,6 @@ ol.render.canvas.Immediate.prototype.drawText_ = function(flatCoordinates, offse
     this.setContextStrokeState_(this.textStrokeState_);
   }
   this.setContextTextState_(this.textState_);
-  ol.DEBUG && console.assert(offset === 0, 'offset should be 0');
-  ol.DEBUG && console.assert(end == flatCoordinates.length,
-      'end should be equal to the length of flatCoordinates');
   var pixelCoordinates = ol.geom.flat.transform.transform2D(
       flatCoordinates, offset, end, stride, this.transform_,
       this.pixelCoordinates_);
@@ -403,6 +397,7 @@ ol.render.canvas.Immediate.prototype.drawRings_ = function(flatCoordinates, offs
  * the current fill and stroke styles.
  *
  * @param {ol.geom.Circle} geometry Circle geometry.
+ * @override
  * @api
  */
 ol.render.canvas.Immediate.prototype.drawCircle = function(geometry) {
@@ -443,6 +438,7 @@ ol.render.canvas.Immediate.prototype.drawCircle = function(geometry) {
  * any `zIndex` on the provided style will be ignored.
  *
  * @param {ol.style.Style} style The rendering style.
+ * @override
  * @api
  */
 ol.render.canvas.Immediate.prototype.setStyle = function(style) {
@@ -457,6 +453,7 @@ ol.render.canvas.Immediate.prototype.setStyle = function(style) {
  * {@link ol.render.canvas.Immediate#setStyle} first to set the rendering style.
  *
  * @param {ol.geom.Geometry|ol.render.Feature} geometry The geometry to render.
+ * @override
  * @api
  */
 ol.render.canvas.Immediate.prototype.drawGeometry = function(geometry) {
@@ -487,7 +484,6 @@ ol.render.canvas.Immediate.prototype.drawGeometry = function(geometry) {
       this.drawCircle(/** @type {ol.geom.Circle} */ (geometry));
       break;
     default:
-      ol.DEBUG && console.assert(false, 'Unsupported geometry type: ' + type);
   }
 };
 
@@ -500,6 +496,7 @@ ol.render.canvas.Immediate.prototype.drawGeometry = function(geometry) {
  *
  * @param {ol.Feature} feature Feature.
  * @param {ol.style.Style} style Style.
+ * @override
  * @api
  */
 ol.render.canvas.Immediate.prototype.drawFeature = function(feature, style) {
@@ -518,6 +515,7 @@ ol.render.canvas.Immediate.prototype.drawFeature = function(feature, style) {
  * uses the current styles appropriate for each geometry in the collection.
  *
  * @param {ol.geom.GeometryCollection} geometry Geometry collection.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.drawGeometryCollection = function(geometry) {
   var geometries = geometry.getGeometriesArray();
@@ -533,6 +531,7 @@ ol.render.canvas.Immediate.prototype.drawGeometryCollection = function(geometry)
  * the current style.
  *
  * @param {ol.geom.Point|ol.render.Feature} geometry Point geometry.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.drawPoint = function(geometry) {
   var flatCoordinates = geometry.getFlatCoordinates();
@@ -551,6 +550,7 @@ ol.render.canvas.Immediate.prototype.drawPoint = function(geometry) {
  * uses the current style.
  *
  * @param {ol.geom.MultiPoint|ol.render.Feature} geometry MultiPoint geometry.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.drawMultiPoint = function(geometry) {
   var flatCoordinates = geometry.getFlatCoordinates();
@@ -569,6 +569,7 @@ ol.render.canvas.Immediate.prototype.drawMultiPoint = function(geometry) {
  * the current style.
  *
  * @param {ol.geom.LineString|ol.render.Feature} geometry LineString geometry.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.drawLineString = function(geometry) {
   if (!ol.extent.intersects(this.extent_, geometry.getExtent())) {
@@ -596,6 +597,7 @@ ol.render.canvas.Immediate.prototype.drawLineString = function(geometry) {
  *
  * @param {ol.geom.MultiLineString|ol.render.Feature} geometry MultiLineString
  *     geometry.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.drawMultiLineString = function(geometry) {
   var geometryExtent = geometry.getExtent();
@@ -629,6 +631,7 @@ ol.render.canvas.Immediate.prototype.drawMultiLineString = function(geometry) {
  * the current style.
  *
  * @param {ol.geom.Polygon|ol.render.Feature} geometry Polygon geometry.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.drawPolygon = function(geometry) {
   if (!ol.extent.intersects(this.extent_, geometry.getExtent())) {
@@ -663,6 +666,7 @@ ol.render.canvas.Immediate.prototype.drawPolygon = function(geometry) {
  * Render MultiPolygon geometry into the canvas.  Rendering is immediate and
  * uses the current style.
  * @param {ol.geom.MultiPolygon} geometry MultiPolygon geometry.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.drawMultiPolygon = function(geometry) {
   if (!ol.extent.intersects(this.extent_, geometry.getExtent())) {
@@ -809,6 +813,7 @@ ol.render.canvas.Immediate.prototype.setContextTextState_ = function(textState) 
  *
  * @param {ol.style.Fill} fillStyle Fill style.
  * @param {ol.style.Stroke} strokeStyle Stroke style.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.setFillStrokeStyle = function(fillStyle, strokeStyle) {
   if (!fillStyle) {
@@ -826,6 +831,7 @@ ol.render.canvas.Immediate.prototype.setFillStrokeStyle = function(fillStyle, st
     var strokeStyleColor = strokeStyle.getColor();
     var strokeStyleLineCap = strokeStyle.getLineCap();
     var strokeStyleLineDash = strokeStyle.getLineDash();
+    var strokeStyleLineDashOffset = strokeStyle.getLineDashOffset();
     var strokeStyleLineJoin = strokeStyle.getLineJoin();
     var strokeStyleWidth = strokeStyle.getWidth();
     var strokeStyleMiterLimit = strokeStyle.getMiterLimit();
@@ -834,6 +840,8 @@ ol.render.canvas.Immediate.prototype.setFillStrokeStyle = function(fillStyle, st
           strokeStyleLineCap : ol.render.canvas.defaultLineCap,
       lineDash: strokeStyleLineDash ?
           strokeStyleLineDash : ol.render.canvas.defaultLineDash,
+      lineDashOffset: strokeStyleLineDashOffset ?
+          strokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset,
       lineJoin: strokeStyleLineJoin !== undefined ?
           strokeStyleLineJoin : ol.render.canvas.defaultLineJoin,
       lineWidth: this.pixelRatio_ * (strokeStyleWidth !== undefined ?
@@ -852,6 +860,7 @@ ol.render.canvas.Immediate.prototype.setFillStrokeStyle = function(fillStyle, st
  * the image style.
  *
  * @param {ol.style.Image} imageStyle Image style.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.setImageStyle = function(imageStyle) {
   if (!imageStyle) {
@@ -862,7 +871,6 @@ ol.render.canvas.Immediate.prototype.setImageStyle = function(imageStyle) {
     var imageImage = imageStyle.getImage(1);
     var imageOrigin = imageStyle.getOrigin();
     var imageSize = imageStyle.getSize();
-    ol.DEBUG && console.assert(imageImage, 'imageImage must be truthy');
     this.imageAnchorX_ = imageAnchor[0];
     this.imageAnchorY_ = imageAnchor[1];
     this.imageHeight_ = imageSize[1];
@@ -884,6 +892,7 @@ ol.render.canvas.Immediate.prototype.setImageStyle = function(imageStyle) {
  * remove the text style.
  *
  * @param {ol.style.Text} textStyle Text style.
+ * @override
  */
 ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
   if (!textStyle) {
@@ -906,6 +915,7 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
       var textStrokeStyleColor = textStrokeStyle.getColor();
       var textStrokeStyleLineCap = textStrokeStyle.getLineCap();
       var textStrokeStyleLineDash = textStrokeStyle.getLineDash();
+      var textStrokeStyleLineDashOffset = textStrokeStyle.getLineDashOffset();
       var textStrokeStyleLineJoin = textStrokeStyle.getLineJoin();
       var textStrokeStyleWidth = textStrokeStyle.getWidth();
       var textStrokeStyleMiterLimit = textStrokeStyle.getMiterLimit();
@@ -914,6 +924,8 @@ ol.render.canvas.Immediate.prototype.setTextStyle = function(textStyle) {
             textStrokeStyleLineCap : ol.render.canvas.defaultLineCap,
         lineDash: textStrokeStyleLineDash ?
             textStrokeStyleLineDash : ol.render.canvas.defaultLineDash,
+        lineDashOffset: textStrokeStyleLineDashOffset ?
+            textStrokeStyleLineDashOffset : ol.render.canvas.defaultLineDashOffset,
         lineJoin: textStrokeStyleLineJoin !== undefined ?
             textStrokeStyleLineJoin : ol.render.canvas.defaultLineJoin,
         lineWidth: textStrokeStyleWidth !== undefined ?

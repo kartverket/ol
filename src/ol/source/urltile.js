@@ -1,9 +1,10 @@
 goog.provide('ol.source.UrlTile');
 
 goog.require('ol');
-goog.require('ol.Tile');
+goog.require('ol.TileState');
 goog.require('ol.TileUrlFunction');
 goog.require('ol.source.Tile');
+goog.require('ol.source.TileEventType');
 
 
 /**
@@ -11,6 +12,7 @@ goog.require('ol.source.Tile');
  * Base class for sources providing tiles divided into a tile grid over http.
  *
  * @constructor
+ * @abstract
  * @fires ol.source.Tile.Event
  * @extends {ol.source.Tile}
  * @param {ol.SourceUrlTileOptions} options Image tile options.
@@ -109,17 +111,17 @@ ol.source.UrlTile.prototype.getUrls = function() {
 ol.source.UrlTile.prototype.handleTileChange = function(event) {
   var tile = /** @type {ol.Tile} */ (event.target);
   switch (tile.getState()) {
-    case ol.Tile.State.LOADING:
+    case ol.TileState.LOADING:
       this.dispatchEvent(
-          new ol.source.Tile.Event(ol.source.Tile.EventType.TILELOADSTART, tile));
+          new ol.source.Tile.Event(ol.source.TileEventType.TILELOADSTART, tile));
       break;
-    case ol.Tile.State.LOADED:
+    case ol.TileState.LOADED:
       this.dispatchEvent(
-          new ol.source.Tile.Event(ol.source.Tile.EventType.TILELOADEND, tile));
+          new ol.source.Tile.Event(ol.source.TileEventType.TILELOADEND, tile));
       break;
-    case ol.Tile.State.ERROR:
+    case ol.TileState.ERROR:
       this.dispatchEvent(
-          new ol.source.Tile.Event(ol.source.Tile.EventType.TILELOADERROR, tile));
+          new ol.source.Tile.Event(ol.source.TileEventType.TILELOADERROR, tile));
       break;
     default:
       // pass
@@ -158,7 +160,7 @@ ol.source.UrlTile.prototype.setTileUrlFunction = function(tileUrlFunction, opt_k
 /**
  * Set the URL to use for requests.
  * @param {string} url URL.
- * @api stable
+ * @api
  */
 ol.source.UrlTile.prototype.setUrl = function(url) {
   var urls = this.urls = ol.TileUrlFunction.expandUrl(url);
@@ -171,7 +173,7 @@ ol.source.UrlTile.prototype.setUrl = function(url) {
 /**
  * Set the URLs to use for requests.
  * @param {Array.<string>} urls URLs.
- * @api stable
+ * @api
  */
 ol.source.UrlTile.prototype.setUrls = function(urls) {
   this.urls = urls;

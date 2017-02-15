@@ -1,7 +1,7 @@
 goog.provide('ol.interaction.DragPan');
 
 goog.require('ol');
-goog.require('ol.View');
+goog.require('ol.ViewHint');
 goog.require('ol.coordinate');
 goog.require('ol.easing');
 goog.require('ol.events.condition');
@@ -16,7 +16,7 @@ goog.require('ol.interaction.Pointer');
  * @constructor
  * @extends {ol.interaction.Pointer}
  * @param {olx.interaction.DragPanOptions=} opt_options Options.
- * @api stable
+ * @api
  */
 ol.interaction.DragPan = function(opt_options) {
 
@@ -62,8 +62,6 @@ ol.inherits(ol.interaction.DragPan, ol.interaction.Pointer);
  * @private
  */
 ol.interaction.DragPan.handleDragEvent_ = function(mapBrowserEvent) {
-  ol.DEBUG && console.assert(this.targetPointers.length >= 1,
-      'the length of this.targetPointers should be more than 1');
   var centroid =
       ol.interaction.Pointer.centroid(this.targetPointers);
   if (this.kinetic_) {
@@ -110,13 +108,15 @@ ol.interaction.DragPan.handleUpEvent_ = function(mapBrowserEvent) {
         duration: 500,
         easing: ol.easing.easeOut
       });
-    } else {
-      // the view is not updated, force a render
-      map.render();
     }
-    view.setHint(ol.View.Hint.INTERACTING, -1);
+    view.setHint(ol.ViewHint.INTERACTING, -1);
     return false;
   } else {
+    if (this.kinetic_) {
+      // reset so we don't overestimate the kinetic energy after
+      // after one finger up, tiny drag, second finger up
+      this.kinetic_.begin();
+    }
     this.lastCentroid = null;
     return true;
   }
@@ -135,10 +135,12 @@ ol.interaction.DragPan.handleDownEvent_ = function(mapBrowserEvent) {
     var view = map.getView();
     this.lastCentroid = null;
     if (!this.handlingDownUpSequence) {
-      view.setHint(ol.View.Hint.INTERACTING, 1);
+      view.setHint(ol.ViewHint.INTERACTING, 1);
     }
     // stop any current animation
-    view.setCenter(mapBrowserEvent.frameState.viewState.center);
+    if (view.getHints()[ol.ViewHint.ANIMATING]) {
+      view.setCenter(mapBrowserEvent.frameState.viewState.center);
+    }
     if (this.kinetic_) {
       this.kinetic_.begin();
     }
