@@ -2,9 +2,31 @@
 
 ### Next release
 
+### v4.0.0
+
+#### Simpler `ol.source.Zoomify` `url` configuration
+
+Instead specifying a base url, the `url` for the `ol.source.Zoomify` source can now be a template.  The `{TileGroup}`, `{x}`, `{y}`, `{z}` and placeholders must be included in the `url` in this case. the `url` can now also include subdomain placeholders:
+```js
+new ol.source.Zoomify({
+  url: 'https://{a-f}.example.com/cgi-bin/iipsrv.fcgi?zoomify=/a/b/{TileGroup}/{z}-{x}-{y}.jpg'
+});
+```
+
 #### Removal of deprecated methods
 
 The deprecated `ol.animation` functions and `map.beforeRender()` method have been removed.  Use `view.animate()` instead.
+
+The `unByKey()` method has been removed from `ol.Observable` instances.  Use the `ol.Observable.unByKey()` static function instead.
+```js
+var key = map.on('moveend', function() { ...});
+map.unByKey(key);
+```
+New code:
+```js
+var key = map.on('moveend', function() { ...});
+ol.Observable.unByKey(key);
+```
 
 #### Simplified `ol.View#fit()` API
 
