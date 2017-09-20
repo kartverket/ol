@@ -1,4 +1,4 @@
-goog.provide('ol.test.ImageTile');
+
 
 goog.require('ol.ImageTile');
 goog.require('ol.TileState');
@@ -59,6 +59,42 @@ describe('ol.ImageTile', function() {
       });
 
       tile.load();
+    });
+
+    it('loads an empty image on error ', function(done) {
+      var tileCoord = [0, 0, 0];
+      var state = ol.TileState.IDLE;
+      var src = 'spec/ol/data/osm-0-0-99.png';
+      var tileLoadFunction = ol.source.Image.defaultImageLoadFunction;
+      var tile = new ol.ImageTile(tileCoord, state, src, null, tileLoadFunction);
+
+      ol.events.listen(tile, ol.events.EventType.CHANGE, function(event) {
+        var state = tile.getState();
+        if (state == ol.TileState.ERROR) {
+          expect(state).to.be(ol.TileState.ERROR);
+          expect(tile.image_.src).to.be(ol.ImageTile.blankImageUrl);
+          done();
+        }
+      });
+
+      tile.load();
+    });
+
+  });
+
+  describe('dispose', function() {
+
+    it('sets image src to a blank image data uri', function() {
+      var tileCoord = [0, 0, 0];
+      var state = ol.TileState.IDLE;
+      var src = 'spec/ol/data/osm-0-0-0.png';
+      var tileLoadFunction = ol.source.Image.defaultImageLoadFunction;
+      var tile = new ol.ImageTile(tileCoord, state, src, null, tileLoadFunction);
+      tile.load();
+      expect(tile.getState()).to.be(ol.TileState.LOADING);
+      tile.dispose();
+      expect(tile.getState()).to.be(ol.TileState.ABORT);
+      expect(tile.getImage().src).to.be(ol.ImageTile.blankImageUrl);
     });
 
   });

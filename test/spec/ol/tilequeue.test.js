@@ -1,8 +1,9 @@
-goog.provide('ol.test.TileQueue');
+
 
 goog.require('ol.ImageTile');
 goog.require('ol.Tile');
 goog.require('ol.TileQueue');
+goog.require('ol.TileState');
 goog.require('ol.source.Image');
 goog.require('ol.structs.PriorityQueue');
 
@@ -25,11 +26,15 @@ describe('ol.TileQueue', function() {
     ++tileId;
     var tileCoord = [tileId, tileId, tileId];
     var state = 0; // IDLE
-    var src = 'data:image/gif;base64,R0lGODlhAQABAPAAAP8AAP///' +
-        'yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==#' + tileId;
+    // The tile queue requires a unique URI for each item added.
+    // Browsers still load the resource even if they don't understand
+    // the charset.  So we create a unique URI by abusing the charset.
+    var src = 'data:image/gif;charset=junk-' + tileId +
+        ';base64,R0lGODlhAQABAPAAAP8AAP///' +
+        'yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==';
 
     var tileLoadFunction = opt_tileLoadFunction ?
-        opt_tileLoadFunction : ol.source.Image.defaultImageLoadFunction;
+      opt_tileLoadFunction : ol.source.Image.defaultImageLoadFunction;
     return new ol.ImageTile(tileCoord, state, src, null, tileLoadFunction);
   }
 
@@ -84,6 +89,20 @@ describe('ol.TileQueue', function() {
         done();
       }, 20);
 
+    });
+
+    it('calls #tileChangeCallback_ when all wanted tiles are aborted', function() {
+      var tileChangeCallback = sinon.spy();
+      var queue = new ol.TileQueue(noop, tileChangeCallback);
+      var numTiles = 20;
+      for (var i = 0; i < numTiles; ++i) {
+        var tile = createImageTile();
+        tile.state = ol.TileState.ABORT;
+        queue.enqueue([tile]);
+      }
+      var maxLoading = numTiles / 2;
+      queue.loadMoreTiles(maxLoading, maxLoading);
+      expect(tileChangeCallback.callCount).to.be(1);
     });
 
   });

@@ -54,14 +54,14 @@ ol.layer.Group = function(opt_options) {
 
   if (layers) {
     if (Array.isArray(layers)) {
-      layers = new ol.Collection(layers.slice());
+      layers = new ol.Collection(layers.slice(), {unique: true});
     } else {
       ol.asserts.assert(layers instanceof ol.Collection,
           43); // Expected `layers` to be an array or an `ol.Collection`
       layers = layers;
     }
   } else {
-    layers = new ol.Collection();
+    layers = new ol.Collection(undefined, {unique: true});
   }
 
   this.setLayers(layers);
@@ -71,18 +71,10 @@ ol.inherits(ol.layer.Group, ol.layer.Base);
 
 
 /**
- * @inheritDoc
- */
-ol.layer.Group.prototype.createRenderer = function(mapRenderer) {};
-
-
-/**
  * @private
  */
 ol.layer.Group.prototype.handleLayerChange_ = function() {
-  if (this.getVisible()) {
-    this.changed();
-  }
+  this.changed();
 };
 
 

@@ -45,7 +45,7 @@ ol.source.Tile = function(options) {
    * @type {number}
    */
   this.tilePixelRatio_ = options.tilePixelRatio !== undefined ?
-      options.tilePixelRatio : 1;
+    options.tilePixelRatio : 1;
 
   /**
    * @protected
@@ -244,12 +244,11 @@ ol.source.Tile.prototype.getTileCacheForProjection = function(projection) {
 /**
  * Get the tile pixel ratio for this source. Subclasses may override this
  * method, which is meant to return a supported pixel ratio that matches the
- * provided `opt_pixelRatio` as close as possible. When no `opt_pixelRatio` is
- * provided, it is meant to return `this.tilePixelRatio_`.
- * @param {number=} opt_pixelRatio Pixel ratio.
+ * provided `pixelRatio` as close as possible.
+ * @param {number} pixelRatio Pixel ratio.
  * @return {number} Tile pixel ratio.
  */
-ol.source.Tile.prototype.getTilePixelRatio = function(opt_pixelRatio) {
+ol.source.Tile.prototype.getTilePixelRatio = function(pixelRatio) {
   return this.tilePixelRatio_;
 };
 
@@ -283,7 +282,7 @@ ol.source.Tile.prototype.getTilePixelSize = function(z, pixelRatio, projection) 
  */
 ol.source.Tile.prototype.getTileCoordForTileUrlFunction = function(tileCoord, opt_projection) {
   var projection = opt_projection !== undefined ?
-      opt_projection : this.getProjection();
+    opt_projection : this.getProjection();
   var tileGrid = this.getTileGridForProjection(projection);
   if (this.getWrapX() && projection.isGlobal()) {
     tileCoord = ol.tilegrid.wrapX(tileGrid, tileCoord, projection);

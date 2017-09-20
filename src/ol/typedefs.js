@@ -79,6 +79,7 @@ ol.CanvasFunctionType;
 /**
  * @typedef {{lineCap: string,
  *            lineDash: Array.<number>,
+ *            lineDashOffset: number,
  *            lineJoin: string,
  *            lineWidth: number,
  *            miterLimit: number,
@@ -89,7 +90,7 @@ ol.CanvasStrokeState;
 
 /**
  * @typedef {{font: string,
- *            textAlign: string,
+ *            textAlign: (string|undefined),
  *            textBaseline: string}}
  */
 ol.CanvasTextState;
@@ -131,6 +132,16 @@ ol.ColorLike;
 
 
 /**
+ * @typedef {{
+ *   center: ol.CenterConstraintType,
+ *   resolution: ol.ResolutionConstraintType,
+ *   rotation: ol.RotationConstraintType
+ * }}
+ */
+ol.Constraints;
+
+
+/**
  * An array of numbers representing an xy coordinate. Example: `[16, 48]`.
  * @typedef {Array.<number>}
  */
@@ -156,12 +167,11 @@ ol.DragBoxEndConditionType;
 
 
 /**
- * Function that takes coordinates and an optional existing geometry as
+ * Function that takes an array of coordinates and an optional existing geometry as
  * arguments, and returns a geometry. The optional existing geometry is the
  * geometry that is returned when the function is called without a second
  * argument.
- * @typedef {function(!(ol.Coordinate|Array.<ol.Coordinate>|
- *     Array.<Array.<ol.Coordinate>>), ol.geom.SimpleGeometry=):
+ * @typedef {function(!Array.<ol.Coordinate>, ol.geom.SimpleGeometry=):
  *     ol.geom.SimpleGeometry}
  */
 ol.DrawGeometryFunctionType;
@@ -254,6 +264,15 @@ ol.FeatureUrlFunction;
 
 
 /**
+ * @typedef {{
+ *     geom: ol.geom.Point,
+ *     text: string
+ * }}
+ */
+ol.GraticuleLabelDataType;
+
+
+/**
  * A function that is called to trigger asynchronous canvas drawing.  It is
  * called with a "done" callback that should be called when drawing is done.
  * If any error occurs during drawing, the "done" callback should be called with
@@ -285,7 +304,8 @@ ol.ImageLoadFunctionType;
 
 /**
  * @typedef {{x: number, xunits: (ol.style.IconAnchorUnits|undefined),
- *            y: number, yunits: (ol.style.IconAnchorUnits|undefined)}}
+ *            y: number, yunits: (ol.style.IconAnchorUnits|undefined),
+ *            origin: (ol.style.IconOrigin|undefined)}}
  */
 ol.KMLVec2_;
 
@@ -345,13 +365,12 @@ ol.LRUCacheEntry;
 
 
 /**
- * @typedef {{controls: ol.Collection.<ol.control.Control>,
- *            interactions: ol.Collection.<ol.interaction.Interaction>,
+ * @typedef {{controls: (ol.Collection.<ol.control.Control>|undefined),
+ *            interactions: (ol.Collection.<ol.interaction.Interaction>|undefined),
  *            keyboardEventTarget: (Element|Document),
  *            logos: (Object.<string, (string|Element)>),
  *            overlays: ol.Collection.<ol.Overlay>,
- *            rendererConstructor:
- *                function(new: ol.renderer.Map, Element, ol.Map),
+ *            mapRendererPlugin: olx.MapRendererPlugin,
  *            values: Object.<string, *>}}
  */
 ol.MapOptionsInternal;
@@ -385,7 +404,7 @@ ol.Pixel;
 
 
 /**
- * @typedef {function(ol.Map, ?olx.FrameState): boolean}
+ * @typedef {function(ol.PluggableMap, ?olx.FrameState): boolean}
  */
 ol.PostRenderFunction;
 
@@ -395,7 +414,7 @@ ol.PostRenderFunction;
  * with the {@link ol.Map} as first and an optional {@link olx.FrameState} as
  * second argument. Return `true` to keep this function for the next frame,
  * `false` to remove it.
- * @typedef {function(ol.Map, ?olx.FrameState): boolean}
+ * @typedef {function(ol.PluggableMap, ?olx.FrameState): boolean}
  */
 ol.PreRenderFunction;
 
@@ -440,6 +459,17 @@ ol.RasterOperation;
  * }}
  */
 ol.RegularShapeRenderOptions;
+
+
+/**
+ * A function to be used when sorting features before rendering.
+ * It takes two instances of {@link ol.Feature} or {@link ol.render.Feature} and
+ * returns a `{number}`.
+ *
+ * @typedef {function((ol.Feature|ol.render.Feature), (ol.Feature|ol.render.Feature)):
+ *     number}
+ */
+ol.RenderOrderFunction;
 
 
 /**
@@ -596,6 +626,17 @@ ol.StyleGeometryFunction;
 
 
 /**
+ * Custom renderer function. Takes two arguments:
+ *
+ * 1. The pixel coordinates of the geometry in GeoJSON notation.
+ * 2. The {@link olx.render.State} of the layer renderer.
+ *
+ * @typedef {function((ol.Coordinate|Array<ol.Coordinate>|Array.<Array.<ol.Coordinate>>),olx.render.State)}
+ */
+ol.StyleRenderFunction;
+
+
+/**
  * @typedef {{opacity: number,
  *            rotateWithView: boolean,
  *            rotation: number,
@@ -631,10 +672,9 @@ ol.TilePriorityFunction;
 /**
  * @typedef {{
  *     dirty: boolean,
- *     renderedRenderOrder: (null|function(ol.Feature, ol.Feature):number),
+ *     renderedRenderOrder: (null|ol.RenderOrderFunction),
  *     renderedTileRevision: number,
- *     renderedRevision: number,
- *     replayGroup: ol.render.ReplayGroup}}
+ *     renderedRevision: number}}
  */
 ol.TileReplayState;
 
@@ -692,6 +732,14 @@ ol.ViewAnimation;
  *            buffer: WebGLBuffer}}
  */
 ol.WebglBufferCacheEntry;
+
+
+/**
+ * @typedef {{atlas: ol.style.AtlasManager,
+ *            width: Object.<string, number>,
+ *            height: number}}
+ */
+ol.WebglGlyphAtlas;
 
 
 /**

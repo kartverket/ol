@@ -6,7 +6,6 @@ goog.require('ol.source.OSM');
 goog.require('ol.source.VectorTile');
 goog.require('ol.layer.Tile');
 goog.require('ol.layer.VectorTile');
-goog.require('ol.tilegrid');
 goog.require('ol.proj.Projection');
 
 
@@ -17,18 +16,30 @@ var replacer = function(key, value) {
     var geometry = value.geometry;
 
     if (rawType === 1) {
-      type = geometry.length === 1 ? 'Point' : 'MultiPoint';
+      type = 'MultiPoint';
+      if (geometry.length == 1) {
+        type = 'Point';
+        geometry = geometry[0];
+      }
     } else if (rawType === 2) {
-      type = geometry.length === 1 ? 'LineString' : 'MultiLineString';
+      type = 'MultiLineString';
+      if (geometry.length == 1) {
+        type = 'LineString';
+        geometry = geometry[0];
+      }
     } else if (rawType === 3) {
-      type = geometry.length === 1 ? 'Polygon' : 'MultiPolygon';
+      type = 'Polygon';
+      if (geometry.length > 1) {
+        type = 'MultiPolygon';
+        geometry = [geometry];
+      }
     }
 
     return {
       'type': 'Feature',
       'geometry': {
         'type': type,
-        'coordinates': geometry.length == 1 ? geometry : [geometry]
+        'coordinates': geometry
       },
       'properties': value.tags
     };
@@ -65,18 +76,16 @@ fetch(url).then(function(response) {
   });
   var vectorSource = new ol.source.VectorTile({
     format: new ol.format.GeoJSON(),
-    tileGrid: ol.tilegrid.createXYZ(),
-    tilePixelRatio: 16,
     tileLoadFunction: function(tile) {
       var format = tile.getFormat();
       var tileCoord = tile.getTileCoord();
       var data = tileIndex.getTile(tileCoord[0], tileCoord[1], -tileCoord[2] - 1);
 
       var features = format.readFeatures(
-        JSON.stringify({
-          type: 'FeatureCollection',
-          features: data ? data.features : []
-        }, replacer));
+          JSON.stringify({
+            type: 'FeatureCollection',
+            features: data ? data.features : []
+          }, replacer));
       tile.setLoader(function() {
         tile.setFeatures(features);
         tile.setProjection(tilePixels);

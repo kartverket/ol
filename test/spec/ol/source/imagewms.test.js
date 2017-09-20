@@ -1,4 +1,4 @@
-goog.provide('ol.test.source.ImageWMS');
+
 
 goog.require('ol.source.ImageWMS');
 goog.require('ol.proj');
@@ -33,6 +33,19 @@ describe('ol.source.ImageWMS', function() {
       var extentAspectRatio = (extent[3] - extent[1]) / (extent[2] - extent[0]);
       var imageAspectRatio = Number(queryData.get('WIDTH') / Number(queryData.get('HEIGHT')));
       expect(extentAspectRatio).to.roughlyEqual(imageAspectRatio, 1e-12);
+    });
+
+    it('uses correct WIDTH and HEIGHT for HiDPI devices', function() {
+      pixelRatio = 2;
+      options.serverType = 'geoserver';
+      var source = new ol.source.ImageWMS(options);
+      var image = source.getImage(extent, resolution, pixelRatio, projection);
+      var uri = new URL(image.src_);
+      var queryData = uri.searchParams;
+      var width = Number(queryData.get('WIDTH'));
+      var height = Number(queryData.get('HEIGHT'));
+      expect(width).to.be(400);
+      expect(height).to.be(400);
     });
 
     it('requests integer WIDTH and HEIGHT', function() {
@@ -151,16 +164,16 @@ describe('ol.source.ImageWMS', function() {
     });
 
     it('rounds FORMAT_OPTIONS to an integer when the server is GeoServer',
-       function() {
-         options.serverType = 'geoserver';
-         var source = new ol.source.ImageWMS(options);
-         pixelRatio = 1.325;
-         var image =
+        function() {
+          options.serverType = 'geoserver';
+          var source = new ol.source.ImageWMS(options);
+          pixelRatio = 1.325;
+          var image =
              source.getImage(extent, resolution, pixelRatio, projection);
-         var uri = new URL(image.src_);
-         var queryData = uri.searchParams;
-         expect(queryData.get('FORMAT_OPTIONS')).to.be('dpi:119');
-       });
+          var uri = new URL(image.src_);
+          var queryData = uri.searchParams;
+          expect(queryData.get('FORMAT_OPTIONS')).to.be('dpi:119');
+        });
 
     it('sets DPI when the server is QGIS', function() {
       options.serverType = 'qgis';

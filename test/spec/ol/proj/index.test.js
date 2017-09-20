@@ -1,16 +1,15 @@
-goog.provide('ol.test.proj');
+
 
 goog.require('ol.proj');
 goog.require('ol.proj.EPSG4326');
 goog.require('ol.proj.Projection');
-goog.require('ol.proj.common');
 
 
 describe('ol.proj', function() {
 
   afterEach(function() {
     ol.proj.clearAllProjections();
-    ol.proj.common.add();
+    ol.proj.addCommon();
   });
 
   describe('projection equivalence', function() {
@@ -56,13 +55,13 @@ describe('ol.proj', function() {
 
     it('gives that CRS:84, urn:ogc:def:crs:EPSG:6.6:4326, EPSG:4326 are ' +
         'equivalent',
-        function() {
-          _testAllEquivalent([
-            'CRS:84',
-            'urn:ogc:def:crs:EPSG:6.6:4326',
-            'EPSG:4326'
-          ]);
-        });
+    function() {
+      _testAllEquivalent([
+        'CRS:84',
+        'urn:ogc:def:crs:EPSG:6.6:4326',
+        'EPSG:4326'
+      ]);
+    });
 
     it('requires code and units to be equal for projection evquivalence',
         function() {
@@ -211,6 +210,33 @@ describe('ol.proj', function() {
       expect(destinationExtent[3]).to.roughlyEqual(8399737.889818361, 1e-8);
     });
 
+  });
+
+  describe('getPointResolution()', function() {
+    it('returns the correct point resolution for EPSG:4326', function() {
+      var pointResolution = ol.proj.getPointResolution('EPSG:4326', 1, [0, 0]);
+      expect (pointResolution).to.be(1);
+      pointResolution = ol.proj.getPointResolution('EPSG:4326', 1, [0, 52]);
+      expect (pointResolution).to.be(1);
+    });
+    it('returns the correct point resolution for EPSG:4326 with custom units', function() {
+      var pointResolution = ol.proj.getPointResolution('EPSG:4326', 1, [0, 0], 'm');
+      expect(pointResolution).to.roughlyEqual(111195.0802335329, 1e-5);
+      pointResolution = ol.proj.getPointResolution('EPSG:4326', 1, [0, 52], 'm');
+      expect(pointResolution).to.roughlyEqual(89826.53390979706, 1e-5);
+    });
+    it('returns the correct point resolution for EPSG:3857', function() {
+      var pointResolution = ol.proj.getPointResolution('EPSG:3857', 1, [0, 0]);
+      expect(pointResolution).to.be(1);
+      pointResolution = ol.proj.getPointResolution('EPSG:3857', 1, ol.proj.fromLonLat([0, 52]));
+      expect(pointResolution).to.roughlyEqual(0.615661, 1e-5);
+    });
+    it('returns the correct point resolution for EPSG:3857 with custom units', function() {
+      var pointResolution = ol.proj.getPointResolution('EPSG:3857', 1, [0, 0], 'degrees');
+      expect(pointResolution).to.be(1);
+      pointResolution = ol.proj.getPointResolution('EPSG:4326', 1, ol.proj.fromLonLat([0, 52]), 'degrees');
+      expect(pointResolution).to.be(1);
+    });
   });
 
   describe('Proj4js integration', function() {

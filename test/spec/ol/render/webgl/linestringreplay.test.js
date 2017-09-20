@@ -1,11 +1,12 @@
-goog.provide('ol.test.render.webgl.LineStringReplay');
+
 
 goog.require('ol');
 goog.require('ol.Feature');
 goog.require('ol.geom.LineString');
 goog.require('ol.geom.MultiLineString');
-goog.require('ol.render.webgl.linestringreplay.defaultshader');
 goog.require('ol.render.webgl.LineStringReplay');
+goog.require('ol.render.webgl.linestringreplay.defaultshader');
+goog.require('ol.render.webgl.linestringreplay.defaultshader.Locations');
 goog.require('ol.style.Stroke');
 
 describe('ol.render.webgl.LineStringReplay', function() {
@@ -84,8 +85,8 @@ describe('ol.render.webgl.LineStringReplay', function() {
       var multilinestring;
 
       multilinestring = new ol.geom.MultiLineString(
-        [[[1000, 2000], [2000, 3000]],
-        [[1000, 3000], [2000, 4000], [3000, 3000]]]);
+          [[[1000, 2000], [2000, 3000]],
+            [[1000, 3000], [2000, 4000], [3000, 3000]]]);
       replay.setFillStrokeStyle(null, strokeStyle1);
       replay.drawMultiLineString(multilinestring, null);
       expect(replay.vertices).to.have.length(140);
@@ -114,9 +115,9 @@ describe('ol.render.webgl.LineStringReplay', function() {
       replay.drawCoordinates_(flatCoordinates, 0,
           flatCoordinates.length, 2);
       expect(replay.indices).to.eql(
-        [2, 0, 1, 4, 2, 1,
-          2, 4, 3,
-          5, 3, 4, 4, 6, 5]);
+          [2, 0, 1, 4, 2, 1,
+            2, 4, 3,
+            5, 3, 4, 4, 6, 5]);
     });
 
     it('optionally creates miters', function() {
@@ -134,9 +135,9 @@ describe('ol.render.webgl.LineStringReplay', function() {
       replay.drawCoordinates_(flatCoordinates, 0,
           flatCoordinates.length, 2);
       expect(replay.indices).to.eql(
-        [2, 0, 1, 4, 2, 1,
-          2, 4, 3, 3, 5, 2,
-          6, 3, 4, 4, 7, 6]);
+          [2, 0, 1, 4, 2, 1,
+            2, 4, 3, 3, 5, 2,
+            6, 3, 4, 4, 7, 6]);
     });
 
     it('optionally creates caps', function() {
@@ -153,11 +154,11 @@ describe('ol.render.webgl.LineStringReplay', function() {
       replay.drawCoordinates_(flatCoordinates, 0,
           flatCoordinates.length, 2);
       expect(replay.indices).to.eql(
-        [2, 0, 1, 1, 3, 2,
-          4, 2, 3, 6, 4, 3,
-          4, 6, 5, 5, 7, 4,
-          8, 5, 6, 6, 9, 8,
-          10, 8, 9, 9, 11, 10]);
+          [2, 0, 1, 1, 3, 2,
+            4, 2, 3, 6, 4, 3,
+            4, 6, 5, 5, 7, 4,
+            8, 5, 6, 6, 9, 8,
+            10, 8, 9, 9, 11, 10]);
     });
 
     it('respects segment orientation', function() {
@@ -176,9 +177,9 @@ describe('ol.render.webgl.LineStringReplay', function() {
       replay.drawCoordinates_(flatCoordinates, 0,
           flatCoordinates.length, 2);
       expect(replay.indices).to.eql(
-        [2, 0, 1, 4, 2, 0,
-          2, 4, 3,
-          5, 3, 4, 4, 6, 5]);
+          [2, 0, 1, 4, 2, 0,
+            2, 4, 3,
+            5, 3, 4, 4, 6, 5]);
     });
 
     it('closes boundaries', function() {
@@ -197,12 +198,12 @@ describe('ol.render.webgl.LineStringReplay', function() {
       replay.drawCoordinates_(flatCoordinates, 0,
           flatCoordinates.length, 2);
       expect(replay.indices).to.eql(
-        [0, 2, 1, 3, 1, 2,
-          5, 3, 2,
-          3, 5, 4, 6, 4, 5,
-          8, 6, 5,
-          6, 8, 7, 9, 7, 8,
-          10, 9, 8]);
+          [0, 2, 1, 3, 1, 2,
+            5, 3, 2,
+            3, 5, 4, 6, 4, 5,
+            8, 6, 5,
+            6, 8, 7, 9, 7, 8,
+            10, 9, 8]);
       expect(replay.vertices.slice(0, 7)).to.eql(
           replay.vertices.slice(-14, -7));
       expect(replay.vertices.slice(14, 21)).to.eql(

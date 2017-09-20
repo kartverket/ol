@@ -1,5 +1,4 @@
-/*global createMapDiv, disposeMap*/
-goog.provide('ol.test.interaction.KeyboardZoom');
+
 
 goog.require('ol.Map');
 goog.require('ol.MapBrowserEvent');

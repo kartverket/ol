@@ -2,7 +2,6 @@ goog.provide('ol.proj.EPSG3857');
 
 goog.require('ol');
 goog.require('ol.math');
-goog.require('ol.proj');
 goog.require('ol.proj.Projection');
 goog.require('ol.proj.Units');
 
@@ -16,7 +15,7 @@ goog.require('ol.proj.Units');
  * @param {string} code Code.
  * @private
  */
-ol.proj.EPSG3857_ = function(code) {
+ol.proj.EPSG3857.Projection_ = function(code) {
   ol.proj.Projection.call(this, {
     code: code,
     units: ol.proj.Units.METERS,
@@ -28,10 +27,12 @@ ol.proj.EPSG3857_ = function(code) {
     }
   });
 };
-ol.inherits(ol.proj.EPSG3857_, ol.proj.Projection);
+ol.inherits(ol.proj.EPSG3857.Projection_, ol.proj.Projection);
 
 
 /**
+ * Radius of WGS84 sphere
+ *
  * @const
  * @type {number}
  */
@@ -63,30 +64,20 @@ ol.proj.EPSG3857.WORLD_EXTENT = [-180, -85, 180, 85];
 
 
 /**
- * Lists several projection codes with the same meaning as EPSG:3857.
- *
- * @type {Array.<string>}
- */
-ol.proj.EPSG3857.CODES = [
-  'EPSG:3857',
-  'EPSG:102100',
-  'EPSG:102113',
-  'EPSG:900913',
-  'urn:ogc:def:crs:EPSG:6.18:3:3857',
-  'urn:ogc:def:crs:EPSG::3857',
-  'http://www.opengis.net/gml/srs/epsg.xml#3857'
-];
-
-
-/**
  * Projections equal to EPSG:3857.
  *
  * @const
  * @type {Array.<ol.proj.Projection>}
  */
-ol.proj.EPSG3857.PROJECTIONS = ol.proj.EPSG3857.CODES.map(function(code) {
-  return new ol.proj.EPSG3857_(code);
-});
+ol.proj.EPSG3857.PROJECTIONS = [
+  new ol.proj.EPSG3857.Projection_('EPSG:3857'),
+  new ol.proj.EPSG3857.Projection_('EPSG:102100'),
+  new ol.proj.EPSG3857.Projection_('EPSG:102113'),
+  new ol.proj.EPSG3857.Projection_('EPSG:900913'),
+  new ol.proj.EPSG3857.Projection_('urn:ogc:def:crs:EPSG:6.18:3:3857'),
+  new ol.proj.EPSG3857.Projection_('urn:ogc:def:crs:EPSG::3857'),
+  new ol.proj.EPSG3857.Projection_('http://www.opengis.net/gml/srs/epsg.xml#3857')
+];
 
 
 /**

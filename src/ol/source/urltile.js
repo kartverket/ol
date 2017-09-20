@@ -43,8 +43,8 @@ ol.source.UrlTile = function(options) {
    * @type {ol.TileUrlFunctionType}
    */
   this.tileUrlFunction = this.fixedTileUrlFunction ?
-      this.fixedTileUrlFunction.bind(this) :
-      ol.TileUrlFunction.nullTileUrlFunction;
+    this.fixedTileUrlFunction.bind(this) :
+    ol.TileUrlFunction.nullTileUrlFunction;
 
   /**
    * @protected
@@ -60,6 +60,12 @@ ol.source.UrlTile = function(options) {
   if (options.tileUrlFunction) {
     this.setTileUrlFunction(options.tileUrlFunction);
   }
+
+  /**
+   * @private
+   * @type {Object.<number, boolean>}
+   */
+  this.tileLoadingKeys_ = {};
 
 };
 ol.inherits(ol.source.UrlTile, ol.source.Tile);
@@ -110,21 +116,20 @@ ol.source.UrlTile.prototype.getUrls = function() {
  */
 ol.source.UrlTile.prototype.handleTileChange = function(event) {
   var tile = /** @type {ol.Tile} */ (event.target);
-  switch (tile.getState()) {
-    case ol.TileState.LOADING:
-      this.dispatchEvent(
-          new ol.source.Tile.Event(ol.source.TileEventType.TILELOADSTART, tile));
-      break;
-    case ol.TileState.LOADED:
-      this.dispatchEvent(
-          new ol.source.Tile.Event(ol.source.TileEventType.TILELOADEND, tile));
-      break;
-    case ol.TileState.ERROR:
-      this.dispatchEvent(
-          new ol.source.Tile.Event(ol.source.TileEventType.TILELOADERROR, tile));
-      break;
-    default:
-      // pass
+  var uid = ol.getUid(tile);
+  var tileState = tile.getState();
+  var type;
+  if (tileState == ol.TileState.LOADING) {
+    this.tileLoadingKeys_[uid] = true;
+    type = ol.source.TileEventType.TILELOADSTART;
+  } else if (uid in this.tileLoadingKeys_) {
+    delete this.tileLoadingKeys_[uid];
+    type = tileState == ol.TileState.ERROR ? ol.source.TileEventType.TILELOADERROR :
+      (tileState == ol.TileState.LOADED || tileState == ol.TileState.ABORT) ?
+        ol.source.TileEventType.TILELOADEND : undefined;
+  }
+  if (type != undefined) {
+    this.dispatchEvent(new ol.source.Tile.Event(type, tile));
   }
 };
 
@@ -165,8 +170,8 @@ ol.source.UrlTile.prototype.setTileUrlFunction = function(tileUrlFunction, opt_k
 ol.source.UrlTile.prototype.setUrl = function(url) {
   var urls = this.urls = ol.TileUrlFunction.expandUrl(url);
   this.setTileUrlFunction(this.fixedTileUrlFunction ?
-      this.fixedTileUrlFunction.bind(this) :
-      ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), url);
+    this.fixedTileUrlFunction.bind(this) :
+    ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), url);
 };
 
 
@@ -179,8 +184,8 @@ ol.source.UrlTile.prototype.setUrls = function(urls) {
   this.urls = urls;
   var key = urls.join('\n');
   this.setTileUrlFunction(this.fixedTileUrlFunction ?
-      this.fixedTileUrlFunction.bind(this) :
-      ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), key);
+    this.fixedTileUrlFunction.bind(this) :
+    ol.TileUrlFunction.createFromTemplates(urls, this.tileGrid), key);
 };
 
 

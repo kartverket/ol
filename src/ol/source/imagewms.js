@@ -55,7 +55,7 @@ ol.source.ImageWMS = function(opt_options) {
    * @type {ol.ImageLoadFunctionType}
    */
   this.imageLoadFunction_ = options.imageLoadFunction !== undefined ?
-      options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
+    options.imageLoadFunction : ol.source.Image.defaultImageLoadFunction;
 
   /**
    * @private
@@ -74,8 +74,7 @@ ol.source.ImageWMS = function(opt_options) {
    * @private
    * @type {ol.source.WMSServerType|undefined}
    */
-  this.serverType_ =
-      /** @type {ol.source.WMSServerType|undefined} */ (options.serverType);
+  this.serverType_ = /** @type {ol.source.WMSServerType|undefined} */ (options.serverType);
 
   /**
    * @private
@@ -194,11 +193,11 @@ ol.source.ImageWMS.prototype.getImageInternal = function(extent, resolution, pix
   var center = ol.extent.getCenter(extent);
   var viewWidth = Math.ceil(ol.extent.getWidth(extent) / imageResolution);
   var viewHeight = Math.ceil(ol.extent.getHeight(extent) / imageResolution);
-  var viewExtent = ol.extent.getForViewAndSize(center, resolution, 0,
+  var viewExtent = ol.extent.getForViewAndSize(center, imageResolution, 0,
       [viewWidth, viewHeight]);
   var requestWidth = Math.ceil(this.ratio_ * ol.extent.getWidth(extent) / imageResolution);
   var requestHeight = Math.ceil(this.ratio_ * ol.extent.getHeight(extent) / imageResolution);
-  var requestExtent = ol.extent.getForViewAndSize(center, resolution, 0,
+  var requestExtent = ol.extent.getForViewAndSize(center, imageResolution, 0,
       [requestWidth, requestHeight]);
 
   var image = this.image_;

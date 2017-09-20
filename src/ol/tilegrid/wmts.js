@@ -22,7 +22,7 @@ ol.tilegrid.WMTS = function(options) {
    * @type {!Array.<string>}
    */
   this.matrixIds_ = options.matrixIds;
-  // FIXME: should the matrixIds become optionnal?
+  // FIXME: should the matrixIds become optional?
 
   ol.tilegrid.TileGrid.call(this, {
     extent: options.extent,
@@ -69,7 +69,7 @@ ol.tilegrid.WMTS.prototype.getMatrixIds = function() {
  * @api
  */
 ol.tilegrid.WMTS.createFromCapabilitiesMatrixSet = function(matrixSet, opt_extent,
- opt_matrixLimits) {
+    opt_matrixLimits) {
 
   /** @type {!Array.<number>} */
   var resolutions = [];
@@ -130,7 +130,7 @@ ol.tilegrid.WMTS.createFromCapabilitiesMatrixSet = function(matrixSet, opt_exten
       }
       resolutions.push(resolution);
       tileSizes.push(tileWidth == tileHeight ?
-          tileWidth : [tileWidth, tileHeight]);
+        tileWidth : [tileWidth, tileHeight]);
       // top-left origin, so height is negative
       sizes.push([elt['MatrixWidth'], -elt['MatrixHeight']]);
     }

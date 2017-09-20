@@ -1,13 +1,14 @@
-goog.provide('ol.test.renderer.canvas.TileLayer');
+
 
 goog.require('ol.Map');
 goog.require('ol.View');
-goog.require('ol.transform');
 goog.require('ol.layer.Tile');
+goog.require('ol.proj');
 goog.require('ol.renderer.Map');
 goog.require('ol.renderer.canvas.TileLayer');
 goog.require('ol.source.TileWMS');
 goog.require('ol.source.XYZ');
+goog.require('ol.transform');
 
 
 describe('ol.renderer.canvas.TileLayer', function() {
@@ -79,6 +80,8 @@ describe('ol.renderer.canvas.TileLayer', function() {
       var renderer = new ol.renderer.canvas.TileLayer(layer);
       renderer.renderedTiles = [];
       var frameState = {
+        viewHints: [],
+        time: Date.now(),
         viewState: {
           center: [10, 5],
           projection: ol.proj.get('EPSG:3857'),

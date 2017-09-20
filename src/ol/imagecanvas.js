@@ -27,7 +27,7 @@ ol.ImageCanvas = function(extent, resolution, pixelRatio, attributions,
   this.loader_ = opt_loader !== undefined ? opt_loader : null;
 
   var state = opt_loader !== undefined ?
-      ol.ImageState.IDLE : ol.ImageState.LOADED;
+    ol.ImageState.IDLE : ol.ImageState.LOADED;
 
   ol.ImageBase.call(this, extent, resolution, pixelRatio, state, attributions);
 
@@ -87,6 +87,6 @@ ol.ImageCanvas.prototype.load = function() {
 /**
  * @inheritDoc
  */
-ol.ImageCanvas.prototype.getImage = function(opt_context) {
+ol.ImageCanvas.prototype.getImage = function() {
   return this.canvas_;
 };

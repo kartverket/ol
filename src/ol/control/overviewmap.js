@@ -2,7 +2,7 @@ goog.provide('ol.control.OverviewMap');
 
 goog.require('ol');
 goog.require('ol.Collection');
-goog.require('ol.Map');
+goog.require('ol.PluggableMap');
 goog.require('ol.MapEventType');
 goog.require('ol.MapProperty');
 goog.require('ol.Object');
@@ -42,7 +42,7 @@ ol.control.OverviewMap = function(opt_options) {
    * @type {boolean}
    */
   this.collapsible_ = options.collapsible !== undefined ?
-      options.collapsible : true;
+    options.collapsible : true;
 
   if (!this.collapsible_) {
     this.collapsed_ = false;
@@ -80,7 +80,7 @@ ol.control.OverviewMap = function(opt_options) {
   }
 
   var activeLabel = (this.collapsible_ && !this.collapsed_) ?
-      this.collapseLabel_ : this.label_;
+    this.collapseLabel_ : this.label_;
   var button = document.createElement('button');
   button.setAttribute('type', 'button');
   button.title = tipLabel;
@@ -97,10 +97,10 @@ ol.control.OverviewMap = function(opt_options) {
   this.ovmapDiv_.className = 'ol-overviewmap-map';
 
   /**
-   * @type {ol.Map}
+   * @type {ol.PluggableMap}
    * @private
    */
-  this.ovmap_ = new ol.Map({
+  this.ovmap_ = new ol.PluggableMap({
     controls: new ol.Collection(),
     interactions: new ol.Collection(),
     view: options.view
@@ -147,6 +147,44 @@ ol.control.OverviewMap = function(opt_options) {
     element: element,
     render: render,
     target: options.target
+  });
+
+  /* Interactive map */
+
+  var scope = this;
+
+  var overlay = this.boxOverlay_;
+  var overlayBox = this.boxOverlay_.getElement();
+
+  /* Functions definition */
+
+  var computeDesiredMousePosition = function(mousePosition) {
+    return {
+      clientX: mousePosition.clientX - (overlayBox.offsetWidth / 2),
+      clientY: mousePosition.clientY + (overlayBox.offsetHeight / 2)
+    };
+  };
+
+  var move = function(event) {
+    var coordinates = ovmap.getEventCoordinate(computeDesiredMousePosition(event));
+
+    overlay.setPosition(coordinates);
+  };
+
+  var endMoving = function(event) {
+    var coordinates = ovmap.getEventCoordinate(event);
+
+    scope.getMap().getView().setCenter(coordinates);
+
+    window.removeEventListener('mousemove', move);
+    window.removeEventListener('mouseup', endMoving);
+  };
+
+  /* Binding */
+
+  overlayBox.addEventListener('mousedown', function() {
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', endMoving);
   });
 };
 ol.inherits(ol.control.OverviewMap, ol.control.Control);
@@ -513,7 +551,7 @@ ol.control.OverviewMap.prototype.getCollapsed = function() {
 
 /**
  * Return the overview map.
- * @return {ol.Map} Overview map.
+ * @return {ol.PluggableMap} Overview map.
  * @api
  */
 ol.control.OverviewMap.prototype.getOverviewMap = function() {

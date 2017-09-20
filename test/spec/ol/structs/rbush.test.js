@@ -1,4 +1,4 @@
-goog.provide('ol.test.structs.RBush');
+
 
 goog.require('ol.structs.RBush');
 
@@ -311,6 +311,31 @@ describe('ol.structs.RBush', function() {
       expect(rBush.getExtent()).to.eql([0, 0, 1, 1]);
     });
 
+  });
+
+  describe('#concat', function() {
+
+    it('concatenates two RBush objects', function() {
+      var obj1 = {};
+      var obj2 = {};
+      var rBush2 = new ol.structs.RBush();
+      rBush.insert([0, 0, 1, 1], obj1);
+      rBush2.insert([0, 0, 2, 2], obj2);
+      rBush.concat(rBush2);
+      expect(rBush.getExtent()).to.eql([0, 0, 2, 2]);
+      expect(rBush.getAll().length).to.be(2);
+    });
+
+    it('preserves the concatenated object\'s references', function() {
+      var obj1 = {};
+      var obj2 = {};
+      var rBush2 = new ol.structs.RBush();
+      rBush.insert([0, 0, 1, 1], obj1);
+      rBush2.insert([0, 0, 2, 2], obj2);
+      rBush.concat(rBush2);
+      rBush.update([0, 0, 3, 3], obj2);
+      expect(rBush.getExtent()).to.eql([0, 0, 3, 3]);
+    });
   });
 
 });

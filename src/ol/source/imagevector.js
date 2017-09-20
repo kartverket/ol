@@ -113,7 +113,7 @@ ol.source.ImageVector.prototype.canvasFunctionInternal_ = function(extent, resol
 
   var replayGroup = new ol.render.canvas.ReplayGroup(
       ol.renderer.vector.getTolerance(resolution, pixelRatio), extent,
-      resolution, this.source_.getOverlaps(), this.renderBuffer_);
+      resolution, pixelRatio, this.source_.getOverlaps(), this.renderBuffer_);
 
   this.source_.loadFeatures(extent, resolution, projection);
 
@@ -143,7 +143,7 @@ ol.source.ImageVector.prototype.canvasFunctionInternal_ = function(extent, resol
 
   var transform = this.getTransform_(ol.extent.getCenter(extent),
       resolution, pixelRatio, size);
-  replayGroup.replay(this.canvasContext_, pixelRatio, transform, 0, {});
+  replayGroup.replay(this.canvasContext_, transform, 0, {});
 
   this.replayGroup_ = replayGroup;
 
@@ -297,6 +297,6 @@ ol.source.ImageVector.prototype.renderFeature_ = function(feature, resolution, p
 ol.source.ImageVector.prototype.setStyle = function(style) {
   this.style_ = style !== undefined ? style : ol.style.Style.defaultFunction;
   this.styleFunction_ = !style ?
-      undefined : ol.style.Style.createFunction(this.style_);
+    undefined : ol.style.Style.createFunction(this.style_);
   this.changed();
 };

@@ -1,4 +1,4 @@
-goog.provide('ol.test.interaction.Translate');
+
 
 goog.require('ol.Collection');
 goog.require('ol.Feature');
@@ -143,6 +143,19 @@ describe('ol.interaction.Translate', function() {
 
   });
 
+  describe('setActive', function() {
+
+    it('works when the map is not set', function() {
+      var translate = new ol.interaction.Translate({
+        features: features
+      });
+      expect(translate.getActive()).to.be(true);
+      translate.setActive(false);
+      expect(translate.getActive()).to.be(false);
+    });
+
+  });
+
   describe('moving features, with features option', function() {
     var translate;
 
@@ -210,27 +223,66 @@ describe('ol.interaction.Translate', function() {
     beforeEach(function() {
       translate = new ol.interaction.Translate();
       map.addInteraction(translate);
-      element = map.getTargetElement();
+      element = map.getViewport();
     });
 
     it('changes css cursor', function() {
-      expect(element.style.cursor).to.eql('');
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(false);
 
       simulateEvent('pointermove', 10, 20);
-      expect(element.style.cursor).to.match(/grab$/);
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(true);
 
       simulateEvent('pointerdown', 10, 20);
-      expect(element.style.cursor).to.match(/grabbing$/);
+      expect(element.classList.contains('ol-grabbing')).to.be(true);
+      expect(element.classList.contains('ol-grab')).to.be(false);
 
       simulateEvent('pointerup', 10, 20);
-      expect(element.style.cursor).to.match(/grab$/);
-    });
-
-    it('respects existing cursor value', function() {
-      element.style.cursor = 'pointer';
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(true);
 
       simulateEvent('pointermove', 0, 0);
-      expect(element.style.cursor).to.eql('pointer');
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(false);
+    });
+
+    it('resets css cursor when interaction is deactivated while pointer is on feature', function() {
+      simulateEvent('pointermove', 10, 20);
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(true);
+
+      translate.setActive(false);
+
+      simulateEvent('pointermove', 0, 0);
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(false);
+    });
+
+    it('resets css cursor interaction is removed while pointer is on feature', function() {
+      simulateEvent('pointermove', 10, 20);
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(true);
+
+      map.removeInteraction(translate);
+
+      simulateEvent('pointermove', 0, 0);
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(false);
+    });
+
+    it('resets css cursor to existing cursor interaction is removed while pointer is on feature', function() {
+      element.style.cursor = 'pointer';
+
+      simulateEvent('pointermove', 10, 20);
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(true);
+
+      map.removeInteraction(translate);
+
+      simulateEvent('pointermove', 0, 0);
+      expect(element.classList.contains('ol-grabbing')).to.be(false);
+      expect(element.classList.contains('ol-grab')).to.be(false);
     });
 
   });

@@ -1,7 +1,7 @@
-goog.provide('ol.test.format.KML');
 
-goog.require('ol.array');
+
 goog.require('ol.Feature');
+goog.require('ol.array');
 goog.require('ol.format.GeoJSON');
 goog.require('ol.format.KML');
 goog.require('ol.geom.GeometryCollection');
@@ -12,12 +12,14 @@ goog.require('ol.geom.MultiPoint');
 goog.require('ol.geom.MultiPolygon');
 goog.require('ol.geom.Point');
 goog.require('ol.geom.Polygon');
-goog.require('ol.style.Circle');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Icon');
 goog.require('ol.proj');
 goog.require('ol.proj.Projection');
 goog.require('ol.proj.transforms');
+goog.require('ol.style.Circle');
+goog.require('ol.style.Fill');
+goog.require('ol.style.Icon');
+goog.require('ol.style.IconAnchorUnits');
+goog.require('ol.style.IconOrigin');
 goog.require('ol.style.Stroke');
 goog.require('ol.style.Style');
 goog.require('ol.style.Text');
@@ -188,6 +190,33 @@ describe('ol.format.KML', function() {
               ' xsi:schemaLocation="http://www.opengis.net/kml/2.2' +
               ' https://developers.google.com/kml/schema/kml22gx.xsd">' +
               '  <Placemark/>' +
+              '</kml>';
+          expect(node).to.xmleql(ol.xml.parse(text));
+        });
+
+
+        it('can write properties', function() {
+          var lineString = new ol.geom.LineString([[1, 2], [3, 4]]);
+          lineString.set('extrude', false);
+          lineString.set('tessellate', true);
+          lineString.set('altitudeMode', 'clampToGround');
+          lineString.set('unsupportedProperty', 'foo');
+          var features = [new ol.Feature(lineString)];
+          var node = format.writeFeaturesNode(features);
+          var text =
+              '<kml xmlns="http://www.opengis.net/kml/2.2"' +
+              ' xmlns:gx="http://www.google.com/kml/ext/2.2"' +
+              ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
+              ' xsi:schemaLocation="http://www.opengis.net/kml/2.2' +
+              ' https://developers.google.com/kml/schema/kml22gx.xsd">' +
+              '  <Placemark>' +
+              '    <LineString>' +
+              '      <extrude>0</extrude>' +
+              '      <tessellate>1</tessellate>' +
+              '      <altitudeMode>clampToGround</altitudeMode>' +
+              '      <coordinates>1,2 3,4</coordinates>' +
+              '    </LineString>' +
+              '  </Placemark>' +
               '</kml>';
           expect(node).to.xmleql(ol.xml.parse(text));
         });
@@ -412,6 +441,7 @@ describe('ol.format.KML', function() {
               '    <LineString>' +
               '      <coordinates>1,2,3 4,5,6</coordinates>' +
               '      <extrude>0</extrude>' +
+              '      <tessellate>1</tessellate>' +
               '      <altitudeMode>absolute</altitudeMode>' +
               '    </LineString>' +
               '  </Placemark>' +
@@ -424,6 +454,7 @@ describe('ol.format.KML', function() {
           expect(g).to.be.an(ol.geom.LineString);
           expect(g.getCoordinates()).to.eql([[1, 2, 3], [4, 5, 6]]);
           expect(g.get('extrude')).to.be(false);
+          expect(g.get('tessellate')).to.be(true);
           expect(g.get('altitudeMode')).to.be('absolute');
         });
 
@@ -849,8 +880,8 @@ describe('ol.format.KML', function() {
           var g = f.getGeometry();
           expect(g).to.be.an(ol.geom.MultiPolygon);
           expect(g.getCoordinates()).to.eql(
-            [[[[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]],
-             [[[3, 0, 0], [3, 1, 0], [4, 1, 0], [4, 0, 0]]]]);
+              [[[[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]],
+                [[[3, 0, 0], [3, 1, 0], [4, 1, 0], [4, 0, 0]]]]);
           expect(g.get('extrude')).to.be.an('array');
           expect(g.get('extrude')).to.have.length(2);
           expect(g.get('extrude')[0]).to.be(false);
@@ -864,8 +895,8 @@ describe('ol.format.KML', function() {
         it('can write MultiPolygon geometries', function() {
           var layout = 'XYZ';
           var multiPolygon = new ol.geom.MultiPolygon(
-            [[[[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]],
-             [[[3, 0, 0], [3, 1, 0], [4, 1, 0], [4, 0, 0]]]], layout);
+              [[[[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]]],
+                [[[3, 0, 0], [3, 1, 0], [4, 1, 0], [4, 0, 0]]]], layout);
           var features = [new ol.Feature(multiPolygon)];
           var node = format.writeFeaturesNode(features);
           var text =
@@ -964,6 +995,7 @@ describe('ol.format.KML', function() {
               '    <MultiGeometry>' +
               '      <LineString>' +
               '        <extrude>0</extrude>' +
+              '        <tessellate>0</tessellate>' +
               '        <altitudeMode>absolute</altitudeMode>' +
               '        <coordinates>1,2,3 4,5,6</coordinates>' +
               '      </LineString>' +
@@ -985,6 +1017,10 @@ describe('ol.format.KML', function() {
           expect(g.get('extrude')).to.have.length(2);
           expect(g.get('extrude')[0]).to.be(false);
           expect(g.get('extrude')[1]).to.be(undefined);
+          expect(g.get('tessellate')).to.be.an('array');
+          expect(g.get('tessellate')).to.have.length(2);
+          expect(g.get('tessellate')[0]).to.be(false);
+          expect(g.get('tessellate')[1]).to.be(undefined);
           expect(g.get('altitudeMode')).to.be.an('array');
           expect(g.get('altitudeMode')).to.have.length(2);
           expect(g.get('altitudeMode')[0]).to.be('absolute');
@@ -1580,7 +1616,29 @@ describe('ol.format.KML', function() {
           expect(fs).to.have.length(1);
           var f = fs[0];
           expect(f).to.be.an(ol.Feature);
+          expect(f.getProperties()).to.only.have.keys(['foo', 'geometry']);
           expect(f.get('foo')).to.be('bar');
+        });
+
+        it('can read ExtendedData with no values', function() {
+          var text =
+              '<kml xmlns="http://earth.google.com/kml/2.2">' +
+              '  <Placemark xmlns="http://earth.google.com/kml/2.2">' +
+              '    <ExtendedData>' +
+              '      <Data name="foo">' +
+              '        <value>200</value>' +
+              '      </Data>' +
+              '      <Data name="bar"/>' +
+              '    </ExtendedData>' +
+              '  </Placemark>' +
+              '</kml>';
+          var fs = format.readFeatures(text);
+          expect(fs).to.have.length(1);
+          var f = fs[0];
+          expect(f).to.be.an(ol.Feature);
+          expect(f.getProperties()).to.only.have.keys(['foo', 'bar', 'geometry']);
+          expect(f.get('foo')).to.be('200');
+          expect(f.get('bar')).to.be(undefined);
         });
 
         it('can read ExtendedData with displayName instead of name', function() {
@@ -1711,6 +1769,111 @@ describe('ol.format.KML', function() {
           expect(imageStyle.getScale()).to.be(1);
           expect(style.getText()).to.be(ol.format.KML.DEFAULT_TEXT_STYLE_);
           expect(style.getZIndex()).to.be(undefined);
+        });
+
+        it('can read a IconStyle\'s hotspot', function() {
+          var text =
+            '<kml xmlns="http://earth.google.com/kml/2.2">' +
+            '  <Placemark id="1">' +
+            '    <Style>' +
+            '      <IconStyle>' +
+            '        <Icon>' +
+            '          <href>http://foo.png</href>' +
+            '        </Icon>' +
+            '        <hotSpot x="0.5" xunits="fraction" y="0.5" yunits="fraction" />' +
+            '      </IconStyle>' +
+            '    </Style>' +
+            '  </Placemark>' +
+            '  <Placemark id="2">' +
+            '    <Style>' +
+            '      <IconStyle>' +
+            '        <Icon>' +
+            '          <href>http://foo.png</href>' +
+            '        </Icon>' +
+            '        <hotSpot x="5" xunits="pixels" y="5" yunits="pixels" />' +
+            '      </IconStyle>' +
+            '    </Style>' +
+            '  </Placemark>' +
+            '  <Placemark id="3">' +
+            '    <Style>' +
+            '      <IconStyle>' +
+            '        <Icon>' +
+            '          <href>http://foo.png</href>' +
+            '        </Icon>' +
+            '        <hotSpot x="5" xunits="insetPixels" y="5" yunits="pixels" />' +
+            '      </IconStyle>' +
+            '    </Style>' +
+            '  </Placemark>' +
+            '  <Placemark id="4">' +
+            '    <Style>' +
+            '      <IconStyle>' +
+            '        <Icon>' +
+            '          <href>http://foo.png</href>' +
+            '        </Icon>' +
+            '        <hotSpot x="5" xunits="pixels" y="5" yunits="insetPixels" />' +
+            '      </IconStyle>' +
+            '    </Style>' +
+            '  </Placemark>' +
+            '  <Placemark id="5">' +
+            '    <Style>' +
+            '      <IconStyle>' +
+            '        <Icon>' +
+            '          <href>http://foo.png</href>' +
+            '        </Icon>' +
+            '        <hotSpot x="5" xunits="insetPixels" y="5" yunits="insetPixels" />' +
+            '      </IconStyle>' +
+            '    </Style>' +
+            '  </Placemark>' +
+            '</kml>';
+          var fs = format.readFeatures(text);
+          expect(fs).to.have.length(5);
+          fs.forEach(function(f) {
+            expect(f).to.be.an(ol.Feature);
+            expect(f.getId()).to.be.within(1, 5);
+            var styleFunction = f.getStyleFunction();
+            expect(styleFunction).not.to.be(undefined);
+            var styleArray = styleFunction.call(f, 0);
+            expect(styleArray).to.be.an(Array);
+            expect(styleArray).to.have.length(1);
+            var style = styleArray[0];
+            expect(style).to.be.an(ol.style.Style);
+            expect(style.getFill()).to.be(ol.format.KML.DEFAULT_FILL_STYLE_);
+            expect(style.getStroke()).to.be(ol.format.KML.DEFAULT_STROKE_STYLE_);
+            var imageStyle = style.getImage();
+            expect(imageStyle).to.be.an(ol.style.Icon);
+            expect(new URL(imageStyle.getSrc()).href).to.eql(new URL('http://foo.png').href);
+            expect(imageStyle.anchor_).to.be.an(Array);
+            expect(imageStyle.anchor_).to.have.length(2);
+            if (f.getId() == 1) {
+              expect(imageStyle.anchor_[0]).to.be(0.5);
+              expect(imageStyle.anchor_[1]).to.be(0.5);
+              expect(imageStyle.anchorOrigin_).to.be(ol.style.IconOrigin.BOTTOM_LEFT);
+              expect(imageStyle.anchorXUnits_).to.be(ol.style.IconAnchorUnits.FRACTION);
+              expect(imageStyle.anchorYUnits_).to.be(ol.style.IconAnchorUnits.FRACTION);
+            } else {
+              expect(imageStyle.anchor_[0]).to.be(5);
+              expect(imageStyle.anchor_[1]).to.be(5);
+              expect(imageStyle.anchorXUnits_).to.be(ol.style.IconAnchorUnits.PIXELS);
+              expect(imageStyle.anchorYUnits_).to.be(ol.style.IconAnchorUnits.PIXELS);
+              if (f.getId() == 2) {
+                expect(imageStyle.anchorOrigin_).to.be(ol.style.IconOrigin.BOTTOM_LEFT);
+              }
+              if (f.getId() == 3) {
+                expect(imageStyle.anchorOrigin_).to.be(ol.style.IconOrigin.BOTTOM_RIGHT);
+              }
+              if (f.getId() == 4) {
+                expect(imageStyle.anchorOrigin_).to.be(ol.style.IconOrigin.TOP_LEFT);
+              }
+              if (f.getId() == 5) {
+                expect(imageStyle.anchorOrigin_).to.be(ol.style.IconOrigin.TOP_RIGHT);
+              }
+            }
+            expect(imageStyle.getRotation()).to.eql(0);
+            expect(imageStyle.getSize()).to.be(null);
+            expect(imageStyle.getScale()).to.be(1);
+            expect(style.getText()).to.be(ol.format.KML.DEFAULT_TEXT_STYLE_);
+            expect(style.getZIndex()).to.be(undefined);
+          });
         });
 
         it('can read a complex feature\'s IconStyle', function() {
@@ -3173,7 +3336,7 @@ describe('ol.format.KML', function() {
         var nl = format.readNetworkLinks(text);
         expect(nl).to.have.length(2);
         expect(nl[0].name).to.be('bar');
-        expect(nl[0].href.replace(window.location.href, '')).to.be('bar/bar.kml');
+        expect(nl[0].href.replace(window.location.origin, '')).to.be('/bar/bar.kml');
         expect(nl[1].href).to.be('http://foo.com/foo.kml');
       });
 

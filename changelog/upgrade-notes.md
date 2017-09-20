@@ -1,6 +1,142 @@
 ## Upgrade notes
 
-### Next release
+### Next Release
+
+#### Minor change for custom `tileLoadFunction` with `ol.source.VectorTile`
+
+It is no longer necessary to set the projection on the tile. Instead, the `readFeatures` method must be called with the tile's extent as `extent` option and the view's projection as `featureProjection`.
+
+Before:
+```js
+tile.setLoader(function() {
+  var data = // ... fetch data
+  var format = tile.getFormat();
+  tile.setFeatures(format.readFeatures(data));
+  tile.setProjection(format.readProjection(data));
+  // uncomment the line below for ol.format.MVT only
+  //tile.setExtent(format.getLastExtent());
+});
+```
+
+After:
+```js
+tile.setLoader(function() {
+  var data = // ... fetch data
+  var format = tile.getFormat();
+  tile.setFeatures(format.readFeatures(data, {
+    featureProjection: map.getView().getProjection(),
+    // uncomment the line below for ol.format.MVT only
+    //extent: tile.getExtent()
+  }));
+);
+```
+
+#### Deprecation of `ol.DeviceOrientation`
+
+`ol.DeviceOrientation` is deprecated and will be removed in the next major version.
+The device-orientation example has been updated to use the (gyronorm.js)[https://github.com/dorukeker/gyronorm.js] library.
+
+
+### v4.3.0
+
+#### `ol.source.VectorTile` no longer requires a `tileGrid` option
+
+By default, the `ol.source.VectorTile` constructor creates an XYZ tile grid (in Web Mercator) for 512 pixel tiles and assumes a max zoom level of 22.  If you were creating a vector tile source with an explicit `tileGrid` option, you can now remove this.
+
+Before:
+```js
+var source = new ol.source.VectorTile({
+  tileGrid: ol.tilegrid.createXYZ({tileSize: 512, maxZoom: 22}),
+  url: url
+});
+```
+
+After:
+```js
+var source = new ol.source.VectorTile({
+  url: url
+});
+```
+
+If you need to change the max zoom level, you can pass the source a `maxZoom` option.  If you need to change the tile size, you can pass the source a `tileSize` option.  If you need a completely custom tile grid, you can still pass the source a `tileGrid` option.
+
+#### `ol.interaction.Modify` deletes with `alt` key only
+
+To delete features with the modify interaction, press the `alt` key while clicking on an existing vertex.  If you want to configure the modify interaction with a different delete condition, use the `deleteCondition` option.  For example, to allow deletion on a single click with no modifier keys, configure the interaction like this:
+```js
+var interaction = new ol.interaction.Modify({
+  source: source,
+  deleteCondition: function(event) {
+    return ol.events.condition.noModifierKeys(event) && ol.events.condition.singleClick(event);
+  }
+});
+```
+
+The motivation for this change is to make the modify, draw, and snap interactions all work well together.  Previously, the use of these interactions with the default configuration would make it so you couldn't reliably add new vertices (click with no modifier) and delete existing vertices (click with no modifier).
+
+#### `ol.source.VectorTile` no longer has a `tilePixelRatio` option
+
+The `tilePixelRatio` option was only used for tiles in projections with `tile-pixels` as units. For tiles read with `ol.format.MVT` and the default tile loader, or tiles with the default pixel size of 4096 pixels, no changes are necessary. For the very rare cases that do not fall under these categories, a custom `tileLoadFunction` now needs to be configured on the `ol.source.VectorTile`. In addition to calling `tile.setFeatures()` and `tile.setProjection()`, it also needs to contain code like the following:
+```js
+var extent = tile.getFormat() instanceof ol.format.MVT ?
+  tile.getLastExtent() :
+  [0, 0, tilePixelRatio * tileSize, tilePixelRatio * tileSize];
+tile.setExtent(extent);
+```
+
+#### `ol.animate` now takes the shortest arc for rotation animation
+
+Usually rotation animations should animate along the shortest arc. There are rare occasions where a spinning animation effect is desired. So if you previously had something like
+```js
+map.getView().animate({
+  rotation: 2 * Math.PI,
+  duration: 2000
+});
+```
+we recommend to split the animation into two parts and use different easing functions. The code below results in the same effect as the snippet above did with previous versions:
+```js
+map.getView().animate({
+  rotation: Math.PI,
+  easing: ol.easing.easeIn
+}, {
+  rotation: 2 * Math.PI,
+  easing: ol.easing.easeOut
+});
+```
+
+### v4.2.0
+
+#### Return values of two `ol.style.RegularShape` getters have changed
+
+To provide a more consistent behaviour the following getters now return the same value that was given to constructor:
+
+`ol.style.RegularShape#getPoints` does not return the double amount of points anymore if a radius2 is set.
+
+`ol.style.RegularShape#getRadius2` will return `undefined` if no radius2 is set.
+
+### v4.1.0
+
+#### Adding duplicate layers to a map throws
+
+Previously, you could do this:
+```js
+map.addLayer(layer);
+map.addLayer(layer);
+```
+
+However, after adding a duplicate layer, things failed if you tried to remove that layer.
+
+Now, `map.addLayer()` throws if you try adding a layer that has already been added to the map.
+
+#### Simpler `constrainResolution` configuration
+
+The `constrainResolution` configuration for `ol.interaction.PinchZoom` and `ol.interaction.MouseWheelZoom`
+can now be set directly with an option in `ol.interaction.defaults`:
+```js
+ol.interaction.defaults({
+  constrainResolution: true
+});
+```
 
 ### v4.0.0
 
