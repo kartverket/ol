@@ -15,7 +15,7 @@ goog.require('ol.featureloader');
  * @extends {ol.Tile}
  * @param {ol.TileCoord} tileCoord Tile coordinate.
  * @param {ol.TileState} state State.
- * @param {string} src Data source url.
+ * @param {number} sourceRevision Source revision.
  * @param {ol.format.Feature} format Feature format.
  * @param {ol.TileLoadFunctionType} tileLoadFunction Tile load function.
  * @param {ol.TileCoord} urlTileCoord Wrapped tile coordinate for source urls.
@@ -30,12 +30,13 @@ goog.require('ol.featureloader');
  *     instantiate for source tiles.
  * @param {function(this: ol.source.VectorTile, ol.events.Event)} handleTileChange
  *     Function to call when a source tile's state changes.
+ * @param {olx.TileOptions=} opt_options Tile options.
  */
-ol.VectorImageTile = function(tileCoord, state, src, format, tileLoadFunction,
-    urlTileCoord, tileUrlFunction, sourceTileGrid, tileGrid, sourceTiles,
-    pixelRatio, projection, tileClass, handleTileChange) {
+ol.VectorImageTile = function(tileCoord, state, sourceRevision, format,
+    tileLoadFunction, urlTileCoord, tileUrlFunction, sourceTileGrid, tileGrid,
+    sourceTiles, pixelRatio, projection, tileClass, handleTileChange, opt_options) {
 
-  ol.Tile.call(this, tileCoord, state);
+  ol.Tile.call(this, tileCoord, state, opt_options);
 
   /**
    * @private
@@ -68,9 +69,9 @@ ol.VectorImageTile = function(tileCoord, state, src, format, tileLoadFunction,
   this.tileKeys = [];
 
   /**
-   * @type {string}
+   * @type {number}
    */
-  this.src_ = src;
+  this.sourceRevision_ = sourceRevision;
 
   /**
    * @type {ol.TileCoord}
@@ -196,7 +197,7 @@ ol.VectorImageTile.prototype.getReplayState = function(layer) {
  * @inheritDoc
  */
 ol.VectorImageTile.prototype.getKey = function() {
-  return this.tileKeys.join('/') + '/' + this.src_;
+  return this.tileKeys.join('/') + '-' + this.sourceRevision_;
 };
 
 

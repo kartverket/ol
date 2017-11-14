@@ -7,6 +7,7 @@ goog.require('ol.TileUrlFunction');
 goog.require('ol.asserts');
 goog.require('ol.dom');
 goog.require('ol.extent');
+goog.require('ol.size');
 goog.require('ol.source.TileImage');
 goog.require('ol.tilegrid.TileGrid');
 
@@ -32,26 +33,28 @@ ol.source.Zoomify = function(opt_options) {
 
   var imageWidth = size[0];
   var imageHeight = size[1];
+  var extent = options.extent || [0, -size[1], size[0], 0];
   var tierSizeInTiles = [];
-  var tileSize = ol.DEFAULT_TILE_SIZE;
+  var tileSize = options.tileSize || ol.DEFAULT_TILE_SIZE;
+  var tileSizeForTierSizeCalculation = tileSize;
 
   switch (tierSizeCalculation) {
     case ol.source.Zoomify.TierSizeCalculation_.DEFAULT:
-      while (imageWidth > tileSize || imageHeight > tileSize) {
+      while (imageWidth > tileSizeForTierSizeCalculation || imageHeight > tileSizeForTierSizeCalculation) {
         tierSizeInTiles.push([
-          Math.ceil(imageWidth / tileSize),
-          Math.ceil(imageHeight / tileSize)
+          Math.ceil(imageWidth / tileSizeForTierSizeCalculation),
+          Math.ceil(imageHeight / tileSizeForTierSizeCalculation)
         ]);
-        tileSize += tileSize;
+        tileSizeForTierSizeCalculation += tileSizeForTierSizeCalculation;
       }
       break;
     case ol.source.Zoomify.TierSizeCalculation_.TRUNCATED:
       var width = imageWidth;
       var height = imageHeight;
-      while (width > tileSize || height > tileSize) {
+      while (width > tileSizeForTierSizeCalculation || height > tileSizeForTierSizeCalculation) {
         tierSizeInTiles.push([
-          Math.ceil(width / tileSize),
-          Math.ceil(height / tileSize)
+          Math.ceil(width / tileSizeForTierSizeCalculation),
+          Math.ceil(height / tileSizeForTierSizeCalculation)
         ]);
         width >>= 1;
         height >>= 1;
@@ -77,8 +80,8 @@ ol.source.Zoomify = function(opt_options) {
   }
   resolutions.reverse();
 
-  var extent = [0, -size[1], size[0], 0];
   var tileGrid = new ol.tilegrid.TileGrid({
+    tileSize: tileSize,
     extent: extent,
     origin: ol.extent.getTopLeft(extent),
     resolutions: resolutions
@@ -113,7 +116,8 @@ ol.source.Zoomify = function(opt_options) {
           var tileIndex =
               tileCoordX +
               tileCoordY * tierSizeInTiles[tileCoordZ][0];
-          var tileGroup = ((tileIndex + tileCountUpToTier[tileCoordZ]) / ol.DEFAULT_TILE_SIZE) | 0;
+          var tileSize = tileGrid.getTileSize(tileCoordZ);
+          var tileGroup = ((tileIndex + tileCountUpToTier[tileCoordZ]) / tileSize) | 0;
           var localContext = {
             'z': tileCoordZ,
             'x': tileCoordX,
@@ -130,6 +134,8 @@ ol.source.Zoomify = function(opt_options) {
 
   var tileUrlFunction = ol.TileUrlFunction.createFromTileUrlFunctions(urls.map(createFromTemplate));
 
+  var ZoomifyTileClass = ol.source.Zoomify.Tile_.bind(null, tileGrid);
+
   ol.source.TileImage.call(this, {
     attributions: options.attributions,
     cacheSize: options.cacheSize,
@@ -137,29 +143,31 @@ ol.source.Zoomify = function(opt_options) {
     logo: options.logo,
     projection: options.projection,
     reprojectionErrorThreshold: options.reprojectionErrorThreshold,
-    tileClass: ol.source.Zoomify.Tile_,
+    tileClass: ZoomifyTileClass,
     tileGrid: tileGrid,
-    tileUrlFunction: tileUrlFunction
+    tileUrlFunction: tileUrlFunction,
+    transition: options.transition
   });
 
 };
 ol.inherits(ol.source.Zoomify, ol.source.TileImage);
 
-
 /**
  * @constructor
  * @extends {ol.ImageTile}
+ * @param {ol.tilegrid.TileGrid} tileGrid TileGrid that the tile belongs to.
  * @param {ol.TileCoord} tileCoord Tile coordinate.
  * @param {ol.TileState} state State.
  * @param {string} src Image source URI.
  * @param {?string} crossOrigin Cross origin.
  * @param {ol.TileLoadFunctionType} tileLoadFunction Tile load function.
+ * @param {olx.TileOptions=} opt_options Tile options.
  * @private
  */
 ol.source.Zoomify.Tile_ = function(
-    tileCoord, state, src, crossOrigin, tileLoadFunction) {
+    tileGrid, tileCoord, state, src, crossOrigin, tileLoadFunction, opt_options) {
 
-  ol.ImageTile.call(this, tileCoord, state, src, crossOrigin, tileLoadFunction);
+  ol.ImageTile.call(this, tileCoord, state, src, crossOrigin, tileLoadFunction, opt_options);
 
   /**
    * @private
@@ -167,6 +175,11 @@ ol.source.Zoomify.Tile_ = function(
    */
   this.zoomifyImage_ = null;
 
+  /**
+   * @private
+   * @type {ol.Size}
+   */
+  this.tileSize_ = ol.size.toSize(tileGrid.getTileSize(tileCoord[0]));
 };
 ol.inherits(ol.source.Zoomify.Tile_, ol.ImageTile);
 
@@ -178,14 +191,14 @@ ol.source.Zoomify.Tile_.prototype.getImage = function() {
   if (this.zoomifyImage_) {
     return this.zoomifyImage_;
   }
-  var tileSize = ol.DEFAULT_TILE_SIZE;
   var image = ol.ImageTile.prototype.getImage.call(this);
   if (this.state == ol.TileState.LOADED) {
-    if (image.width == tileSize && image.height == tileSize) {
+    var tileSize = this.tileSize_;
+    if (image.width == tileSize[0] && image.height == tileSize[1]) {
       this.zoomifyImage_ = image;
       return image;
     } else {
-      var context = ol.dom.createCanvasContext2D(tileSize, tileSize);
+      var context = ol.dom.createCanvasContext2D(tileSize[0], tileSize[1]);
       context.drawImage(image, 0, 0);
       this.zoomifyImage_ = context.canvas;
       return context.canvas;
@@ -194,7 +207,6 @@ ol.source.Zoomify.Tile_.prototype.getImage = function() {
     return image;
   }
 };
-
 
 /**
  * @enum {string}

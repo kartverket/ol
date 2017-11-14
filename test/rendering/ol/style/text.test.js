@@ -17,15 +17,16 @@ describe('ol.rendering.style.Text', function() {
 
   var map, vectorSource;
 
-  function createMap(renderer) {
+  function createMap(renderer, opt_pixelRatio) {
+    var pixelRatio = opt_pixelRatio || 1;
     vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
       source: vectorSource
     });
 
     map = new ol.Map({
-      pixelRatio: 1,
-      target: createMapDiv(200, 200),
+      pixelRatio: pixelRatio,
+      target: createMapDiv(200 / pixelRatio, 200 / pixelRatio),
       renderer: renderer,
       layers: [vectorLayer],
       view: new ol.View({
@@ -45,15 +46,17 @@ describe('ol.rendering.style.Text', function() {
 
   describe('#render', function() {
 
-    function createFeatures() {
+    function createFeatures(opt_scale) {
+      var scale = opt_scale || 1;
       var feature;
       feature = new ol.Feature({
         geometry: new ol.geom.Point([-20, 18])
       });
       feature.setStyle(new ol.style.Style({
         text: new ol.style.Text({
+          scale: scale,
           text: 'hello',
-          font: '10px'
+          font: '10px sans-serif'
         })
       }));
       vectorSource.addFeature(feature);
@@ -63,10 +66,11 @@ describe('ol.rendering.style.Text', function() {
       });
       feature.setStyle(new ol.style.Style({
         text: new ol.style.Text({
+          scale: scale,
           text: 'hello',
           fill: new ol.style.Fill({
             color: 'red',
-            font: '12px'
+            font: '12px sans-serif'
           }),
           stroke: new ol.style.Stroke({
             color: '#000',
@@ -81,9 +85,10 @@ describe('ol.rendering.style.Text', function() {
       });
       feature.setStyle(new ol.style.Style({
         text: new ol.style.Text({
+          scale: scale,
           rotateWithView: true,
           text: 'hello',
-          font: '10px',
+          font: '10px sans-serif',
           stroke: new ol.style.Stroke({
             color: [10, 10, 10, 0.5]
           })
@@ -99,7 +104,7 @@ describe('ol.rendering.style.Text', function() {
     var uglyPath = [163, 22, 159, 30, 150, 30, 143, 24, 151, 17];
     var polygon = [151, 17, 163, 22, 159, 30, 150, 30, 143, 24, 151, 17];
 
-    function createLineString(coords, textAlign, maxAngle) {
+    function createLineString(coords, textAlign, maxAngle, strokeColor, strokeWidth, scale) {
       var geom = new ol.geom.LineString();
       geom.setFlatCoordinates('XY', coords);
       var style = new ol.style.Style({
@@ -109,11 +114,13 @@ describe('ol.rendering.style.Text', function() {
         text: new ol.style.Text({
           text: 'Hello world',
           font: 'bold 14px sans-serif',
+          scale: scale || 1,
           textAlign: textAlign,
           maxAngle: maxAngle,
           placement: 'line',
           stroke: new ol.style.Stroke({
-            color: 'white'
+            color: strokeColor || 'white',
+            width: strokeWidth
           })
         })
       });
@@ -151,6 +158,18 @@ describe('ol.rendering.style.Text', function() {
       createFeatures();
       map.getView().setRotation(Math.PI / 7);
       expectResemble(map, 'rendering/ol/style/expected/text-rotated-canvas.png', IMAGE_TOLERANCE, done);
+    });
+
+    it('renders correct stroke with pixelRatio != 1', function(done) {
+      createMap('canvas', 2);
+      createFeatures();
+      expectResemble(map, 'rendering/ol/style/expected/text-canvas-hidpi.png', 2.8, done);
+    });
+
+    it('renders text correctly with scale != 1', function(done) {
+      createMap('canvas');
+      createFeatures(3);
+      expectResemble(map, 'rendering/ol/style/expected/text-canvas-scale.png', 6, done);
     });
 
     it('renders multiline text with alignment options', function(done) {
@@ -282,13 +301,26 @@ describe('ol.rendering.style.Text', function() {
       it('renders text along a linestring', function(done) {
         createMap('canvas');
         createLineString(nicePath);
-        expectResemble(map, 'rendering/ol/style/expected/text-linestring-nice.png', 2.5, done);
+        expectResemble(map, 'rendering/ol/style/expected/text-linestring-nice.png', 2.8, done);
+      });
+
+      it('renders text along a linestring with scale != 1', function(done) {
+        createMap('canvas');
+        createLineString(nicePath, undefined, undefined, undefined, undefined, 2);
+        expectResemble(map, 'rendering/ol/style/expected/text-linestring-nice-scale.png', 8, done);
+      });
+
+      it('aligns text along a linestring correctly with `textBaseline` option', function(done) {
+        createMap('canvas');
+        createLineString(nicePath, undefined, undefined, 'cyan', 3);
+        map.getView().setResolution(0.25);
+        expectResemble(map, 'rendering/ol/style/expected/text-linestring-nice-baseline.png', 6.2, done);
       });
 
       it('renders text along a linestring with `textAlign: \'left\'`', function(done) {
         createMap('canvas');
         createLineString(nicePath, 'left');
-        expectResemble(map, 'rendering/ol/style/expected/text-linestring-left-nice.png', 2.5, done);
+        expectResemble(map, 'rendering/ol/style/expected/text-linestring-left-nice.png', 2.8, done);
       });
 
       it('renders text along a rotated linestring', function(done) {
@@ -326,7 +358,7 @@ describe('ol.rendering.style.Text', function() {
       }));
       vectorSource.addFeature(feature);
       map.getView().fit(vectorSource.getExtent());
-      expectResemble(map, 'rendering/ol/style/expected/text-multilinestring.png', 6.9, done);
+      expectResemble(map, 'rendering/ol/style/expected/text-multilinestring.png', 7, done);
     });
 
     it('renders text along a Polygon', function(done) {

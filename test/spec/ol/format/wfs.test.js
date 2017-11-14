@@ -1,5 +1,3 @@
-
-
 goog.require('ol.Feature');
 goog.require('ol.format.GML2');
 goog.require('ol.format.WFS');
@@ -13,6 +11,20 @@ goog.require('ol.proj');
 goog.require('ol.xml');
 
 describe('ol.format.WFS', function() {
+
+  describe('featureType', function() {
+
+    it('#getFeatureType #setFeatureType', function() {
+      var format = new ol.format.WFS({
+        featureNS: 'http://www.openplans.org/topp',
+        featureType: ['foo', 'bar']
+      });
+      expect(format.getFeatureType()).to.eql(['foo', 'bar']);
+      format.setFeatureType('baz');
+      expect(format.getFeatureType()).to.eql('baz');
+    });
+
+  });
 
   describe('when parsing TOPP states GML from WFS', function() {
 
@@ -509,6 +521,43 @@ describe('ol.format.WFS', function() {
             ol.format.filter.equalTo('name', 'New York'),
             ol.format.filter.bbox('the_geom', [1, 2, 3, 4], 'urn:ogc:def:crs:EPSG::4326'),
             ol.format.filter.greaterThan('population', 2000000)
+        )
+      });
+      expect(serialized.firstElementChild).to.xmleql(ol.xml.parse(text));
+    });
+
+    it('creates a contains filter', function() {
+      var text =
+          '<wfs:Query xmlns:wfs="http://www.opengis.net/wfs" ' +
+          '    typeName="area" srsName="EPSG:4326" ' +
+          '    xmlns:topp="http://www.openplans.org/topp">' +
+          '  <ogc:Filter xmlns:ogc="http://www.opengis.net/ogc">' +
+          '    <ogc:Contains>' +
+          '      <ogc:PropertyName>the_geom</ogc:PropertyName>' +
+          '      <gml:Polygon xmlns:gml="http://www.opengis.net/gml">' +
+          '        <gml:exterior>' +
+          '          <gml:LinearRing>' +
+          '            <gml:posList srsDimension="2">' +
+          '              10 20 10 25 15 25 15 20 10 20' +
+          '            </gml:posList>' +
+          '          </gml:LinearRing>' +
+          '        </gml:exterior>' +
+          '      </gml:Polygon>' +
+          '    </ogc:Contains>' +
+          '  </ogc:Filter>' +
+          '</wfs:Query>';
+      var serialized = new ol.format.WFS().writeGetFeature({
+        srsName: 'EPSG:4326',
+        featureTypes: ['area'],
+        filter: ol.format.filter.contains(
+            'the_geom',
+            new ol.geom.Polygon([[
+              [10, 20],
+              [10, 25],
+              [15, 25],
+              [15, 20],
+              [10, 20]
+            ]])
         )
       });
       expect(serialized.firstElementChild).to.xmleql(ol.xml.parse(text));

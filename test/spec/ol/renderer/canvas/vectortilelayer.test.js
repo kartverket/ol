@@ -1,6 +1,5 @@
-
-
 goog.require('ol');
+goog.require('ol.obj');
 goog.require('ol.Feature');
 goog.require('ol.Map');
 goog.require('ol.TileState');
@@ -13,6 +12,7 @@ goog.require('ol.geom.Point');
 goog.require('ol.layer.VectorTile');
 goog.require('ol.proj');
 goog.require('ol.proj.Projection');
+goog.require('ol.render.canvas');
 goog.require('ol.render.Feature');
 goog.require('ol.renderer.canvas.VectorTileLayer');
 goog.require('ol.source.VectorTile');
@@ -25,7 +25,12 @@ describe('ol.renderer.canvas.VectorTileLayer', function() {
 
   describe('constructor', function() {
 
-    var map, layer, source, feature1, feature2, feature3, target, tileCallback;
+    var head = document.getElementsByTagName('head')[0];
+    var font = document.createElement('link');
+    font.href = 'https://fonts.googleapis.com/css?family=Dancing+Script';
+    font.rel = 'stylesheet';
+
+    var map, layer, layerStyle, source, feature1, feature2, feature3, target, tileCallback;
 
     beforeEach(function() {
       tileCallback = function() {};
@@ -40,7 +45,7 @@ describe('ol.renderer.canvas.VectorTileLayer', function() {
         }),
         target: target
       });
-      var layerStyle = [new ol.style.Style({
+      layerStyle = [new ol.style.Style({
         text: new ol.style.Text({
           text: 'layer'
         })
@@ -147,6 +152,44 @@ describe('ol.renderer.canvas.VectorTileLayer', function() {
       spy.restore();
     });
 
+    it('does not re-render for unavailable fonts', function(done) {
+      map.renderSync();
+      ol.obj.clear(ol.render.canvas.checkedFonts_);
+      layerStyle[0].getText().setFont('12px "Unavailable font",sans-serif');
+      layer.changed();
+      var revision = layer.getRevision();
+      setTimeout(function() {
+        expect(layer.getRevision()).to.be(revision);
+        done();
+      }, 800);
+    });
+
+    it('does not re-render for available fonts', function(done) {
+      map.renderSync();
+      ol.obj.clear(ol.render.canvas.checkedFonts_);
+      layerStyle[0].getText().setFont('12px sans-serif');
+      layer.changed();
+      var revision = layer.getRevision();
+      setTimeout(function() {
+        expect(layer.getRevision()).to.be(revision);
+        done();
+      }, 800);
+    });
+
+    it('re-renders for fonts that become available', function(done) {
+      map.renderSync();
+      ol.obj.clear(ol.render.canvas.checkedFonts_);
+      head.appendChild(font);
+      layerStyle[0].getText().setFont('12px "Dancing Script",sans-serif');
+      layer.changed();
+      var revision = layer.getRevision();
+      setTimeout(function() {
+        head.removeChild(font);
+        expect(layer.getRevision()).to.be(revision + 1);
+        done();
+      }, 1600);
+    });
+
     it('transforms geometries when tile and view projection are different', function() {
       var tile;
       tileCallback = function(t) {
@@ -199,7 +242,8 @@ describe('ol.renderer.canvas.VectorTileLayer', function() {
     it('re-renders when layer changed', function() {
       var layer = new ol.layer.VectorTile({
         source: new ol.source.VectorTile({
-          tileGrid: ol.tilegrid.createXYZ()
+          tileGrid: ol.tilegrid.createXYZ(),
+          transition: 0
         })
       });
       var sourceTile = new ol.VectorTile([0, 0, 0], 2);
@@ -209,6 +253,7 @@ describe('ol.renderer.canvas.VectorTileLayer', function() {
         return document.createElement('canvas');
       };
       var tile = new ol.VectorImageTile([0, 0, 0]);
+      tile.transition_ = 0;
       tile.wrappedTileCoord = [0, 0, 0];
       tile.setState(ol.TileState.LOADED);
       tile.getSourceTile = function() {
@@ -258,6 +303,7 @@ describe('ol.renderer.canvas.VectorTileLayer', function() {
       this.tileKeys = [key];
       this.sourceTiles_ = {};
       this.sourceTiles_[key] = sourceTile;
+      this.wrappedTileCoord = arguments[0];
     };
     ol.inherits(TileClass, ol.VectorImageTile);
 

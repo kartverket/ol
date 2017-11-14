@@ -46,13 +46,23 @@ ol.AtlasManagerInfo;
  * A type that can be used to provide attribution information for data sources.
  *
  * It represents either
- * * a simple string (e.g. `'© Acme Inc.'`),
- * * an array of simple strings (e.g. `['© Acme Inc.', '© Bacme Inc.']`),
- * * an instance of `{@link ol.Attribution}`,
- * * or an array with multiple `{@link ol.Attribution}` instances.
- * @typedef {string|Array.<string>|ol.Attribution|Array.<ol.Attribution>}
+ * * a simple string (e.g. `'© Acme Inc.'`)
+ * * an array of simple strings (e.g. `['© Acme Inc.', '© Bacme Inc.']`)
+ * * a function that returns a string or array of strings (`{@link ol.Attribution2}`)
+ *
+ * Note that the `{@link ol.Attribution}` constructor is deprecated.
+ * @typedef {string|Array.<string>|ol.Attribution2|ol.Attribution|Array.<ol.Attribution>}
  */
 ol.AttributionLike;
+
+
+/**
+ * A function that returns a string or an array of strings representing source
+ * attributions.
+ *
+ * @typedef {function(olx.FrameState): (string|Array.<string>)}
+ */
+ol.Attribution2;
 
 
 /**
@@ -74,6 +84,28 @@ ol.CanvasFillState;
  *     number, ol.Size, ol.proj.Projection): HTMLCanvasElement}
  */
 ol.CanvasFunctionType;
+
+
+/**
+ * @typedef {{currentFillStyle: (ol.ColorLike|undefined),
+ *            currentStrokeStyle: (ol.ColorLike|undefined),
+ *            currentLineCap: (string|undefined),
+ *            currentLineDash: Array.<number>,
+ *            currentLineDashOffset: (number|undefined),
+ *            currentLineJoin: (string|undefined),
+ *            currentLineWidth: (number|undefined),
+ *            currentMiterLimit: (number|undefined),
+ *            lastStroke: (number|undefined),
+ *            fillStyle: (ol.ColorLike|undefined),
+ *            strokeStyle: (ol.ColorLike|undefined),
+ *            lineCap: (string|undefined),
+ *            lineDash: Array.<number>,
+ *            lineDashOffset: (number|undefined),
+ *            lineJoin: (string|undefined),
+ *            lineWidth: (number|undefined),
+ *            miterLimit: (number|undefined)}|null}
+ */
+ol.CanvasFillStrokeState;
 
 
 /**
@@ -155,6 +187,20 @@ ol.Coordinate;
  * @typedef {function((ol.Coordinate|undefined)): string}
  */
 ol.CoordinateFormatType;
+
+
+/**
+ * Container for decluttered replay instructions that need to be rendered or
+ * omitted together, i.e. when styles render both an image and text, or for the
+ * characters that form text along lines. The basic elements of this array are
+ * `[minX, minY, maxX, maxY, count]`, where the first four entries are the
+ * rendered extent of the group in pixel space. `count` is the number of styles
+ * in the group, i.e. 2 when an image and a text are grouped, or 1 otherwise.
+ * In addition to these four elements, declutter instruction arrays (i.e. the
+ * arguments to @{link ol.render.canvas.drawImage} are appended to the array.
+ * @typedef {Array.<*>}
+ */
+ol.DeclutterGroup;
 
 
 /**
@@ -580,7 +626,8 @@ ol.SourceSourceOptions;
  *            projection: ol.ProjectionLike,
  *            state: (ol.source.State|undefined),
  *            tileGrid: (ol.tilegrid.TileGrid|undefined),
- *            wrapX: (boolean|undefined)}}
+ *            wrapX: (boolean|undefined),
+ *            transition: (number|undefined)}}
  */
 ol.SourceTileOptions;
 
@@ -599,7 +646,8 @@ ol.SourceTileOptions;
  *            tileUrlFunction: (ol.TileUrlFunctionType|undefined),
  *            url: (string|undefined),
  *            urls: (Array.<string>|undefined),
- *            wrapX: (boolean|undefined)}}
+ *            wrapX: (boolean|undefined),
+ *            transition: (number|undefined)}}
  */
 ol.SourceUrlTileOptions;
 

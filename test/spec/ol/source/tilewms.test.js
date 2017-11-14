@@ -9,13 +9,20 @@ goog.require('ol.tilegrid.TileGrid');
 
 describe('ol.source.TileWMS', function() {
 
-  var options;
+  var options, optionsReproj;
   beforeEach(function() {
     options = {
       params: {
         'LAYERS': 'layer'
       },
       url: 'http://example.com/wms'
+    };
+    optionsReproj = {
+      params: {
+        'LAYERS': 'layer'
+      },
+      url: 'http://example.com/wms',
+      projection: 'EPSG:4326'
     };
   });
 
@@ -193,7 +200,7 @@ describe('ol.source.TileWMS', function() {
 
   });
 
-  describe('#getGetFeatureInfo', function() {
+  describe('#getGetFeatureInfoUrl', function() {
 
     it('returns the expected GetFeatureInfo URL', function() {
       var source = new ol.source.TileWMS(options);
@@ -217,6 +224,36 @@ describe('ol.source.TileWMS', function() {
       expect(queryData.get('HEIGHT')).to.be('256');
       expect(queryData.get('I')).to.be('154');
       expect(queryData.get('J')).to.be('101');
+      expect(queryData.get('LAYERS')).to.be('layer');
+      expect(queryData.get('QUERY_LAYERS')).to.be('layer');
+      expect(queryData.get('REQUEST')).to.be('GetFeatureInfo');
+      expect(queryData.get('SERVICE')).to.be('WMS');
+      expect(queryData.get('SRS')).to.be(null);
+      expect(queryData.get('STYLES')).to.be('');
+      expect(queryData.get('TRANSPARENT')).to.be('true');
+      expect(queryData.get('VERSION')).to.be('1.3.0');
+      expect(queryData.get('WIDTH')).to.be('256');
+      expect(uri.hash.replace('#', '')).to.be.empty();
+    });
+
+    it('returns the expected GetFeatureInfo URL when source\'s projection is different from the parameter', function() {
+      var source = new ol.source.TileWMS(optionsReproj);
+      source.pixelRatio_ = 1;
+      var url = source.getGetFeatureInfoUrl(
+          [-7000000, -12000000],
+          19567.87924100512, ol.proj.get('EPSG:3857'),
+          {INFO_FORMAT: 'text/plain'});
+      var uri = new URL(url);
+      expect(uri.protocol).to.be('http:');
+      expect(uri.hostname).to.be('example.com');
+      expect(uri.pathname).to.be('/wms');
+      var queryData = uri.searchParams;
+      expect(queryData.get('BBOX')).to.be('-79.17133464081945,-90,-66.51326044311186,-45');
+      expect(queryData.get('CRS')).to.be('EPSG:4326');
+      expect(queryData.get('FORMAT')).to.be('image/png');
+      expect(queryData.get('HEIGHT')).to.be('256');
+      expect(queryData.get('I')).to.be('517');
+      expect(queryData.get('J')).to.be('117');
       expect(queryData.get('LAYERS')).to.be('layer');
       expect(queryData.get('QUERY_LAYERS')).to.be('layer');
       expect(queryData.get('REQUEST')).to.be('GetFeatureInfo');
@@ -275,15 +312,13 @@ describe('ol.source.TileWMS', function() {
   });
 
   describe('#setUrls()', function() {
-    it ('resets coordKeyPrefix_', function() {
-      var urls = ['u1', 'u2'];
-      var source1 = new ol.source.TileWMS({
-        urls: urls
+    it ('updates the source key', function() {
+      var source = new ol.source.TileWMS({
+        urls: ['u1', 'u2']
       });
-      var source2 = new ol.source.TileWMS({});
-      expect(source2.coordKeyPrefix_).to.be.empty();
-      source2.setUrls(urls);
-      expect(source2.coordKeyPrefix_).to.equal(source1.coordKeyPrefix_);
+      var originalKey = source.getKey();
+      source.setUrls(['u3', 'u4']);
+      expect(source.getKey() !== originalKey).to.be(true);
     });
   });
 });

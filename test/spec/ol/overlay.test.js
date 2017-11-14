@@ -44,6 +44,12 @@ describe('ol.Overlay', function() {
       expect(instance).to.be.an(ol.Overlay);
     });
 
+    it('can be constructed with className', function() {
+      var instance = new ol.Overlay({className: 'my-class'});
+      expect(instance).to.be.an(ol.Overlay);
+      expect(instance.element.className).to.be('my-class');
+    });
+
   });
 
   describe('#getId()', function() {
@@ -92,9 +98,9 @@ describe('ol.Overlay', function() {
       });
       map.addOverlay(overlay);
       map.renderSync();
-      expect(overlay.element_.style.display).not.to.be('none');
+      expect(overlay.element.style.display).not.to.be('none');
       overlay.setVisible(false);
-      expect(overlay.element_.style.display).to.be('none');
+      expect(overlay.element.style.display).to.be('none');
     });
 
   });

@@ -1,6 +1,9 @@
 goog.provide('ol.structs.LRUCache');
 
+goog.require('ol');
 goog.require('ol.asserts');
+goog.require('ol.events.EventTarget');
+goog.require('ol.events.EventType');
 
 
 /**
@@ -8,11 +11,15 @@ goog.require('ol.asserts');
  * Object's properties (e.g. 'hasOwnProperty' is not allowed as a key). Expiring
  * items from the cache is the responsibility of the user.
  * @constructor
+ * @extends {ol.events.EventTarget}
+ * @fires ol.events.Event
  * @struct
  * @template T
  * @param {number=} opt_highWaterMark High water mark.
  */
 ol.structs.LRUCache = function(opt_highWaterMark) {
+
+  ol.events.EventTarget.call(this);
 
   /**
    * @type {number}
@@ -45,6 +52,8 @@ ol.structs.LRUCache = function(opt_highWaterMark) {
 
 };
 
+ol.inherits(ol.structs.LRUCache, ol.events.EventTarget);
+
 
 /**
  * @return {boolean} Can expire cache.
@@ -62,6 +71,7 @@ ol.structs.LRUCache.prototype.clear = function() {
   this.entries_ = {};
   this.oldest_ = null;
   this.newest_ = null;
+  this.dispatchEvent(ol.events.EventType.CLEAR);
 };
 
 
@@ -112,6 +122,34 @@ ol.structs.LRUCache.prototype.get = function(key) {
   entry.older = this.newest_;
   this.newest_.newer = entry;
   this.newest_ = entry;
+  return entry.value_;
+};
+
+
+/**
+ * Remove an entry from the cache.
+ * @param {string} key The entry key.
+ * @return {T} The removed entry.
+ */
+ol.structs.LRUCache.prototype.remove = function(key) {
+  var entry = this.entries_[key];
+  ol.asserts.assert(entry !== undefined, 15); // Tried to get a value for a key that does not exist in the cache
+  if (entry === this.newest_) {
+    this.newest_ = /** @type {ol.LRUCacheEntry} */ (entry.older);
+    if (this.newest_) {
+      this.newest_.newer = null;
+    }
+  } else if (entry === this.oldest_) {
+    this.oldest_ = /** @type {ol.LRUCacheEntry} */ (entry.newer);
+    if (this.oldest_) {
+      this.oldest_.older = null;
+    }
+  } else {
+    entry.newer.older = entry.older;
+    entry.older.newer = entry.newer;
+  }
+  delete this.entries_[key];
+  --this.count_;
   return entry.value_;
 };
 
@@ -169,6 +207,15 @@ ol.structs.LRUCache.prototype.peekLastKey = function() {
 
 
 /**
+ * Get the key of the newest item in the cache.  Throws if the cache is empty.
+ * @return {string} The newest key.
+ */
+ol.structs.LRUCache.prototype.peekFirstKey = function() {
+  return this.newest_.key_;
+};
+
+
+/**
  * @return {T} value Value.
  */
 ol.structs.LRUCache.prototype.pop = function() {
@@ -217,4 +264,16 @@ ol.structs.LRUCache.prototype.set = function(key, value) {
   this.newest_ = entry;
   this.entries_[key] = entry;
   ++this.count_;
+};
+
+
+/**
+ * @param {string} key Key.
+ * @param {T} value Value.
+ */
+ol.structs.LRUCache.prototype.pruneAndSet = function(key, value) {
+  while (this.canExpireCache()) {
+    this.pop();
+  }
+  this.set(key, value);
 };
