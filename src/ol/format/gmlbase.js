@@ -69,9 +69,17 @@ ol.format.GMLBase = function(opt_options) {
    */
   this.FEATURE_COLLECTION_PARSERS = {};
   this.FEATURE_COLLECTION_PARSERS[ol.format.GMLBase.GMLNS] = {
-    'featureMember': ol.xml.makeReplacer(
+    'featureMember': ol.xml.makeArrayPusher(
         ol.format.GMLBase.prototype.readFeaturesInternal),
-    'featureMembers': ol.xml.makeReplacer(
+    'featureMembers': ol.xml.makeArrayPusher(
+        ol.format.GMLBase.prototype.readFeaturesInternal)
+  };
+  this.FEATURE_COLLECTION_PARSERS[ol.format.GMLBase.GMLNS_3_2] = {
+    'member': ol.xml.makeArrayPusher(
+        ol.format.GMLBase.prototype.readFeaturesInternal),
+    'featureMember': ol.xml.makeArrayPusher(
+        ol.format.GMLBase.prototype.readFeaturesInternal),
+    'featureMembers': ol.xml.makeArrayPusher(
         ol.format.GMLBase.prototype.readFeaturesInternal)
   };
 
@@ -85,6 +93,23 @@ ol.inherits(ol.format.GMLBase, ol.format.XMLFeature);
  * @type {string}
  */
 ol.format.GMLBase.GMLNS = 'http://www.opengis.net/gml';
+
+
+/**
+ * @const
+ * @type {string}
+ */
+ol.format.GMLBase.GMLNS_3_2 = 'http://www.opengis.net/gml/3.2';
+
+
+/**
+ * @const
+ * @type {Array.<string>}
+ */
+ol.format.GMLBase.NAMESPACE_URIS = [
+  ol.format.GMLBase.GMLNS,
+  ol.format.GMLBase.GMLNS_3_2
+];
 
 
 /**
@@ -111,16 +136,11 @@ ol.format.GMLBase.prototype.readFeaturesInternal = function(node, objectStack) {
   var localName = node.localName;
   var features = null;
   if (localName == 'FeatureCollection') {
-    if (node.namespaceURI === 'http://www.opengis.net/wfs') {
-      features = ol.xml.pushParseAndPop([],
-          this.FEATURE_COLLECTION_PARSERS, node,
-          objectStack, this);
-    } else {
-      features = ol.xml.pushParseAndPop(null,
-          this.FEATURE_COLLECTION_PARSERS, node,
-          objectStack, this);
-    }
-  } else if (localName == 'featureMembers' || localName == 'featureMember') {
+    features = ol.xml.pushParseAndPop([],
+        this.FEATURE_COLLECTION_PARSERS, node,
+        objectStack, this);
+  } else if (localName == 'featureMembers' || localName == 'featureMember' ||
+             localName == 'member') {
     var context = objectStack[0];
     var featureType = context['featureType'];
     var featureNS = context['featureNS'];
@@ -150,7 +170,7 @@ ol.format.GMLBase.prototype.readFeaturesInternal = function(node, objectStack) {
           }
         }
       }
-      if (localName != 'featureMember') {
+      if (localName != 'featureMember' && localName != 'member') {
         // recheck featureType for each featureMember
         context['featureType'] = featureType;
         context['featureNS'] = featureNS;
@@ -177,7 +197,7 @@ ol.format.GMLBase.prototype.readFeaturesInternal = function(node, objectStack) {
       }
       parsersNS[featureNS[p]] = parsers;
     }
-    if (localName == 'featureMember') {
+    if (localName == 'featureMember' || localName == 'member') {
       features = ol.xml.pushParseAndPop(undefined, parsersNS, node, objectStack);
     } else {
       features = ol.xml.pushParseAndPop([], parsersNS, node, objectStack);
@@ -219,7 +239,8 @@ ol.format.GMLBase.prototype.readGeometryElement = function(node, objectStack) {
 ol.format.GMLBase.prototype.readFeatureElement = function(node, objectStack) {
   var n;
   var fid = node.getAttribute('fid') ||
-      ol.xml.getAttributeNS(node, ol.format.GMLBase.GMLNS, 'id');
+      ol.xml.getAttributeNS(node, ol.format.GMLBase.GMLNS, 'id') ||
+      ol.xml.getAttributeNS(node, ol.format.GMLBase.GMLNS_3_2, 'id');
   var values = {}, geometryName;
   for (n = node.firstElementChild; n; n = n.nextElementSibling) {
     var localName = n.localName;
@@ -456,14 +477,13 @@ ol.format.GMLBase.prototype.readFlatCoordinatesFromNode_ = function(node, object
  * @type {Object.<string, Object.<string, ol.XmlParser>>}
  * @private
  */
-ol.format.GMLBase.prototype.MULTIPOINT_PARSERS_ = {
-  'http://www.opengis.net/gml': {
-    'pointMember': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.pointMemberParser_),
-    'pointMembers': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.pointMemberParser_)
-  }
-};
+ol.format.GMLBase.prototype.MULTIPOINT_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.GMLBase.NAMESPACE_URIS, {
+      'pointMember': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.pointMemberParser_),
+      'pointMembers': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.pointMemberParser_)
+    });
 
 
 /**
@@ -471,14 +491,13 @@ ol.format.GMLBase.prototype.MULTIPOINT_PARSERS_ = {
  * @type {Object.<string, Object.<string, ol.XmlParser>>}
  * @private
  */
-ol.format.GMLBase.prototype.MULTILINESTRING_PARSERS_ = {
-  'http://www.opengis.net/gml': {
-    'lineStringMember': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.lineStringMemberParser_),
-    'lineStringMembers': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.lineStringMemberParser_)
-  }
-};
+ol.format.GMLBase.prototype.MULTILINESTRING_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.GMLBase.NAMESPACE_URIS, {
+      'lineStringMember': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.lineStringMemberParser_),
+      'lineStringMembers': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.lineStringMemberParser_)
+    });
 
 
 /**
@@ -486,14 +505,13 @@ ol.format.GMLBase.prototype.MULTILINESTRING_PARSERS_ = {
  * @type {Object.<string, Object.<string, ol.XmlParser>>}
  * @private
  */
-ol.format.GMLBase.prototype.MULTIPOLYGON_PARSERS_ = {
-  'http://www.opengis.net/gml': {
-    'polygonMember': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.polygonMemberParser_),
-    'polygonMembers': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.polygonMemberParser_)
-  }
-};
+ol.format.GMLBase.prototype.MULTIPOLYGON_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.GMLBase.NAMESPACE_URIS, {
+      'polygonMember': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.polygonMemberParser_),
+      'polygonMembers': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.polygonMemberParser_)
+    });
 
 
 /**
@@ -501,12 +519,11 @@ ol.format.GMLBase.prototype.MULTIPOLYGON_PARSERS_ = {
  * @type {Object.<string, Object.<string, ol.XmlParser>>}
  * @private
  */
-ol.format.GMLBase.prototype.POINTMEMBER_PARSERS_ = {
-  'http://www.opengis.net/gml': {
-    'Point': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.readFlatCoordinatesFromNode_)
-  }
-};
+ol.format.GMLBase.prototype.POINTMEMBER_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.GMLBase.NAMESPACE_URIS, {
+      'Point': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.readFlatCoordinatesFromNode_)
+    });
 
 
 /**
@@ -514,12 +531,11 @@ ol.format.GMLBase.prototype.POINTMEMBER_PARSERS_ = {
  * @type {Object.<string, Object.<string, ol.XmlParser>>}
  * @private
  */
-ol.format.GMLBase.prototype.LINESTRINGMEMBER_PARSERS_ = {
-  'http://www.opengis.net/gml': {
-    'LineString': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.readLineString)
-  }
-};
+ol.format.GMLBase.prototype.LINESTRINGMEMBER_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.GMLBase.NAMESPACE_URIS, {
+      'LineString': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.readLineString)
+    });
 
 
 /**
@@ -527,12 +543,11 @@ ol.format.GMLBase.prototype.LINESTRINGMEMBER_PARSERS_ = {
  * @type {Object.<string, Object.<string, ol.XmlParser>>}
  * @private
  */
-ol.format.GMLBase.prototype.POLYGONMEMBER_PARSERS_ = {
-  'http://www.opengis.net/gml': {
-    'Polygon': ol.xml.makeArrayPusher(
-        ol.format.GMLBase.prototype.readPolygon)
-  }
-};
+ol.format.GMLBase.prototype.POLYGONMEMBER_PARSERS_ = ol.xml.makeStructureNS(
+    ol.format.GMLBase.NAMESPACE_URIS, {
+      'Polygon': ol.xml.makeArrayPusher(
+          ol.format.GMLBase.prototype.readPolygon)
+    });
 
 
 /**
@@ -540,12 +555,11 @@ ol.format.GMLBase.prototype.POLYGONMEMBER_PARSERS_ = {
  * @type {Object.<string, Object.<string, ol.XmlParser>>}
  * @protected
  */
-ol.format.GMLBase.prototype.RING_PARSERS = {
-  'http://www.opengis.net/gml': {
-    'LinearRing': ol.xml.makeReplacer(
-        ol.format.GMLBase.prototype.readFlatLinearRing_)
-  }
-};
+ol.format.GMLBase.prototype.RING_PARSERS = ol.xml.makeStructureNS(
+    ol.format.GMLBase.NAMESPACE_URIS, {
+      'LinearRing': ol.xml.makeReplacer(
+          ol.format.GMLBase.prototype.readFlatLinearRing_)
+    });
 
 
 /**
