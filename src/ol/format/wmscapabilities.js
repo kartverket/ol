@@ -500,7 +500,7 @@ ol.format.WMSCapabilities.CAPABILITY_PARSERS_ = ol.xml.makeStructureNS(
           ol.format.WMSCapabilities.readRequest_),
       'Exception': ol.xml.makeObjectPropertySetter(
           ol.format.WMSCapabilities.readException_),
-      'Layer': ol.xml.makeObjectPropertySetter(
+      'Layer': ol.xml.makeObjectPropertyPusher(
           ol.format.WMSCapabilities.readCapabilityLayer_)
     });
 
