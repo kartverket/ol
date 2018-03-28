@@ -1,40 +1,40 @@
-goog.provide('ol.proj.transforms');
-
-goog.require('ol.obj');
+/**
+ * @module ol/proj/transforms
+ */
+import {isEmpty} from '../obj.js';
 
 
 /**
  * @private
- * @type {Object.<string, Object.<string, ol.TransformFunction>>}
+ * @type {!Object.<string, Object.<string, module:ol/proj~TransformFunction>>}
  */
-ol.proj.transforms.cache_ = {};
+let transforms = {};
 
 
 /**
  * Clear the transform cache.
  */
-ol.proj.transforms.clear = function() {
-  ol.proj.transforms.cache_ = {};
-};
+export function clear() {
+  transforms = {};
+}
 
 
 /**
  * Registers a conversion function to convert coordinates from the source
  * projection to the destination projection.
  *
- * @param {ol.proj.Projection} source Source.
- * @param {ol.proj.Projection} destination Destination.
- * @param {ol.TransformFunction} transformFn Transform.
+ * @param {module:ol/proj/Projection~Projection} source Source.
+ * @param {module:ol/proj/Projection~Projection} destination Destination.
+ * @param {module:ol/proj~TransformFunction} transformFn Transform.
  */
-ol.proj.transforms.add = function(source, destination, transformFn) {
-  var sourceCode = source.getCode();
-  var destinationCode = destination.getCode();
-  var transforms = ol.proj.transforms.cache_;
+export function add(source, destination, transformFn) {
+  const sourceCode = source.getCode();
+  const destinationCode = destination.getCode();
   if (!(sourceCode in transforms)) {
     transforms[sourceCode] = {};
   }
   transforms[sourceCode][destinationCode] = transformFn;
-};
+}
 
 
 /**
@@ -42,34 +42,32 @@ ol.proj.transforms.add = function(source, destination, transformFn) {
  * projection to the destination projection.  This method is used to clean up
  * cached transforms during testing.
  *
- * @param {ol.proj.Projection} source Source projection.
- * @param {ol.proj.Projection} destination Destination projection.
- * @return {ol.TransformFunction} transformFn The unregistered transform.
+ * @param {module:ol/proj/Projection~Projection} source Source projection.
+ * @param {module:ol/proj/Projection~Projection} destination Destination projection.
+ * @return {module:ol/proj~TransformFunction} transformFn The unregistered transform.
  */
-ol.proj.transforms.remove = function(source, destination) {
-  var sourceCode = source.getCode();
-  var destinationCode = destination.getCode();
-  var transforms = ol.proj.transforms.cache_;
-  var transform = transforms[sourceCode][destinationCode];
+export function remove(source, destination) {
+  const sourceCode = source.getCode();
+  const destinationCode = destination.getCode();
+  const transform = transforms[sourceCode][destinationCode];
   delete transforms[sourceCode][destinationCode];
-  if (ol.obj.isEmpty(transforms[sourceCode])) {
+  if (isEmpty(transforms[sourceCode])) {
     delete transforms[sourceCode];
   }
   return transform;
-};
+}
 
 
 /**
  * Get a transform given a source code and a destination code.
  * @param {string} sourceCode The code for the source projection.
  * @param {string} destinationCode The code for the destination projection.
- * @return {ol.TransformFunction|undefined} The transform function (if found).
+ * @return {module:ol/proj~TransformFunction|undefined} The transform function (if found).
  */
-ol.proj.transforms.get = function(sourceCode, destinationCode) {
-  var transform;
-  var transforms = ol.proj.transforms.cache_;
+export function get(sourceCode, destinationCode) {
+  let transform;
   if (sourceCode in transforms && destinationCode in transforms[sourceCode]) {
     transform = transforms[sourceCode][destinationCode];
   }
   return transform;
-};
+}

@@ -1,21 +1,19 @@
-
-
-goog.require('ol.transform');
-goog.require('ol.layer.Image');
-goog.require('ol.renderer.Map');
-goog.require('ol.renderer.canvas.IntermediateCanvas');
+import {create as createTransform} from '../../../../../src/ol/transform.js';
+import ImageLayer from '../../../../../src/ol/layer/Image.js';
+import MapRenderer from '../../../../../src/ol/renderer/Map.js';
+import IntermediateCanvasRenderer from '../../../../../src/ol/renderer/canvas/IntermediateCanvas.js';
 
 
 describe('ol.renderer.canvas.IntermediateCanvas', function() {
 
   describe('#composeFrame()', function() {
-    var renderer, frameState, layerState, context;
+    let renderer, frameState, layerState, context;
     beforeEach(function() {
-      var layer = new ol.layer.Image({
+      const layer = new ImageLayer({
         extent: [1, 2, 3, 4]
       });
-      renderer = new ol.renderer.canvas.IntermediateCanvas(layer);
-      var image = new Image();
+      renderer = new IntermediateCanvasRenderer(layer);
+      const image = new Image();
       image.width = 3;
       image.height = 3;
       renderer.getImage = function() {
@@ -29,13 +27,13 @@ describe('ol.renderer.canvas.IntermediateCanvas', function() {
         },
         size: [10, 10],
         pixelRatio: 1,
-        coordinateToPixelTransform: ol.transform.create(),
-        pixelToCoordinateTransform: ol.transform.create()
+        coordinateToPixelTransform: createTransform(),
+        pixelToCoordinateTransform: createTransform()
       };
       renderer.getImageTransform = function() {
-        return ol.transform.create();
+        return createTransform();
       };
-      ol.renderer.Map.prototype.calculateMatrices2D(frameState);
+      MapRenderer.prototype.calculateMatrices2D(frameState);
       layerState = layer.getLayerState();
       context = {
         save: sinon.spy(),
@@ -64,7 +62,7 @@ describe('ol.renderer.canvas.IntermediateCanvas', function() {
       expect(context.lineTo.thirdCall.args).to.eql([4, 6]);
       expect(context.clip.callCount).to.be(1);
       expect(context.drawImage.firstCall.args).to.eql(
-          [renderer.getImage(), 0, 0, 3, 3, 0, 0, 3, 3]);
+        [renderer.getImage(), 0, 0, 3, 3, 0, 0, 3, 3]);
       expect(context.restore.callCount).to.be(1);
     });
 
@@ -78,7 +76,7 @@ describe('ol.renderer.canvas.IntermediateCanvas', function() {
       expect(context.beginPath.callCount).to.be(0);
       expect(context.clip.callCount).to.be(0);
       expect(context.drawImage.firstCall.args).to.eql(
-          [renderer.getImage(), 0, 0, 3, 3, 0, 0, 3, 3]);
+        [renderer.getImage(), 0, 0, 3, 3, 0, 0, 3, 3]);
       expect(context.restore.callCount).to.be(0);
     });
 
@@ -92,7 +90,7 @@ describe('ol.renderer.canvas.IntermediateCanvas', function() {
       expect(context.beginPath.callCount).to.be(0);
       expect(context.clip.callCount).to.be(0);
       expect(context.drawImage.firstCall.args).to.eql(
-          [renderer.getImage(), 0, 0, 3, 3, 0, 0, 3, 3]);
+        [renderer.getImage(), 0, 0, 3, 3, 0, 0, 3, 3]);
       expect(context.restore.callCount).to.be(0);
     });
 

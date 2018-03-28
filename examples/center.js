@@ -1,97 +1,97 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.control');
-goog.require('ol.format.GeoJSON');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.OSM');
-goog.require('ol.source.Vector');
-goog.require('ol.style.Circle');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {defaults as defaultControls} from '../src/ol/control.js';
+import GeoJSON from '../src/ol/format/GeoJSON.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import CircleStyle from '../src/ol/style/Circle.js';
+import Fill from '../src/ol/style/Fill.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
 
-var source = new ol.source.Vector({
+const source = new VectorSource({
   url: 'data/geojson/switzerland.geojson',
-  format: new ol.format.GeoJSON()
+  format: new GeoJSON()
 });
-var style = new ol.style.Style({
-  fill: new ol.style.Fill({
+const style = new Style({
+  fill: new Fill({
     color: 'rgba(255, 255, 255, 0.6)'
   }),
-  stroke: new ol.style.Stroke({
+  stroke: new Stroke({
     color: '#319FD3',
     width: 1
   }),
-  image: new ol.style.Circle({
+  image: new CircleStyle({
     radius: 5,
-    fill: new ol.style.Fill({
+    fill: new Fill({
       color: 'rgba(255, 255, 255, 0.6)'
     }),
-    stroke: new ol.style.Stroke({
+    stroke: new Stroke({
       color: '#319FD3',
       width: 1
     })
   })
 });
-var vectorLayer = new ol.layer.Vector({
+const vectorLayer = new VectorLayer({
   source: source,
   style: style
 });
-var view = new ol.View({
+const view = new View({
   center: [0, 0],
   zoom: 1
 });
-var map = new ol.Map({
+const map = new Map({
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.OSM()
+    new TileLayer({
+      source: new OSM()
     }),
     vectorLayer
   ],
   target: 'map',
-  controls: ol.control.defaults({
-    attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+  controls: defaultControls({
+    attributionOptions: {
       collapsible: false
-    })
+    }
   }),
   view: view
 });
 
-var zoomtoswitzerlandbest = document.getElementById('zoomtoswitzerlandbest');
+const zoomtoswitzerlandbest = document.getElementById('zoomtoswitzerlandbest');
 zoomtoswitzerlandbest.addEventListener('click', function() {
-  var feature = source.getFeatures()[0];
-  var polygon = /** @type {ol.geom.SimpleGeometry} */ (feature.getGeometry());
+  const feature = source.getFeatures()[0];
+  const polygon = /** @type {module:ol/geom/SimpleGeometry~SimpleGeometry} */ (feature.getGeometry());
   view.fit(polygon, {padding: [170, 50, 30, 150], constrainResolution: false});
 }, false);
 
-var zoomtoswitzerlandconstrained =
+const zoomtoswitzerlandconstrained =
     document.getElementById('zoomtoswitzerlandconstrained');
 zoomtoswitzerlandconstrained.addEventListener('click', function() {
-  var feature = source.getFeatures()[0];
-  var polygon = /** @type {ol.geom.SimpleGeometry} */ (feature.getGeometry());
+  const feature = source.getFeatures()[0];
+  const polygon = /** @type {module:ol/geom/SimpleGeometry~SimpleGeometry} */ (feature.getGeometry());
   view.fit(polygon, {padding: [170, 50, 30, 150]});
 }, false);
 
-var zoomtoswitzerlandnearest =
+const zoomtoswitzerlandnearest =
     document.getElementById('zoomtoswitzerlandnearest');
 zoomtoswitzerlandnearest.addEventListener('click', function() {
-  var feature = source.getFeatures()[0];
-  var polygon = /** @type {ol.geom.SimpleGeometry} */ (feature.getGeometry());
+  const feature = source.getFeatures()[0];
+  const polygon = /** @type {module:ol/geom/SimpleGeometry~SimpleGeometry} */ (feature.getGeometry());
   view.fit(polygon, {padding: [170, 50, 30, 150], nearest: true});
 }, false);
 
-var zoomtolausanne = document.getElementById('zoomtolausanne');
+const zoomtolausanne = document.getElementById('zoomtolausanne');
 zoomtolausanne.addEventListener('click', function() {
-  var feature = source.getFeatures()[1];
-  var point = /** @type {ol.geom.SimpleGeometry} */ (feature.getGeometry());
+  const feature = source.getFeatures()[1];
+  const point = /** @type {module:ol/geom/SimpleGeometry~SimpleGeometry} */ (feature.getGeometry());
   view.fit(point, {padding: [170, 50, 30, 150], minResolution: 50});
 }, false);
 
-var centerlausanne = document.getElementById('centerlausanne');
+const centerlausanne = document.getElementById('centerlausanne');
 centerlausanne.addEventListener('click', function() {
-  var feature = source.getFeatures()[1];
-  var point = /** @type {ol.geom.Point} */ (feature.getGeometry());
-  var size = /** @type {ol.Size} */ (map.getSize());
+  const feature = source.getFeatures()[1];
+  const point = /** @type {module:ol/geom/Point~Point} */ (feature.getGeometry());
+  const size = /** @type {ol.Size} */ (map.getSize());
   view.centerOn(point.getCoordinates(), size, [570, 500]);
 }, false);

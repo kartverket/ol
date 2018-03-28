@@ -1,43 +1,43 @@
 // NOCOMPILE
 // this example uses topolis and toastr for which we don't have an externs file.
 
-goog.require('ol.Feature');
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.geom.Point');
-goog.require('ol.geom.LineString');
-goog.require('ol.geom.Polygon');
-goog.require('ol.interaction.Draw');
-goog.require('ol.interaction.Snap');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.OSM');
-goog.require('ol.source.Vector');
-goog.require('ol.style.Style');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Circle');
-goog.require('ol.style.Text');
-goog.require('ol.control.MousePosition');
+import Feature from '../src/ol/Feature.js';
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import Point from '../src/ol/geom/Point.js';
+import LineString from '../src/ol/geom/LineString.js';
+import Polygon from '../src/ol/geom/Polygon.js';
+import Draw from '../src/ol/interaction/Draw.js';
+import Snap from '../src/ol/interaction/Snap.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import Style from '../src/ol/style/Style.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Fill from '../src/ol/style/Fill.js';
+import CircleStyle from '../src/ol/style/Circle.js';
+import Text from '../src/ol/style/Text.js';
+import MousePosition from '../src/ol/control/MousePosition.js';
 
-var raster = new ol.layer.Tile({
-  source: new ol.source.OSM()
+const raster = new TileLayer({
+  source: new OSM()
 });
 
-var nodes = new ol.source.Vector({wrapX: false});
-var nodesLayer = new ol.layer.Vector({
+const nodes = new VectorSource({wrapX: false});
+const nodesLayer = new VectorLayer({
   source: nodes,
   style: function(f) {
-    var style = new ol.style.Style({
-      image: new ol.style.Circle({
+    const style = new Style({
+      image: new CircleStyle({
         radius: 8,
-        fill: new ol.style.Fill({color: 'rgba(255, 0, 0, 0.2)'}),
-        stroke: new ol.style.Stroke({color: 'red', width: 1})
+        fill: new Fill({color: 'rgba(255, 0, 0, 0.2)'}),
+        stroke: new Stroke({color: 'red', width: 1})
       }),
-      text: new ol.style.Text({
+      text: new Text({
         text: f.get('node').id.toString(),
-        fill: new ol.style.Fill({color: 'red'}),
-        stroke: new ol.style.Stroke({
+        fill: new Fill({color: 'red'}),
+        stroke: new Stroke({
           color: 'white',
           width: 3
         })
@@ -47,19 +47,19 @@ var nodesLayer = new ol.layer.Vector({
   }
 });
 
-var edges = new ol.source.Vector({wrapX: false});
-var edgesLayer = new ol.layer.Vector({
+const edges = new VectorSource({wrapX: false});
+const edgesLayer = new VectorLayer({
   source: edges,
   style: function(f) {
-    var style = new ol.style.Style({
-      stroke: new ol.style.Stroke({
+    const style = new Style({
+      stroke: new Stroke({
         color: 'blue',
         width: 1
       }),
-      text: new ol.style.Text({
+      text: new Text({
         text: f.get('edge').id.toString(),
-        fill: new ol.style.Fill({color: 'blue'}),
-        stroke: new ol.style.Stroke({
+        fill: new Fill({color: 'blue'}),
+        stroke: new Stroke({
           color: 'white',
           width: 2
         })
@@ -69,23 +69,23 @@ var edgesLayer = new ol.layer.Vector({
   }
 });
 
-var faces = new ol.source.Vector({wrapX: false});
-var facesLayer = new ol.layer.Vector({
+const faces = new VectorSource({wrapX: false});
+const facesLayer = new VectorLayer({
   source: faces,
   style: function(f) {
-    var style = new ol.style.Style({
-      stroke: new ol.style.Stroke({
+    const style = new Style({
+      stroke: new Stroke({
         color: 'black',
         width: 1
       }),
-      fill: new ol.style.Fill({
+      fill: new Fill({
         color: 'rgba(0, 255, 0, 0.2)'
       }),
-      text: new ol.style.Text({
+      text: new Text({
         font: 'bold 12px sans-serif',
         text: f.get('face').id.toString(),
-        fill: new ol.style.Fill({color: 'green'}),
-        stroke: new ol.style.Stroke({
+        fill: new Fill({color: 'green'}),
+        stroke: new Stroke({
           color: 'white',
           width: 2
         })
@@ -95,16 +95,16 @@ var facesLayer = new ol.layer.Vector({
   }
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [raster, facesLayer, edgesLayer, nodesLayer],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [-11000000, 4600000],
     zoom: 16
   })
 });
 
-var topo = topolis.createTopology();
+const topo = topolis.createTopology();
 
 topo.on('addnode', nodeToFeature);
 topo.on('removenode', function(e) {
@@ -112,8 +112,8 @@ topo.on('removenode', function(e) {
 });
 topo.on('addedge', edgeToFeature);
 topo.on('modedge', function(e) {
-  var feature = edges.getFeatureById(e.id);
-  feature.setGeometry(new ol.geom.LineString(e.coordinates));
+  const feature = edges.getFeatureById(e.id);
+  feature.setGeometry(new LineString(e.coordinates));
 });
 topo.on('removeedge', function(e) {
   removeElementFeature(edges, e);
@@ -124,13 +124,13 @@ topo.on('removeface', function(e) {
 });
 
 function removeElementFeature(source, element) {
-  var feature = source.getFeatureById(element.id);
+  const feature = source.getFeatureById(element.id);
   source.removeFeature(feature);
 }
 
 function nodeToFeature(node) {
-  var feature = new ol.Feature({
-    geometry: new ol.geom.Point(node.coordinate),
+  const feature = new Feature({
+    geometry: new Point(node.coordinate),
     node: node
   });
   feature.setId(node.id);
@@ -138,8 +138,8 @@ function nodeToFeature(node) {
 }
 
 function edgeToFeature(edge) {
-  var feature = new ol.Feature({
-    geometry: new ol.geom.LineString(edge.coordinates),
+  const feature = new Feature({
+    geometry: new LineString(edge.coordinates),
     edge: edge
   });
   feature.setId(edge.id);
@@ -147,9 +147,9 @@ function edgeToFeature(edge) {
 }
 
 function faceToFeature(face) {
-  var coordinates = topo.getFaceGeometry(face);
-  var feature = new ol.Feature({
-    geometry: new ol.geom.Polygon(coordinates),
+  const coordinates = topo.getFaceGeometry(face);
+  const feature = new Feature({
+    geometry: new Polygon(coordinates),
     face: face
   });
   feature.setId(face.id);
@@ -157,8 +157,8 @@ function faceToFeature(face) {
 }
 
 function createNode(topo, coord) {
-  var node;
-  var existingEdge = topo.getEdgeByPoint(coord, 5)[0];
+  let node;
+  const existingEdge = topo.getEdgeByPoint(coord, 5)[0];
   if (existingEdge) {
     node = topo.modEdgeSplit(existingEdge, coord);
   } else {
@@ -168,16 +168,16 @@ function createNode(topo, coord) {
 }
 
 function onDrawend(e) {
-  var edgeGeom = e.feature.getGeometry().getCoordinates();
-  var startCoord = edgeGeom[0];
-  var endCoord = edgeGeom[edgeGeom.length - 1];
-  var start, end;
+  const edgeGeom = e.feature.getGeometry().getCoordinates();
+  const startCoord = edgeGeom[0];
+  const endCoord = edgeGeom[edgeGeom.length - 1];
+  let start, end;
   try {
     start = topo.getNodeByPoint(startCoord);
     end = topo.getNodeByPoint(endCoord);
-    var edgesAtStart = topo.getEdgeByPoint(startCoord, 5);
-    var edgesAtEnd = topo.getEdgeByPoint(endCoord, 5);
-    var crossing = topo.getEdgesByLine(edgeGeom);
+    const edgesAtStart = topo.getEdgeByPoint(startCoord, 5);
+    const edgesAtEnd = topo.getEdgeByPoint(endCoord, 5);
+    const crossing = topo.getEdgesByLine(edgeGeom);
     if (crossing.length === 1 && !start && !end && edgesAtStart.length === 0 && edgesAtEnd.length === 0) {
       topo.remEdgeNewFace(crossing[0]);
       start = crossing[0].start;
@@ -204,13 +204,13 @@ function onDrawend(e) {
   }
 }
 
-var draw = new ol.interaction.Draw({
+const draw = new Draw({
   type: 'LineString'
 });
 draw.on('drawend', onDrawend);
 map.addInteraction(draw);
-var snap = new ol.interaction.Snap({
+const snap = new Snap({
   source: edges
 });
 map.addInteraction(snap);
-map.addControl(new ol.control.MousePosition());
+map.addControl(new MousePosition());

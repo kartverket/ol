@@ -1,19 +1,19 @@
 // NOCOMPILE
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.format.GeoJSON');
-goog.require('ol.source.OSM');
-goog.require('ol.source.VectorTile');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.VectorTile');
-goog.require('ol.proj.Projection');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import GeoJSON from '../src/ol/format/GeoJSON.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorTileSource from '../src/ol/source/VectorTile.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorTileLayer from '../src/ol/layer/VectorTile.js';
+import Projection from '../src/ol/proj/Projection.js';
 
 
-var replacer = function(key, value) {
+const replacer = function(key, value) {
   if (value.geometry) {
-    var type;
-    var rawType = value.type;
-    var geometry = value.geometry;
+    let type;
+    const rawType = value.type;
+    let geometry = value.geometry;
 
     if (rawType === 1) {
       type = 'MultiPoint';
@@ -48,44 +48,44 @@ var replacer = function(key, value) {
   }
 };
 
-var tilePixels = new ol.proj.Projection({
+const tilePixels = new Projection({
   code: 'TILE_PIXELS',
   units: 'tile-pixels'
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.OSM()
+    new TileLayer({
+      source: new OSM()
     })
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 2
   })
 });
 
-var url = 'data/geojson/countries.geojson';
+const url = 'data/geojson/countries.geojson';
 fetch(url).then(function(response) {
   return response.json();
 }).then(function(json) {
-  var tileIndex = geojsonvt(json, {
+  const tileIndex = geojsonvt(json, {
     extent: 4096,
     debug: 1
   });
-  var vectorSource = new ol.source.VectorTile({
-    format: new ol.format.GeoJSON(),
+  const vectorSource = new VectorTileSource({
+    format: new GeoJSON(),
     tileLoadFunction: function(tile) {
-      var format = tile.getFormat();
-      var tileCoord = tile.getTileCoord();
-      var data = tileIndex.getTile(tileCoord[0], tileCoord[1], -tileCoord[2] - 1);
+      const format = tile.getFormat();
+      const tileCoord = tile.getTileCoord();
+      const data = tileIndex.getTile(tileCoord[0], tileCoord[1], -tileCoord[2] - 1);
 
-      var features = format.readFeatures(
-          JSON.stringify({
-            type: 'FeatureCollection',
-            features: data ? data.features : []
-          }, replacer));
+      const features = format.readFeatures(
+        JSON.stringify({
+          type: 'FeatureCollection',
+          features: data ? data.features : []
+        }, replacer));
       tile.setLoader(function() {
         tile.setFeatures(features);
         tile.setProjection(tilePixels);
@@ -93,7 +93,7 @@ fetch(url).then(function(response) {
     },
     url: 'data:' // arbitrary url, we don't use it in the tileLoadFunction
   });
-  var vectorLayer = new ol.layer.VectorTile({
+  const vectorLayer = new VectorTileLayer({
     source: vectorSource
   });
   map.addLayer(vectorLayer);

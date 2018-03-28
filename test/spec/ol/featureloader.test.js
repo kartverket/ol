@@ -1,27 +1,25 @@
-
-
-goog.require('ol.featureloader');
-goog.require('ol.format.GeoJSON');
-goog.require('ol.source.Vector');
+import {xhr} from '../../../src/ol/featureloader.js';
+import GeoJSON from '../../../src/ol/format/GeoJSON.js';
+import VectorSource from '../../../src/ol/source/Vector.js';
 
 
 describe('ol.featureloader', function() {
 
   describe('ol.featureloader.xhr', function() {
-    var loader;
-    var source;
-    var url;
-    var format;
+    let loader;
+    let source;
+    let url;
+    let format;
 
     beforeEach(function() {
       url = 'spec/ol/data/point.json';
-      format = new ol.format.GeoJSON();
+      format = new GeoJSON();
 
-      source = new ol.source.Vector();
+      source = new VectorSource();
     });
 
     it('adds features to the source', function(done) {
-      loader = ol.featureloader.xhr(url, format);
+      loader = xhr(url, format);
       source.on('addfeature', function(e) {
         expect(source.getFeatures().length).to.be.greaterThan(0);
         done();
@@ -34,7 +32,7 @@ describe('ol.featureloader', function() {
         url = function(extent, resolution, projection) {
           return 'spec/ol/data/point.json';
         };
-        loader = ol.featureloader.xhr(url, format);
+        loader = xhr(url, format);
 
         source.on('addfeature', function(e) {
           expect(source.getFeatures().length).to.be.greaterThan(0);
@@ -44,9 +42,9 @@ describe('ol.featureloader', function() {
       });
 
       it('sends the correct arguments to the urlFunction', function(done) {
-        var extent = [];
-        var resolution = 1;
-        var projection = 'EPSG:3857';
+        const extent = [];
+        const resolution = 1;
+        const projection = 'EPSG:3857';
         url = function(extent_, resolution_, projection_) {
           expect(extent_).to.eql(extent);
           expect(resolution_).to.eql(resolution);
@@ -54,7 +52,7 @@ describe('ol.featureloader', function() {
           done();
           return 'spec/ol/data/point.json';
         };
-        loader = ol.featureloader.xhr(url, format);
+        loader = xhr(url, format);
         loader.call(source, [], 1, 'EPSG:3857');
       });
     });

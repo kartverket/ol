@@ -25,17 +25,17 @@ function glsl_compress(s, shortNames) {
   s = s.replace(/\s+/g, ' ');
   // remove whitespace between non-word tokens
   s = s.replace(/(\S)\s+([^\w])/g, '$1$2')
-      .replace(/([^\w])\s+(\S)/g, '$1$2');
+    .replace(/([^\w])\s+(\S)/g, '$1$2');
   // replace original names with short names
-  for (var originalName in shortNames) {
+  for (const originalName in shortNames) {
     s = s.replace(new RegExp(originalName, 'gm'), shortNames[originalName]);
   }
   return s;
 }
 
 function main(argv) {
-  var options = {};
-  for (var i = 2, ii = argv.length; i < ii; i += 2) {
+  const options = {};
+  for (let i = 2, ii = argv.length; i < ii; i += 2) {
     options[argv[i].replace(/^../, '')] = argv[i + 1];
   }
   if (!options.input) {
@@ -62,9 +62,9 @@ function main(argv) {
   let m, shortName;
   lines.forEach(function(line, i) {
     if (line.indexOf('//!') == 0) {
-      m = line.match(/\/\/!\s+NAMESPACE=(\S+)\s*$/);
+      m = line.match(/\/\/!\s+MODULE=(\S+)\s*$/);
       if (m) {
-        json.namespace = m[1];
+        json.module = m[1];
         return;
       }
       m = line.match(/\/\/!\s+COMMON\s*$/);

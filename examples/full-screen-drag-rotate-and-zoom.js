@@ -1,23 +1,23 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.control');
-goog.require('ol.control.FullScreen');
-goog.require('ol.interaction');
-goog.require('ol.interaction.DragRotateAndZoom');
-goog.require('ol.layer.Tile');
-goog.require('ol.source.BingMaps');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {defaults as defaultControls} from '../src/ol/control.js';
+import FullScreen from '../src/ol/control/FullScreen.js';
+import {defaults as defaultInteractions} from '../src/ol/interaction.js';
+import DragRotateAndZoom from '../src/ol/interaction/DragRotateAndZoom.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import BingMaps from '../src/ol/source/BingMaps.js';
 
 
-var map = new ol.Map({
-  controls: ol.control.defaults().extend([
-    new ol.control.FullScreen()
+const map = new Map({
+  controls: defaultControls().extend([
+    new FullScreen()
   ]),
-  interactions: ol.interaction.defaults().extend([
-    new ol.interaction.DragRotateAndZoom()
+  interactions: defaultInteractions().extend([
+    new DragRotateAndZoom()
   ]),
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.BingMaps({
+    new TileLayer({
+      source: new BingMaps({
         key: 'As1HiMj1PvLPlqc_gtM7AqZfBL8ZL3VrjaS3zIb22Uvb9WKhuJObROC-qUpa81U5',
         imagerySet: 'Aerial'
       })
@@ -25,7 +25,7 @@ var map = new ol.Map({
   ],
   // Use the canvas renderer because it's currently the fastest
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [-33519607, 5616436],
     rotation: -Math.PI / 8,
     zoom: 8

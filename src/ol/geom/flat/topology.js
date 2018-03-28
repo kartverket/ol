@@ -1,6 +1,7 @@
-goog.provide('ol.geom.flat.topology');
-
-goog.require('ol.geom.flat.area');
+/**
+ * @module ol/geom/flat/topology
+ */
+import {linearRing as linearRingArea} from '../flat/area.js';
 
 /**
  * Check if the linestring is a boundary.
@@ -10,11 +11,11 @@ goog.require('ol.geom.flat.area');
  * @param {number} stride Stride.
  * @return {boolean} The linestring is a boundary.
  */
-ol.geom.flat.topology.lineStringIsClosed = function(flatCoordinates, offset, end, stride) {
-  var lastCoord = end - stride;
+export function lineStringIsClosed(flatCoordinates, offset, end, stride) {
+  const lastCoord = end - stride;
   if (flatCoordinates[offset] === flatCoordinates[lastCoord] &&
       flatCoordinates[offset + 1] === flatCoordinates[lastCoord + 1] && (end - offset) / stride > 3) {
-    return !!ol.geom.flat.area.linearRing(flatCoordinates, offset, end, stride);
+    return !!linearRingArea(flatCoordinates, offset, end, stride);
   }
   return false;
-};
+}

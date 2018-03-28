@@ -1,22 +1,42 @@
-goog.provide('ol.plugins');
+/**
+ * @module ol/plugins
+ */
+import PluginType from './PluginType.js';
 
-goog.require('ol.PluginType');
+
+/**
+ * @typedef {Object} MapRendererPlugin
+ * @property {function(module:ol/renderer/Type):boolean} handles Determine if
+ * this renderer handles the provided layer.
+ * @property {function(Element, module:ol/PluggableMap~PluggableMap):module:ol/renderer/Map~Map} create
+ * Create the map renderer.
+ */
+
+
+/**
+ * @typedef {Object} LayerRendererPlugin
+ * @property {function(module:ol/renderer/Type, module:ol/layer/Layer~Layer):boolean} handles
+ * Determine if this renderer handles the provided layer.
+ * @property {function(module:ol/renderer/Map~Map, module:ol/layer/Layer~Layer):module:ol/renderer/Layer~Layer} create
+ * Create a layer renderer.
+ */
+
 
 /**
  * The registry of map renderer plugins.
- * @type {Array<olx.MapRendererPlugin>}
+ * @type {Array<module:ol/plugins~MapRendererPlugin>}
  * @private
  */
-ol.plugins.mapRendererPlugins_ = [];
+const mapRendererPlugins = [];
 
 
 /**
  * Get all registered map renderer plugins.
- * @return {Array<olx.MapRendererPlugin>} The registered map renderer plugins.
+ * @return {Array<module:ol/plugins~MapRendererPlugin>} The registered map renderer plugins.
  */
-ol.plugins.getMapRendererPlugins = function() {
-  return ol.plugins.mapRendererPlugins_;
-};
+export function getMapRendererPlugins() {
+  return mapRendererPlugins;
+}
 
 
 /**
@@ -24,33 +44,33 @@ ol.plugins.getMapRendererPlugins = function() {
  * @type {Array<olx.LayerRendererPlugin>}
  * @private
  */
-ol.plugins.layerRendererPlugins_ = [];
+const layerRendererPlugins = [];
 
 
 /**
  * Get all registered layer renderer plugins.
  * @return {Array<olx.LayerRendererPlugin>} The registered layer renderer plugins.
  */
-ol.plugins.getLayerRendererPlugins = function() {
-  return ol.plugins.layerRendererPlugins_;
-};
+export function getLayerRendererPlugins() {
+  return layerRendererPlugins;
+}
 
 
 /**
  * Register a plugin.
- * @param {ol.PluginType} type The plugin type.
+ * @param {module:ol/PluginType~PluginType} type The plugin type.
  * @param {*} plugin The plugin.
  */
-ol.plugins.register = function(type, plugin) {
-  var plugins;
+export function register(type, plugin) {
+  let plugins;
   switch (type) {
-    case ol.PluginType.MAP_RENDERER: {
-      plugins = ol.plugins.mapRendererPlugins_;
-      plugins.push(/** @type {olx.MapRendererPlugin} */ (plugin));
+    case PluginType.MAP_RENDERER: {
+      plugins = mapRendererPlugins;
+      plugins.push(/** @type {module:ol/plugins~MapRendererPlugin} */ (plugin));
       break;
     }
-    case ol.PluginType.LAYER_RENDERER: {
-      plugins = ol.plugins.layerRendererPlugins_;
+    case PluginType.LAYER_RENDERER: {
+      plugins = layerRendererPlugins;
       plugins.push(/** @type {olx.LayerRendererPlugin} */ (plugin));
       break;
     }
@@ -58,16 +78,16 @@ ol.plugins.register = function(type, plugin) {
       throw new Error('Unsupported plugin type: ' + type);
     }
   }
-};
+}
 
 
 /**
  * Register multiple plugins.
- * @param {ol.PluginType} type The plugin type.
+ * @param {module:ol/PluginType~PluginType} type The plugin type.
  * @param {Array} plugins The plugins.
  */
-ol.plugins.registerMultiple = function(type, plugins) {
-  for (var i = 0, ii = plugins.length; i < ii; ++i) {
-    ol.plugins.register(type, plugins[i]);
+export function registerMultiple(type, plugins) {
+  for (let i = 0, ii = plugins.length; i < ii; ++i) {
+    register(type, plugins[i]);
   }
-};
+}

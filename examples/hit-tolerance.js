@@ -1,49 +1,49 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.OSM');
-goog.require('ol.source.Vector');
-goog.require('ol.Feature');
-goog.require('ol.geom.LineString');
-goog.require('ol.style.Style');
-goog.require('ol.style.Stroke');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import Feature from '../src/ol/Feature.js';
+import LineString from '../src/ol/geom/LineString.js';
+import Style from '../src/ol/style/Style.js';
+import Stroke from '../src/ol/style/Stroke.js';
 
-var raster = new ol.layer.Tile({
-  source: new ol.source.OSM()
+const raster = new TileLayer({
+  source: new OSM()
 });
 
-var style = new ol.style.Style({
-  stroke: new ol.style.Stroke({
+const style = new Style({
+  stroke: new Stroke({
     color: 'black',
     width: 1
   })
 });
 
-var feature = new ol.Feature(new ol.geom.LineString([[-4000000, 0], [4000000, 0]]));
+const feature = new Feature(new LineString([[-4000000, 0], [4000000, 0]]));
 
-var vector = new ol.layer.Vector({
-  source: new ol.source.Vector({
+const vector = new VectorLayer({
+  source: new VectorSource({
     features: [feature]
   }),
   style: style
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [raster, vector],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 2
   })
 });
 
-var hitTolerance;
+let hitTolerance;
 
-var statusElement = document.getElementById('status');
+const statusElement = document.getElementById('status');
 
 map.on('singleclick', function(e) {
-  var hit = false;
+  let hit = false;
   map.forEachFeatureAtPixel(e.pixel, function() {
     hit = true;
   }, {
@@ -59,16 +59,16 @@ map.on('singleclick', function(e) {
   feature.changed();
 });
 
-var selectHitToleranceElement = document.getElementById('hitTolerance');
-var circleCanvas = document.getElementById('circle');
+const selectHitToleranceElement = document.getElementById('hitTolerance');
+const circleCanvas = document.getElementById('circle');
 
-var changeHitTolerance = function() {
+const changeHitTolerance = function() {
   hitTolerance = parseInt(selectHitToleranceElement.value, 10);
 
-  var size = 2 * hitTolerance + 2;
+  const size = 2 * hitTolerance + 2;
   circleCanvas.width = size;
   circleCanvas.height = size;
-  var ctx = circleCanvas.getContext('2d');
+  const ctx = circleCanvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
   ctx.beginPath();
   ctx.arc(hitTolerance + 1, hitTolerance + 1, hitTolerance + 0.5, 0, 2 * Math.PI);

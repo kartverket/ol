@@ -1,32 +1,32 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.extent');
-goog.require('ol.format.GeoJSON');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.Vector');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
-goog.require('ol.style.Text');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {getWidth} from '../src/ol/extent.js';
+import GeoJSON from '../src/ol/format/GeoJSON.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import Fill from '../src/ol/style/Fill.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
+import Text from '../src/ol/style/Text.js';
 
-var map = new ol.Map({
+const map = new Map({
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 1
   })
 });
 
-var labelStyle = new ol.style.Style({
+const labelStyle = new Style({
   geometry: function(feature) {
-    var geometry = feature.getGeometry();
+    let geometry = feature.getGeometry();
     if (geometry.getType() == 'MultiPolygon') {
       // Only render label for the widest polygon of a multipolygon
-      var polygons = geometry.getPolygons();
-      var widest = 0;
-      for (var i = 0, ii = polygons.length; i < ii; ++i) {
-        var polygon = polygons[i];
-        var width = ol.extent.getWidth(polygon.getExtent());
+      const polygons = geometry.getPolygons();
+      let widest = 0;
+      for (let i = 0, ii = polygons.length; i < ii; ++i) {
+        const polygon = polygons[i];
+        const width = getWidth(polygon.getExtent());
         if (width > widest) {
           widest = width;
           geometry = polygon;
@@ -35,33 +35,33 @@ var labelStyle = new ol.style.Style({
     }
     return geometry;
   },
-  text: new ol.style.Text({
+  text: new Text({
     font: '12px Calibri,sans-serif',
-    exceedLength: true,
-    fill: new ol.style.Fill({
+    overflow: true,
+    fill: new Fill({
       color: '#000'
     }),
-    stroke: new ol.style.Stroke({
+    stroke: new Stroke({
       color: '#fff',
       width: 3
     })
   })
 });
-var countryStyle = new ol.style.Style({
-  fill: new ol.style.Fill({
+const countryStyle = new Style({
+  fill: new Fill({
     color: 'rgba(255, 255, 255, 0.6)'
   }),
-  stroke: new ol.style.Stroke({
+  stroke: new Stroke({
     color: '#319FD3',
     width: 1
   })
 });
-var style = [countryStyle, labelStyle];
+const style = [countryStyle, labelStyle];
 
-var vectorLayer = new ol.layer.Vector({
-  source: new ol.source.Vector({
+const vectorLayer = new VectorLayer({
+  source: new VectorSource({
     url: 'data/geojson/countries.geojson',
-    format: new ol.format.GeoJSON()
+    format: new GeoJSON()
   }),
   style: function(feature) {
     labelStyle.getText().setText(feature.get('name'));

@@ -1,13 +1,11 @@
-
-
-goog.require('ol.structs.LinkedList');
+import LinkedList from '../../../../src/ol/structs/LinkedList.js';
 
 describe('ol.structs.LinkedList', function() {
-  var ll;
-  var item = {};
-  var item2 = {};
+  let ll;
+  const item = {};
+  const item2 = {};
   beforeEach(function() {
-    ll = new ol.structs.LinkedList();
+    ll = new LinkedList();
   });
 
   it('defaults to circular', function() {
@@ -42,7 +40,7 @@ describe('ol.structs.LinkedList', function() {
   });
 
   describe('#removeItem', function() {
-    var item3 = {};
+    const item3 = {};
     beforeEach(function() {
       ll.insertItem(item);
       ll.insertItem(item2);
@@ -60,8 +58,8 @@ describe('ol.structs.LinkedList', function() {
       expect(ll.head_.data).to.be(item);
     });
 
-    it('otherwise sets the cursor to the prevous item', function() {
-      ll = new ol.structs.LinkedList(false);
+    it('otherwise sets the cursor to the previous item', function() {
+      ll = new LinkedList(false);
       ll.insertItem(item);
       ll.insertItem(item2);
       ll.insertItem(item3);
@@ -70,7 +68,7 @@ describe('ol.structs.LinkedList', function() {
     });
 
     it('empties a list with only one item', function() {
-      ll = new ol.structs.LinkedList();
+      ll = new LinkedList();
       ll.insertItem(item);
       ll.removeItem();
       expect(ll.length_).to.be(0);
@@ -84,13 +82,13 @@ describe('ol.structs.LinkedList', function() {
     it('sets the cursor to the first item and returns its data', function() {
       ll.insertItem(item);
       ll.insertItem(item2);
-      var i = ll.firstItem();
+      const i = ll.firstItem();
       expect(i).to.be(item);
       expect(ll.head_.data).to.be(item);
     });
 
     it('returns undefined on empty list', function() {
-      var i = ll.firstItem();
+      const i = ll.firstItem();
       expect(i).to.be(undefined);
     });
   });
@@ -100,13 +98,13 @@ describe('ol.structs.LinkedList', function() {
       ll.insertItem(item);
       ll.insertItem(item2);
       ll.firstItem();
-      var i = ll.lastItem();
+      const i = ll.lastItem();
       expect(i).to.be(item2);
       expect(ll.head_.data).to.be(item2);
     });
 
     it('returns undefined on empty list', function() {
-      var i = ll.lastItem();
+      const i = ll.lastItem();
       expect(i).to.be(undefined);
     });
   });
@@ -116,13 +114,13 @@ describe('ol.structs.LinkedList', function() {
       ll.insertItem(item);
       ll.insertItem(item2);
       ll.firstItem();
-      var i = ll.nextItem();
+      const i = ll.nextItem();
       expect(i).to.be(item2);
       expect(ll.head_.data).to.be(item2);
     });
 
     it('returns undefined on empty list', function() {
-      var i = ll.nextItem();
+      const i = ll.nextItem();
       expect(i).to.be(undefined);
     });
   });
@@ -131,13 +129,13 @@ describe('ol.structs.LinkedList', function() {
     it('sets the cursor to the previous item and returns its data', function() {
       ll.insertItem(item);
       ll.insertItem(item2);
-      var i = ll.prevItem();
+      const i = ll.prevItem();
       expect(i).to.be(item);
       expect(ll.head_.data).to.be(item);
     });
 
     it('returns undefined on empty list', function() {
-      var i = ll.prevItem();
+      const i = ll.prevItem();
       expect(i).to.be(undefined);
     });
   });
@@ -147,13 +145,13 @@ describe('ol.structs.LinkedList', function() {
       ll.insertItem(item);
       ll.insertItem(item2);
       ll.firstItem();
-      var i = ll.getNextItem();
+      const i = ll.getNextItem();
       expect(i).to.be(item2);
       expect(ll.head_.data).to.be(item);
     });
 
     it('returns undefined on empty list', function() {
-      var i = ll.getNextItem();
+      const i = ll.getNextItem();
       expect(i).to.be(undefined);
     });
   });
@@ -162,31 +160,31 @@ describe('ol.structs.LinkedList', function() {
     it('returns the data of the previous item without stepping the cursor', function() {
       ll.insertItem(item);
       ll.insertItem(item2);
-      var i = ll.getPrevItem();
+      const i = ll.getPrevItem();
       expect(i).to.be(item);
       expect(ll.head_.data).to.be(item2);
     });
 
     it('returns undefined on empty list', function() {
-      var i = ll.getPrevItem();
+      const i = ll.getPrevItem();
       expect(i).to.be(undefined);
     });
   });
 
   describe('#getCurrItem', function() {
     it('returns the data of the current item', function() {
-      var item3 = {};
+      const item3 = {};
       ll.insertItem(item);
       ll.insertItem(item2);
       ll.insertItem(item3);
       ll.prevItem();
-      var i = ll.getCurrItem();
+      const i = ll.getCurrItem();
       expect(i).to.be(item2);
       expect(ll.head_.data).to.be(item2);
     });
 
     it('returns undefined on empty list', function() {
-      var i = ll.getCurrItem();
+      const i = ll.getCurrItem();
       expect(i).to.be(undefined);
     });
   });
@@ -195,25 +193,25 @@ describe('ol.structs.LinkedList', function() {
     it('returns the length of the list', function() {
       ll.insertItem(item);
       ll.insertItem(item2);
-      var l = ll.getLength();
+      const l = ll.getLength();
       expect(l).to.be(2);
     });
   });
 
   describe('#concat', function() {
-    var ll2, item3;
+    let ll2, item3;
     beforeEach(function() {
       item3 = {};
-      ll2 = new ol.structs.LinkedList();
+      ll2 = new LinkedList();
       ll2.insertItem(item);
       ll2.insertItem(item2);
       ll2.insertItem(item3);
     });
 
     it('concatenates a second list with the current one', function() {
-      var item4 = {};
-      var item5 = {};
-      var item6 = {};
+      const item4 = {};
+      const item5 = {};
+      const item6 = {};
       ll.insertItem(item4);
       ll.insertItem(item5);
       ll.insertItem(item6);
@@ -244,7 +242,7 @@ describe('ol.structs.LinkedList', function() {
 
   describe('when circular', function() {
     beforeEach(function() {
-      ll = new ol.structs.LinkedList();
+      ll = new LinkedList();
       ll.insertItem(item);
     });
 

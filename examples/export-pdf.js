@@ -1,47 +1,48 @@
 // NOCOMPILE
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.control');
-goog.require('ol.format.WKT');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.OSM');
-goog.require('ol.source.Vector');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {defaults as defaultControls} from '../src/ol/control.js';
+import WKT from '../src/ol/format/WKT.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import {unByKey} from '../src/ol/Observable.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorSource from '../src/ol/source/Vector.js';
 
-var raster = new ol.layer.Tile({
-  source: new ol.source.OSM()
+const raster = new TileLayer({
+  source: new OSM()
 });
 
-var format = new ol.format.WKT();
-var feature = format.readFeature(
-    'POLYGON((10.689697265625 -25.0927734375, 34.595947265625 ' +
+const format = new WKT();
+const feature = format.readFeature(
+  'POLYGON((10.689697265625 -25.0927734375, 34.595947265625 ' +
         '-20.1708984375, 38.814697265625 -35.6396484375, 13.502197265625 ' +
         '-39.1552734375, 10.689697265625 -25.0927734375))');
 feature.getGeometry().transform('EPSG:4326', 'EPSG:3857');
 
-var vector = new ol.layer.Vector({
-  source: new ol.source.Vector({
+const vector = new VectorLayer({
+  source: new VectorSource({
     features: [feature]
   })
 });
 
 
-var map = new ol.Map({
+const map = new Map({
   layers: [raster, vector],
   target: 'map',
-  controls: ol.control.defaults({
-    attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+  controls: defaultControls({
+    attributionOptions: {
       collapsible: false
-    })
+    }
   }),
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 2
   })
 });
 
 
-var dims = {
+const dims = {
   a0: [1189, 841],
   a1: [841, 594],
   a2: [594, 420],
@@ -50,61 +51,75 @@ var dims = {
   a5: [210, 148]
 };
 
-var loading = 0;
-var loaded = 0;
+let loading = 0;
+let loaded = 0;
 
-var exportButton = document.getElementById('export-pdf');
+const exportButton = document.getElementById('export-pdf');
 
 exportButton.addEventListener('click', function() {
 
   exportButton.disabled = true;
   document.body.style.cursor = 'progress';
 
-  var format = document.getElementById('format').value;
-  var resolution = document.getElementById('resolution').value;
-  var dim = dims[format];
-  var width = Math.round(dim[0] * resolution / 25.4);
-  var height = Math.round(dim[1] * resolution / 25.4);
-  var size = /** @type {ol.Size} */ (map.getSize());
-  var extent = map.getView().calculateExtent(size);
+  const format = document.getElementById('format').value;
+  const resolution = document.getElementById('resolution').value;
+  const dim = dims[format];
+  const width = Math.round(dim[0] * resolution / 25.4);
+  const height = Math.round(dim[1] * resolution / 25.4);
+  const size = /** @type {ol.Size} */ (map.getSize());
+  const extent = map.getView().calculateExtent(size);
 
-  var source = raster.getSource();
+  const source = raster.getSource();
 
-  var tileLoadStart = function() {
+  const tileLoadStart = function() {
     ++loading;
   };
 
-  var tileLoadEnd = function() {
-    ++loaded;
-    if (loading === loaded) {
-      var canvas = this;
-      window.setTimeout(function() {
-        loading = 0;
-        loaded = 0;
-        var data = canvas.toDataURL('image/png');
-        var pdf = new jsPDF('landscape', undefined, format);
-        pdf.addImage(data, 'JPEG', 0, 0, dim[0], dim[1]);
-        pdf.save('map.pdf');
-        source.un('tileloadstart', tileLoadStart);
-        source.un('tileloadend', tileLoadEnd, canvas);
-        source.un('tileloaderror', tileLoadEnd, canvas);
-        map.setSize(size);
-        map.getView().fit(extent);
-        map.renderSync();
-        exportButton.disabled = false;
-        document.body.style.cursor = 'auto';
-      }, 100);
-    }
-  };
+  let timer;
+  let keys = [];
+
+  function tileLoadEndFactory(canvas) {
+    return () => {
+      ++loaded;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (loading === loaded) {
+        timer = window.setTimeout(() => {
+          loading = 0;
+          loaded = 0;
+          const data = canvas.toDataURL('image/jpeg');
+          const pdf = new jsPDF('landscape', undefined, format);
+          pdf.addImage(data, 'JPEG', 0, 0, dim[0], dim[1]);
+          pdf.save('map.pdf');
+          keys.forEach(unByKey);
+          keys = [];
+          map.setSize(size);
+          map.getView().fit(extent, {size});
+          map.renderSync();
+          exportButton.disabled = false;
+          document.body.style.cursor = 'auto';
+        }, 500);
+      }
+    };
+  }
 
   map.once('postcompose', function(event) {
-    source.on('tileloadstart', tileLoadStart);
-    source.on('tileloadend', tileLoadEnd, event.context.canvas);
-    source.on('tileloaderror', tileLoadEnd, event.context.canvas);
+    const canvas = event.context.canvas;
+    const tileLoadEnd = tileLoadEndFactory(canvas);
+    keys = [
+      source.on('tileloadstart', tileLoadStart),
+      source.on('tileloadend', tileLoadEnd),
+      source.on('tileloaderror', tileLoadEnd)
+    ];
+    tileLoadEnd();
   });
 
-  map.setSize([width, height]);
-  map.getView().fit(extent);
+  const printSize = [width, height];
+  map.setSize(printSize);
+  map.getView().fit(extent, {size: printSize});
+  loaded = -1;
   map.renderSync();
 
 }, false);

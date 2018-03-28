@@ -1,9 +1,9 @@
-goog.require('ol.css');
+import {getFontFamilies} from '../../../src/ol/css.js';
 
 describe('ol.css', function() {
 
   describe('getFontFamilies()', function() {
-    var cases = [{
+    const cases = [{
       font: '2em "Open Sans"',
       families: ['"Open Sans"']
     }, {
@@ -25,7 +25,7 @@ describe('ol.css', function() {
 
     cases.forEach(function(c, i) {
       it('works for ' + c.font, function() {
-        var families = ol.css.getFontFamilies(c.font);
+        const families = getFontFamilies(c.font);
         if (c.families === null) {
           expect(families).to.be(null);
           return;

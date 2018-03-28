@@ -1,23 +1,23 @@
-goog.require('ol.Feature');
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.geom.Point');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.Vector');
-goog.require('ol.style.AtlasManager');
-goog.require('ol.style.Circle');
-goog.require('ol.style.Fill');
-goog.require('ol.style.RegularShape');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
+import Feature from '../src/ol/Feature.js';
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import Point from '../src/ol/geom/Point.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import AtlasManager from '../src/ol/style/AtlasManager.js';
+import CircleStyle from '../src/ol/style/Circle.js';
+import Fill from '../src/ol/style/Fill.js';
+import RegularShape from '../src/ol/style/RegularShape.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
 
-var atlasManager = new ol.style.AtlasManager({
+const atlasManager = new AtlasManager({
   // we increase the initial size so that all symbols fit into
   // a single atlas image
   initialSize: 512
 });
 
-var symbolInfo = [{
+const symbolInfo = [{
   opacity: 1.0,
   scale: 1.0,
   fillColor: 'rgba(255, 153, 0, 0.4)',
@@ -39,22 +39,22 @@ var symbolInfo = [{
   strokeColor: 'rgba(145, 43, 20, 0.2)'
 }];
 
-var radiuses = [3, 6, 9, 15, 19, 25];
-var symbolCount = symbolInfo.length * radiuses.length * 2;
-var symbols = [];
-var i, j;
+const radiuses = [3, 6, 9, 15, 19, 25];
+const symbolCount = symbolInfo.length * radiuses.length * 2;
+const symbols = [];
+let i, j;
 for (i = 0; i < symbolInfo.length; ++i) {
-  var info = symbolInfo[i];
+  const info = symbolInfo[i];
   for (j = 0; j < radiuses.length; ++j) {
     // circle symbol
-    symbols.push(new ol.style.Circle({
+    symbols.push(new CircleStyle({
       opacity: info.opacity,
       scale: info.scale,
       radius: radiuses[j],
-      fill: new ol.style.Fill({
+      fill: new Fill({
         color: info.fillColor
       }),
-      stroke: new ol.style.Stroke({
+      stroke: new Stroke({
         color: info.strokeColor,
         width: 1
       }),
@@ -64,17 +64,17 @@ for (i = 0; i < symbolInfo.length; ++i) {
     }));
 
     // star symbol
-    symbols.push(new ol.style.RegularShape({
+    symbols.push(new RegularShape({
       points: 8,
       opacity: info.opacity,
       scale: info.scale,
       radius: radiuses[j],
       radius2: radiuses[j] * 0.7,
       angle: 1.4,
-      fill: new ol.style.Fill({
+      fill: new Fill({
         color: info.fillColor
       }),
-      stroke: new ol.style.Stroke({
+      stroke: new Stroke({
         color: info.strokeColor,
         width: 1
       }),
@@ -83,34 +83,34 @@ for (i = 0; i < symbolInfo.length; ++i) {
   }
 }
 
-var featureCount = 50000;
-var features = new Array(featureCount);
-var feature, geometry;
-var e = 25000000;
+const featureCount = 50000;
+const features = new Array(featureCount);
+let feature, geometry;
+const e = 25000000;
 for (i = 0; i < featureCount; ++i) {
-  geometry = new ol.geom.Point(
-      [2 * e * Math.random() - e, 2 * e * Math.random() - e]);
-  feature = new ol.Feature(geometry);
+  geometry = new Point(
+    [2 * e * Math.random() - e, 2 * e * Math.random() - e]);
+  feature = new Feature(geometry);
   feature.setStyle(
-      new ol.style.Style({
-        image: symbols[i % symbolCount]
-      })
+    new Style({
+      image: symbols[i % symbolCount]
+    })
   );
   features[i] = feature;
 }
 
-var vectorSource = new ol.source.Vector({
+const vectorSource = new VectorSource({
   features: features
 });
-var vector = new ol.layer.Vector({
+const vector = new VectorLayer({
   source: vectorSource
 });
 
-var map = new ol.Map({
+const map = new Map({
   renderer: /** @type {Array<ol.renderer.Type>} */ (['webgl', 'canvas']),
   layers: [vector],
   target: document.getElementById('map'),
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 4
   })

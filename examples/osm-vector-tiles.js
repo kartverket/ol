@@ -1,44 +1,44 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.format.TopoJSON');
-goog.require('ol.layer.VectorTile');
-goog.require('ol.proj');
-goog.require('ol.source.VectorTile');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import TopoJSON from '../src/ol/format/TopoJSON.js';
+import VectorTileLayer from '../src/ol/layer/VectorTile.js';
+import {fromLonLat} from '../src/ol/proj.js';
+import VectorTileSource from '../src/ol/source/VectorTile.js';
+import Fill from '../src/ol/style/Fill.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
 
-var key = 'vector-tiles-5eJz6JX';
+const key = 'vector-tiles-5eJz6JX';
 
-var roadStyleCache = {};
-var roadColor = {
+const roadStyleCache = {};
+const roadColor = {
   'major_road': '#776',
   'minor_road': '#ccb',
   'highway': '#f39'
 };
-var buildingStyle = new ol.style.Style({
-  fill: new ol.style.Fill({
+const buildingStyle = new Style({
+  fill: new Fill({
     color: '#666',
     opacity: 0.4
   }),
-  stroke: new ol.style.Stroke({
+  stroke: new Stroke({
     color: '#444',
     width: 1
   })
 });
-var waterStyle = new ol.style.Style({
-  fill: new ol.style.Fill({
+const waterStyle = new Style({
+  fill: new Fill({
     color: '#9db9e8'
   })
 });
-var roadStyle = function(feature) {
-  var kind = feature.get('kind');
-  var railway = feature.get('railway');
-  var sort_key = feature.get('sort_key');
-  var styleKey = kind + '/' + railway + '/' + sort_key;
-  var style = roadStyleCache[styleKey];
+const roadStyle = function(feature) {
+  const kind = feature.get('kind');
+  const railway = feature.get('railway');
+  const sort_key = feature.get('sort_key');
+  const styleKey = kind + '/' + railway + '/' + sort_key;
+  let style = roadStyleCache[styleKey];
   if (!style) {
-    var color, width;
+    let color, width;
     if (railway) {
       color = '#7de';
       width = 1;
@@ -46,8 +46,8 @@ var roadStyle = function(feature) {
       color = roadColor[kind];
       width = kind == 'highway' ? 1.5 : 1;
     }
-    style = new ol.style.Style({
-      stroke: new ol.style.Stroke({
+    style = new Style({
+      stroke: new Stroke({
         color: color,
         width: width
       }),
@@ -58,13 +58,13 @@ var roadStyle = function(feature) {
   return style;
 };
 
-var map = new ol.Map({
+const map = new Map({
   layers: [
-    new ol.layer.VectorTile({
-      source: new ol.source.VectorTile({
+    new VectorTileLayer({
+      source: new VectorTileSource({
         attributions: '&copy; OpenStreetMap contributors, Who’s On First, ' +
             'Natural Earth, and openstreetmapdata.com',
-        format: new ol.format.TopoJSON({
+        format: new TopoJSON({
           layerName: 'layer',
           layers: ['water', 'roads', 'buildings']
         }),
@@ -82,8 +82,8 @@ var map = new ol.Map({
     })
   ],
   target: 'map',
-  view: new ol.View({
-    center: ol.proj.fromLonLat([-74.0064, 40.7142]),
+  view: new View({
+    center: fromLonLat([-74.0064, 40.7142]),
     maxZoom: 19,
     zoom: 15
   })

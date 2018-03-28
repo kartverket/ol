@@ -1,45 +1,65 @@
-goog.provide('ol.control');
+/**
+ * @module ol/control
+ */
+import Collection from './Collection.js';
+import Attribution from './control/Attribution.js';
+import Rotate from './control/Rotate.js';
+import Zoom from './control/Zoom.js';
 
-goog.require('ol.Collection');
-goog.require('ol.control.Attribution');
-goog.require('ol.control.Rotate');
-goog.require('ol.control.Zoom');
+
+/**
+ * @typedef {Object} DefaultsOptions
+ * @property {boolean} [attribution=true] Include
+ * {@link module:ol/control/Attribution~Attribution}.
+ * @property {module:ol/control/Attribution~Options} [attributionOptions]
+ * Options for {@link module:ol/control/Attribution~Attribution}.
+ * @property {boolean} [rotate=true] Include
+ * {@link module:ol/control/Rotate~Rotate}.
+ * @property {module:ol/control/Rotate~Options} [rotateOptions] Options
+ * for {@link module:ol/control/Rotate~Rotate}.
+ * @property {boolean} [zoom] Include {@link module:ol/control/Zoom~Zoom}.
+ * @property {module:ol/control/Zoom~Options} [zoomOptions] Options for
+ * {@link module:ol/control/Zoom~Zoom}.
+ * @api
+ */
 
 
 /**
  * Set of controls included in maps by default. Unless configured otherwise,
  * this returns a collection containing an instance of each of the following
  * controls:
- * * {@link ol.control.Zoom}
- * * {@link ol.control.Rotate}
- * * {@link ol.control.Attribution}
+ * * {@link module:ol/control/Zoom~Zoom}
+ * * {@link module:ol/control/Rotate~Rotate}
+ * * {@link module:ol/control/Attribution~Attribution}
  *
- * @param {olx.control.DefaultsOptions=} opt_options Defaults options.
- * @return {ol.Collection.<ol.control.Control>} Controls.
+ * @param {module:ol/control~DefaultsOptions=} opt_options
+ * Defaults options.
+ * @return {module:ol/Collection~Collection.<module:ol/control/Control~Control>}
+ * Controls.
  * @api
  */
-ol.control.defaults = function(opt_options) {
+export function defaults(opt_options) {
 
-  var options = opt_options ? opt_options : {};
+  const options = opt_options ? opt_options : {};
 
-  var controls = new ol.Collection();
+  const controls = new Collection();
 
-  var zoomControl = options.zoom !== undefined ? options.zoom : true;
+  const zoomControl = options.zoom !== undefined ? options.zoom : true;
   if (zoomControl) {
-    controls.push(new ol.control.Zoom(options.zoomOptions));
+    controls.push(new Zoom(options.zoomOptions));
   }
 
-  var rotateControl = options.rotate !== undefined ? options.rotate : true;
+  const rotateControl = options.rotate !== undefined ? options.rotate : true;
   if (rotateControl) {
-    controls.push(new ol.control.Rotate(options.rotateOptions));
+    controls.push(new Rotate(options.rotateOptions));
   }
 
-  var attributionControl = options.attribution !== undefined ?
+  const attributionControl = options.attribution !== undefined ?
     options.attribution : true;
   if (attributionControl) {
-    controls.push(new ol.control.Attribution(options.attributionOptions));
+    controls.push(new Attribution(options.attributionOptions));
   }
 
   return controls;
 
-};
+}

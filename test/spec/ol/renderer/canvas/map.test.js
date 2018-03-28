@@ -1,67 +1,65 @@
-
-
-goog.require('ol');
-goog.require('ol.Feature');
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.geom.Point');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.renderer.canvas.Layer');
-goog.require('ol.renderer.canvas.Map');
-goog.require('ol.source.Vector');
-goog.require('ol.style.Icon');
-goog.require('ol.style.Style');
+import {getUid} from '../../../../../src/ol/index.js';
+import Feature from '../../../../../src/ol/Feature.js';
+import Map from '../../../../../src/ol/Map.js';
+import View from '../../../../../src/ol/View.js';
+import Point from '../../../../../src/ol/geom/Point.js';
+import TileLayer from '../../../../../src/ol/layer/Tile.js';
+import VectorLayer from '../../../../../src/ol/layer/Vector.js';
+import CanvasLayerRenderer from '../../../../../src/ol/renderer/canvas/Layer.js';
+import CanvasMapRenderer from '../../../../../src/ol/renderer/canvas/Map.js';
+import VectorSource from '../../../../../src/ol/source/Vector.js';
+import Icon from '../../../../../src/ol/style/Icon.js';
+import Style from '../../../../../src/ol/style/Style.js';
 
 describe('ol.renderer.canvas.Map', function() {
 
   describe('constructor', function() {
 
     it('creates a new instance', function() {
-      var map = new ol.Map({
+      const map = new Map({
         target: document.createElement('div')
       });
-      var renderer = new ol.renderer.canvas.Map(map.viewport_, map);
-      expect(renderer).to.be.a(ol.renderer.canvas.Map);
+      const renderer = new CanvasMapRenderer(map.viewport_, map);
+      expect(renderer).to.be.a(CanvasMapRenderer);
     });
 
   });
 
   describe('#forEachFeatureAtCoordinate', function() {
 
-    var layer, map, target;
+    let layer, map, target;
 
     beforeEach(function(done) {
       target = document.createElement('div');
       target.style.width = '100px';
       target.style.height = '100px';
       document.body.appendChild(target);
-      map = new ol.Map({
+      map = new Map({
         pixelRatio: 1,
         target: target,
-        view: new ol.View({
+        view: new View({
           center: [0, 0],
           zoom: 0
         })
       });
 
       // 1 x 1 pixel black icon
-      var img = document.createElement('img');
+      const img = document.createElement('img');
       img.onload = function() {
         done();
       };
       img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4nGNiAAAABgADNjd8qAAAAABJRU5ErkJggg==';
 
-      layer = new ol.layer.Vector({
-        source: new ol.source.Vector({
+      layer = new VectorLayer({
+        source: new VectorSource({
           features: [
-            new ol.Feature({
-              geometry: new ol.geom.Point([0, 0])
+            new Feature({
+              geometry: new Point([0, 0])
             })
           ]
         }),
-        style: new ol.style.Style({
-          image: new ol.style.Icon({
+        style: new Style({
+          image: new Icon({
             img: img,
             imgSize: [1, 1]
           })
@@ -77,7 +75,7 @@ describe('ol.renderer.canvas.Map', function() {
     it('calls callback with layer for managed layers', function() {
       map.addLayer(layer);
       map.renderSync();
-      var cb = sinon.spy();
+      const cb = sinon.spy();
       map.forEachFeatureAtPixel(map.getPixelFromCoordinate([0, 0]), cb);
       expect(cb).to.be.called();
       expect(cb.firstCall.args[1]).to.be(layer);
@@ -86,16 +84,16 @@ describe('ol.renderer.canvas.Map', function() {
     it('calls callback with null for unmanaged layers', function() {
       layer.setMap(map);
       map.renderSync();
-      var cb = sinon.spy();
+      const cb = sinon.spy();
       map.forEachFeatureAtPixel(map.getPixelFromCoordinate([0, 0]), cb);
       expect(cb).to.be.called();
       expect(cb.firstCall.args[1]).to.be(null);
     });
 
     it('calls callback with main layer when skipped feature on unmanaged layer', function() {
-      var feature = layer.getSource().getFeatures()[0];
-      var managedLayer = new ol.layer.Vector({
-        source: new ol.source.Vector({
+      const feature = layer.getSource().getFeatures()[0];
+      const managedLayer = new VectorLayer({
+        source: new VectorSource({
           features: [feature]
         })
       });
@@ -103,7 +101,7 @@ describe('ol.renderer.canvas.Map', function() {
       map.skipFeature(feature);
       layer.setMap(map);
       map.renderSync();
-      var cb = sinon.spy();
+      const cb = sinon.spy();
       map.forEachFeatureAtPixel(map.getPixelFromCoordinate([0, 0]), cb);
       expect(cb.callCount).to.be(1);
       expect(cb.firstCall.args[1]).to.be(managedLayer);
@@ -112,7 +110,7 @@ describe('ol.renderer.canvas.Map', function() {
     it('filters managed layers', function() {
       map.addLayer(layer);
       map.renderSync();
-      var cb = sinon.spy();
+      const cb = sinon.spy();
       map.forEachFeatureAtPixel(map.getPixelFromCoordinate([0, 0]), cb, {
         layerFilter: function() {
           return false;
@@ -122,43 +120,43 @@ describe('ol.renderer.canvas.Map', function() {
     });
 
     it('doesn\'t fail with layer with no source', function() {
-      map.addLayer(new ol.layer.Tile());
+      map.addLayer(new TileLayer());
       map.renderSync();
       expect(function() {
         map.forEachFeatureAtPixel(map.getPixelFromCoordinate([0, 0]),
-            function() {});
+          function() {});
       }).to.not.throwException();
     });
 
     it('calls callback for clicks inside of the hitTolerance', function() {
       map.addLayer(layer);
       map.renderSync();
-      var cb1 = sinon.spy();
-      var cb2 = sinon.spy();
+      const cb1 = sinon.spy();
+      const cb2 = sinon.spy();
 
-      var pixel = map.getPixelFromCoordinate([0, 0]);
+      const pixel = map.getPixelFromCoordinate([0, 0]);
 
-      var pixelsInside = [
+      const pixelsInside = [
         [pixel[0] + 9, pixel[1]],
         [pixel[0] - 9, pixel[1]],
         [pixel[0], pixel[1] + 9],
         [pixel[0], pixel[1] - 9]
       ];
 
-      var pixelsOutside = [
+      const pixelsOutside = [
         [pixel[0] + 9, pixel[1] + 9],
         [pixel[0] - 9, pixel[1] + 9],
         [pixel[0] + 9, pixel[1] - 9],
         [pixel[0] - 9, pixel[1] - 9]
       ];
 
-      for (var i = 0; i < 4; i++) {
+      for (let i = 0; i < 4; i++) {
         map.forEachFeatureAtPixel(pixelsInside[i], cb1, {hitTolerance: 10});
       }
       expect(cb1.callCount).to.be(4);
       expect(cb1.firstCall.args[1]).to.be(layer);
 
-      for (var j = 0; j < 4; j++) {
+      for (let j = 0; j < 4; j++) {
         map.forEachFeatureAtPixel(pixelsOutside[j], cb2, {hitTolerance: 10});
       }
       expect(cb2).not.to.be.called();
@@ -166,24 +164,24 @@ describe('ol.renderer.canvas.Map', function() {
   });
 
   describe('#renderFrame()', function() {
-    var layer, map, renderer;
+    let layer, map, renderer;
 
     beforeEach(function() {
-      map = new ol.Map({});
+      map = new Map({});
       map.on('postcompose', function() {});
-      layer = new ol.layer.Vector({
-        source: new ol.source.Vector({wrapX: true})
+      layer = new VectorLayer({
+        source: new VectorSource({wrapX: true})
       });
       renderer = map.getRenderer();
       renderer.layerRenderers_ = {};
-      var layerRenderer = new ol.renderer.canvas.Layer(layer);
+      const layerRenderer = new CanvasLayerRenderer(layer);
       layerRenderer.prepareFrame = function() {
         return true;
       };
       layerRenderer.getImage = function() {
         return null;
       };
-      renderer.layerRenderers_[ol.getUid(layer)] = layerRenderer;
+      renderer.layerRenderers_[getUid(layer)] = layerRenderer;
     });
 
   });

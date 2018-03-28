@@ -1,36 +1,36 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.events.condition');
-goog.require('ol.format.GeoJSON');
-goog.require('ol.interaction.Extent');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.OSM');
-goog.require('ol.source.Vector');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {platformModifierKeyOnly} from '../src/ol/events/condition.js';
+import GeoJSON from '../src/ol/format/GeoJSON.js';
+import ExtentInteraction from '../src/ol/interaction/Extent.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorSource from '../src/ol/source/Vector.js';
 
-var vectorSource = new ol.source.Vector({
+const vectorSource = new VectorSource({
   url: 'data/geojson/countries.geojson',
-  format: new ol.format.GeoJSON()
+  format: new GeoJSON()
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.OSM()
+    new TileLayer({
+      source: new OSM()
     }),
-    new ol.layer.Vector({
+    new VectorLayer({
       source: vectorSource
     })
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 2
   })
 });
 
-var extent = new ol.interaction.Extent({
-  condition: ol.events.condition.platformModifierKeyOnly
+const extent = new ExtentInteraction({
+  condition: platformModifierKeyOnly
 });
 map.addInteraction(extent);
 extent.setActive(false);

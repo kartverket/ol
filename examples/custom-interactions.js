@@ -1,26 +1,26 @@
-goog.require('ol');
-goog.require('ol.Feature');
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.geom.LineString');
-goog.require('ol.geom.Point');
-goog.require('ol.geom.Polygon');
-goog.require('ol.interaction');
-goog.require('ol.interaction.Pointer');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.TileJSON');
-goog.require('ol.source.Vector');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Icon');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
+import {inherits} from '../src/ol/index.js';
+import Feature from '../src/ol/Feature.js';
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import LineString from '../src/ol/geom/LineString.js';
+import Point from '../src/ol/geom/Point.js';
+import Polygon from '../src/ol/geom/Polygon.js';
+import {defaults as defaultInteractions} from '../src/ol/interaction.js';
+import PointerInteraction from '../src/ol/interaction/Pointer.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import TileJSON from '../src/ol/source/TileJSON.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import Fill from '../src/ol/style/Fill.js';
+import Icon from '../src/ol/style/Icon.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
 
 
 /**
  * Define a namespace for the application.
  */
-var app = {};
+const app = {};
 
 
 /**
@@ -29,7 +29,7 @@ var app = {};
  */
 app.Drag = function() {
 
-  ol.interaction.Pointer.call(this, {
+  PointerInteraction.call(this, {
     handleDownEvent: app.Drag.prototype.handleDownEvent,
     handleDragEvent: app.Drag.prototype.handleDragEvent,
     handleMoveEvent: app.Drag.prototype.handleMoveEvent,
@@ -49,7 +49,7 @@ app.Drag = function() {
   this.cursor_ = 'pointer';
 
   /**
-   * @type {ol.Feature}
+   * @type {module:ol/Feature~Feature}
    * @private
    */
   this.feature_ = null;
@@ -61,20 +61,20 @@ app.Drag = function() {
   this.previousCursor_ = undefined;
 
 };
-ol.inherits(app.Drag, ol.interaction.Pointer);
+inherits(app.Drag, PointerInteraction);
 
 
 /**
- * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @param {module:ol/MapBrowserEvent~MapBrowserEvent} evt Map browser event.
  * @return {boolean} `true` to start the drag sequence.
  */
 app.Drag.prototype.handleDownEvent = function(evt) {
-  var map = evt.map;
+  const map = evt.map;
 
-  var feature = map.forEachFeatureAtPixel(evt.pixel,
-      function(feature) {
-        return feature;
-      });
+  const feature = map.forEachFeatureAtPixel(evt.pixel,
+    function(feature) {
+      return feature;
+    });
 
   if (feature) {
     this.coordinate_ = evt.coordinate;
@@ -86,14 +86,13 @@ app.Drag.prototype.handleDownEvent = function(evt) {
 
 
 /**
- * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @param {module:ol/MapBrowserEvent~MapBrowserEvent} evt Map browser event.
  */
 app.Drag.prototype.handleDragEvent = function(evt) {
-  var deltaX = evt.coordinate[0] - this.coordinate_[0];
-  var deltaY = evt.coordinate[1] - this.coordinate_[1];
+  const deltaX = evt.coordinate[0] - this.coordinate_[0];
+  const deltaY = evt.coordinate[1] - this.coordinate_[1];
 
-  var geometry = /** @type {ol.geom.SimpleGeometry} */
-      (this.feature_.getGeometry());
+  const geometry = this.feature_.getGeometry();
   geometry.translate(deltaX, deltaY);
 
   this.coordinate_[0] = evt.coordinate[0];
@@ -102,16 +101,16 @@ app.Drag.prototype.handleDragEvent = function(evt) {
 
 
 /**
- * @param {ol.MapBrowserEvent} evt Event.
+ * @param {module:ol/MapBrowserEvent~MapBrowserEvent} evt Event.
  */
 app.Drag.prototype.handleMoveEvent = function(evt) {
   if (this.cursor_) {
-    var map = evt.map;
-    var feature = map.forEachFeatureAtPixel(evt.pixel,
-        function(feature) {
-          return feature;
-        });
-    var element = evt.map.getTargetElement();
+    const map = evt.map;
+    const feature = map.forEachFeatureAtPixel(evt.pixel,
+      function(feature) {
+        return feature;
+      });
+    const element = evt.map.getTargetElement();
     if (feature) {
       if (element.style.cursor != this.cursor_) {
         this.previousCursor_ = element.style.cursor;
@@ -135,48 +134,48 @@ app.Drag.prototype.handleUpEvent = function() {
 };
 
 
-var pointFeature = new ol.Feature(new ol.geom.Point([0, 0]));
+const pointFeature = new Feature(new Point([0, 0]));
 
-var lineFeature = new ol.Feature(
-    new ol.geom.LineString([[-1e7, 1e6], [-1e6, 3e6]]));
+const lineFeature = new Feature(
+  new LineString([[-1e7, 1e6], [-1e6, 3e6]]));
 
-var polygonFeature = new ol.Feature(
-    new ol.geom.Polygon([[[-3e6, -1e6], [-3e6, 1e6],
-      [-1e6, 1e6], [-1e6, -1e6], [-3e6, -1e6]]]));
+const polygonFeature = new Feature(
+  new Polygon([[[-3e6, -1e6], [-3e6, 1e6],
+    [-1e6, 1e6], [-1e6, -1e6], [-3e6, -1e6]]]));
 
 
-var map = new ol.Map({
-  interactions: ol.interaction.defaults().extend([new app.Drag()]),
+const map = new Map({
+  interactions: defaultInteractions().extend([new app.Drag()]),
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.TileJSON({
+    new TileLayer({
+      source: new TileJSON({
         url: 'https://api.tiles.mapbox.com/v3/mapbox.geography-class.json?secure'
       })
     }),
-    new ol.layer.Vector({
-      source: new ol.source.Vector({
+    new VectorLayer({
+      source: new VectorSource({
         features: [pointFeature, lineFeature, polygonFeature]
       }),
-      style: new ol.style.Style({
-        image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ ({
+      style: new Style({
+        image: new Icon(/** @type {olx.style.IconOptions} */ ({
           anchor: [0.5, 46],
           anchorXUnits: 'fraction',
           anchorYUnits: 'pixels',
           opacity: 0.95,
           src: 'data/icon.png'
         })),
-        stroke: new ol.style.Stroke({
+        stroke: new Stroke({
           width: 3,
           color: [255, 0, 0, 1]
         }),
-        fill: new ol.style.Fill({
+        fill: new Fill({
           color: [0, 0, 255, 0.6]
         })
       })
     })
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 2
   })

@@ -1,38 +1,37 @@
-goog.provide('ol.proj.projections');
+/**
+ * @module ol/proj/projections
+ */
 
 
 /**
- * @private
- * @type {Object.<string, ol.proj.Projection>}
+ * @type {Object.<string, module:ol/proj/Projection~Projection>}
  */
-ol.proj.projections.cache_ = {};
+let cache = {};
 
 
 /**
  * Clear the projections cache.
  */
-ol.proj.projections.clear = function() {
-  ol.proj.projections.cache_ = {};
-};
+export function clear() {
+  cache = {};
+}
 
 
 /**
  * Get a cached projection by code.
  * @param {string} code The code for the projection.
- * @return {ol.proj.Projection} The projection (if cached).
+ * @return {module:ol/proj/Projection~Projection} The projection (if cached).
  */
-ol.proj.projections.get = function(code) {
-  var projections = ol.proj.projections.cache_;
-  return projections[code] || null;
-};
+export function get(code) {
+  return cache[code] || null;
+}
 
 
 /**
  * Add a projection to the cache.
  * @param {string} code The projection code.
- * @param {ol.proj.Projection} projection The projection to cache.
+ * @param {module:ol/proj/Projection~Projection} projection The projection to cache.
  */
-ol.proj.projections.add = function(code, projection) {
-  var projections = ol.proj.projections.cache_;
-  projections[code] = projection;
-};
+export function add(code, projection) {
+  cache[code] = projection;
+}

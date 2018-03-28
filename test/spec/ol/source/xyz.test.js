@@ -1,10 +1,8 @@
-
-
-goog.require('ol.source.Tile');
-goog.require('ol.source.TileImage');
-goog.require('ol.source.UrlTile');
-goog.require('ol.source.XYZ');
-goog.require('ol.tilegrid');
+import TileSource from '../../../../src/ol/source/Tile.js';
+import TileImage from '../../../../src/ol/source/TileImage.js';
+import UrlTile from '../../../../src/ol/source/UrlTile.js';
+import XYZ from '../../../../src/ol/source/XYZ.js';
+import {createXYZ} from '../../../../src/ol/tilegrid.js';
 
 
 describe('ol.source.XYZ', function() {
@@ -12,30 +10,30 @@ describe('ol.source.XYZ', function() {
   describe('constructor', function() {
 
     it('can be constructed without options', function() {
-      var source = new ol.source.XYZ();
-      expect(source).to.be.an(ol.source.XYZ);
-      expect(source).to.be.an(ol.source.TileImage);
-      expect(source).to.be.an(ol.source.UrlTile);
-      expect(source).to.be.an(ol.source.Tile);
+      const source = new XYZ();
+      expect(source).to.be.an(XYZ);
+      expect(source).to.be.an(TileImage);
+      expect(source).to.be.an(UrlTile);
+      expect(source).to.be.an(TileSource);
     });
 
     it('can be constructed with a custom tile grid', function() {
-      var tileGrid = ol.tilegrid.createXYZ();
-      var tileSource = new ol.source.XYZ({
+      const tileGrid = createXYZ();
+      const tileSource = new XYZ({
         tileGrid: tileGrid
       });
       expect(tileSource.getTileGrid()).to.be(tileGrid);
     });
 
     it('can be constructed with a custom tile size', function() {
-      var tileSource = new ol.source.XYZ({
+      const tileSource = new XYZ({
         tileSize: 512
       });
       expect(tileSource.getTileGrid().getTileSize(0)).to.be(512);
     });
 
     it('can be constructed with a custom min zoom', function() {
-      var tileSource = new ol.source.XYZ({
+      const tileSource = new XYZ({
         minZoom: 2
       });
       expect(tileSource.getTileGrid().getMinZoom()).to.be(2);
@@ -45,10 +43,10 @@ describe('ol.source.XYZ', function() {
 
   describe('tileUrlFunction', function() {
 
-    var xyzTileSource, tileGrid;
+    let xyzTileSource, tileGrid;
 
     beforeEach(function() {
-      xyzTileSource = new ol.source.XYZ({
+      xyzTileSource = new XYZ({
         maxZoom: 6,
         url: '{z}/{x}/{y}'
       });
@@ -57,35 +55,35 @@ describe('ol.source.XYZ', function() {
 
     it('returns the expected URL', function() {
 
-      var coordinate = [829330.2064098881, 5933916.615134273];
-      var tileUrl;
+      const coordinate = [829330.2064098881, 5933916.615134273];
+      let tileUrl;
 
       tileUrl = xyzTileSource.tileUrlFunction(
-          tileGrid.getTileCoordForCoordAndZ(coordinate, 0));
+        tileGrid.getTileCoordForCoordAndZ(coordinate, 0));
       expect(tileUrl).to.eql('0/0/0');
 
       tileUrl = xyzTileSource.tileUrlFunction(
-          tileGrid.getTileCoordForCoordAndZ(coordinate, 1));
+        tileGrid.getTileCoordForCoordAndZ(coordinate, 1));
       expect(tileUrl).to.eql('1/1/0');
 
       tileUrl = xyzTileSource.tileUrlFunction(
-          tileGrid.getTileCoordForCoordAndZ(coordinate, 2));
+        tileGrid.getTileCoordForCoordAndZ(coordinate, 2));
       expect(tileUrl).to.eql('2/2/1');
 
       tileUrl = xyzTileSource.tileUrlFunction(
-          tileGrid.getTileCoordForCoordAndZ(coordinate, 3));
+        tileGrid.getTileCoordForCoordAndZ(coordinate, 3));
       expect(tileUrl).to.eql('3/4/2');
 
       tileUrl = xyzTileSource.tileUrlFunction(
-          tileGrid.getTileCoordForCoordAndZ(coordinate, 4));
+        tileGrid.getTileCoordForCoordAndZ(coordinate, 4));
       expect(tileUrl).to.eql('4/8/5');
 
       tileUrl = xyzTileSource.tileUrlFunction(
-          tileGrid.getTileCoordForCoordAndZ(coordinate, 5));
+        tileGrid.getTileCoordForCoordAndZ(coordinate, 5));
       expect(tileUrl).to.eql('5/16/11');
 
       tileUrl = xyzTileSource.tileUrlFunction(
-          tileGrid.getTileCoordForCoordAndZ(coordinate, 6));
+        tileGrid.getTileCoordForCoordAndZ(coordinate, 6));
       expect(tileUrl).to.eql('6/33/22');
 
     });
@@ -93,20 +91,20 @@ describe('ol.source.XYZ', function() {
     describe('wrap x', function() {
 
       it('returns the expected URL', function() {
-        var projection = xyzTileSource.getProjection();
-        var tileUrl = xyzTileSource.tileUrlFunction(
-            xyzTileSource.getTileCoordForTileUrlFunction(
-                [6, -31, -23], projection));
+        const projection = xyzTileSource.getProjection();
+        let tileUrl = xyzTileSource.tileUrlFunction(
+          xyzTileSource.getTileCoordForTileUrlFunction(
+            [6, -31, -23], projection));
         expect(tileUrl).to.eql('6/33/22');
 
         tileUrl = xyzTileSource.tileUrlFunction(
-            xyzTileSource.getTileCoordForTileUrlFunction(
-                [6, 33, -23], projection));
+          xyzTileSource.getTileCoordForTileUrlFunction(
+            [6, 33, -23], projection));
         expect(tileUrl).to.eql('6/33/22');
 
         tileUrl = xyzTileSource.tileUrlFunction(
-            xyzTileSource.getTileCoordForTileUrlFunction(
-                [6, 97, -23], projection));
+          xyzTileSource.getTileCoordForTileUrlFunction(
+            [6, 97, -23], projection));
         expect(tileUrl).to.eql('6/33/22');
       });
 
@@ -115,20 +113,20 @@ describe('ol.source.XYZ', function() {
     describe('crop y', function() {
 
       it('returns the expected URL', function() {
-        var projection = xyzTileSource.getProjection();
-        var tileUrl = xyzTileSource.tileUrlFunction(
-            xyzTileSource.getTileCoordForTileUrlFunction(
-                [6, 33, 0], projection));
+        const projection = xyzTileSource.getProjection();
+        let tileUrl = xyzTileSource.tileUrlFunction(
+          xyzTileSource.getTileCoordForTileUrlFunction(
+            [6, 33, 0], projection));
         expect(tileUrl).to.be(undefined);
 
         tileUrl = xyzTileSource.tileUrlFunction(
-            xyzTileSource.getTileCoordForTileUrlFunction(
-                [6, 33, -23], projection));
+          xyzTileSource.getTileCoordForTileUrlFunction(
+            [6, 33, -23], projection));
         expect(tileUrl).to.eql('6/33/22');
 
         tileUrl = xyzTileSource.tileUrlFunction(
-            xyzTileSource.getTileCoordForTileUrlFunction(
-                [6, 33, -65], projection));
+          xyzTileSource.getTileCoordForTileUrlFunction(
+            [6, 33, -65], projection));
         expect(tileUrl).to.be(undefined);
       });
 
@@ -138,9 +136,9 @@ describe('ol.source.XYZ', function() {
 
   describe('#getUrls', function() {
 
-    var sourceOptions;
-    var source;
-    var url = 'http://geo.nls.uk/maps/towns/glasgow1857/{z}/{x}/{-y}.png';
+    let sourceOptions;
+    let source;
+    const url = 'http://geo.nls.uk/maps/towns/glasgow1857/{z}/{x}/{-y}.png';
 
     beforeEach(function() {
       sourceOptions = {
@@ -151,11 +149,11 @@ describe('ol.source.XYZ', function() {
     describe('using a "url" option', function() {
       beforeEach(function() {
         sourceOptions.url = url;
-        source = new ol.source.XYZ(sourceOptions);
+        source = new XYZ(sourceOptions);
       });
 
       it('returns the XYZ URL', function() {
-        var urls = source.getUrls();
+        const urls = source.getUrls();
         expect(urls).to.be.eql([url]);
       });
 
@@ -164,11 +162,11 @@ describe('ol.source.XYZ', function() {
     describe('using a "urls" option', function() {
       beforeEach(function() {
         sourceOptions.urls = ['some_xyz_url1', 'some_xyz_url2'];
-        source = new ol.source.XYZ(sourceOptions);
+        source = new XYZ(sourceOptions);
       });
 
       it('returns the XYZ URLs', function() {
-        var urls = source.getUrls();
+        const urls = source.getUrls();
         expect(urls).to.be.eql(['some_xyz_url1', 'some_xyz_url2']);
       });
 
@@ -179,11 +177,11 @@ describe('ol.source.XYZ', function() {
         sourceOptions.tileUrlFunction = function() {
           return 'some_xyz_url';
         };
-        source = new ol.source.XYZ(sourceOptions);
+        source = new XYZ(sourceOptions);
       });
 
       it('returns null', function() {
-        var urls = source.getUrls();
+        const urls = source.getUrls();
         expect(urls).to.be(null);
       });
 

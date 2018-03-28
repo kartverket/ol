@@ -1,20 +1,18 @@
-
-
-goog.require('ol.Feature');
-goog.require('ol.geom.Point');
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.Vector');
-goog.require('ol.style.Icon');
-goog.require('ol.style.Style');
+import Feature from '../../../../src/ol/Feature.js';
+import Point from '../../../../src/ol/geom/Point.js';
+import Map from '../../../../src/ol/Map.js';
+import View from '../../../../src/ol/View.js';
+import VectorLayer from '../../../../src/ol/layer/Vector.js';
+import VectorSource from '../../../../src/ol/source/Vector.js';
+import Icon from '../../../../src/ol/style/Icon.js';
+import Style from '../../../../src/ol/style/Style.js';
 
 
 describe('ol.rendering.style.Icon', function() {
 
-  var map, vectorSource;
+  let map, vectorSource;
 
-  var imgInfo = {
+  const imgInfo = {
     anchor: [0.5, 46],
     anchorXUnits: 'fraction',
     anchorYUnits: 'pixels',
@@ -24,17 +22,17 @@ describe('ol.rendering.style.Icon', function() {
   };
 
   function createMap(renderer, width, height) {
-    vectorSource = new ol.source.Vector();
-    var vectorLayer = new ol.layer.Vector({
+    vectorSource = new VectorSource();
+    const vectorLayer = new VectorLayer({
       source: vectorSource
     });
 
-    map = new ol.Map({
+    map = new Map({
       pixelRatio: 1,
       target: createMapDiv(width ? width : 50, height ? height : 50),
       renderer: renderer,
       layers: [vectorLayer],
-      view: new ol.View({
+      view: new View({
         projection: 'EPSG:4326',
         center: [0, 0],
         resolution: 1
@@ -52,16 +50,15 @@ describe('ol.rendering.style.Icon', function() {
   describe('#render', function() {
 
     function createFeatures(src, imgInfo, callback) {
-      var feature;
-      feature = new ol.Feature({
-        geometry: new ol.geom.Point([0, 0])
+      const feature = new Feature({
+        geometry: new Point([0, 0])
       });
 
-      var img = new Image();
+      const img = new Image();
       img.onload = function() {
         imgInfo.img = img;
-        feature.setStyle(new ol.style.Style({
-          image: new ol.style.Icon(/** @type {olx.style.IconOptions} */ (imgInfo))
+        feature.setStyle(new Style({
+          image: new Icon(/** @type {olx.style.IconOptions} */ (imgInfo))
         }));
         vectorSource.addFeature(feature);
         callback();
@@ -73,7 +70,7 @@ describe('ol.rendering.style.Icon', function() {
       createMap('canvas');
       createFeatures('rendering/ol/data/icon.png', imgInfo, function() {
         expectResemble(map, 'rendering/ol/style/expected/icon-canvas.png',
-            IMAGE_TOLERANCE, done);
+          IMAGE_TOLERANCE, done);
       });
     });
 
@@ -84,7 +81,7 @@ describe('ol.rendering.style.Icon', function() {
         imgSize: [512, 512]
       }, function() {
         expectResemble(map, 'rendering/ol/style/expected/icon-canvas-svg-scale.png',
-            IMAGE_TOLERANCE, done);
+          IMAGE_TOLERANCE, done);
       });
     });
 
@@ -96,7 +93,7 @@ describe('ol.rendering.style.Icon', function() {
         imgSize: [512, 512]
       }, function() {
         expectResemble(map, 'rendering/ol/style/expected/icon-canvas-svg-offset.png',
-            IMAGE_TOLERANCE, done);
+          IMAGE_TOLERANCE, done);
       });
     });
 
@@ -108,7 +105,7 @@ describe('ol.rendering.style.Icon', function() {
         imgSize: [512, 512]
       }, function() {
         expectResemble(map, 'rendering/ol/style/expected/icon-canvas-svg-offset2.png',
-            IMAGE_TOLERANCE, done);
+          IMAGE_TOLERANCE, done);
       });
     });
 
@@ -117,7 +114,7 @@ describe('ol.rendering.style.Icon', function() {
       createMap('webgl');
       createFeatures('rendering/ol/data/icon.png', imgInfo, function() {
         expectResemble(map, 'rendering/ol/style/expected/icon-webgl.png',
-            2.0, done);
+          2.0, done);
       });
     });
   });

@@ -1,11 +1,9 @@
-
-
-goog.require('ol.render.webgl.Replay');
+import WebGLReplay from '../../../../../src/ol/render/webgl/Replay.js';
 
 describe('ol.render.Replay', function() {
-  var replay;
+  let replay;
   beforeEach(function() {
-    replay = new ol.render.webgl.Replay(5, [-180, -90, 180, 90]);
+    replay = new WebGLReplay(5, [-180, -90, 180, 90]);
   });
 
 
@@ -17,8 +15,8 @@ describe('ol.render.Replay', function() {
     });
 
     it ('sets up the required matrices', function() {
-      var mat3 = [1, 0, 0, 1, 0, 0];
-      var mat4 = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+      const mat3 = [1, 0, 0, 1, 0, 0];
+      const mat4 = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
       expect(replay.projectionMatrix_).to.eql(mat3);
       expect(replay.offsetRotateMatrix_).to.eql(mat3);
       expect(replay.offsetScaleMatrix_).to.eql(mat3);
@@ -27,11 +25,11 @@ describe('ol.render.Replay', function() {
   });
 
   describe('#replay', function() {
-    var gl = {
+    const gl = {
       uniformMatrix4fv: function() {},
       uniform1f: function() {}
     };
-    var context = {
+    const context = {
       bindBuffer: function() {},
       getGL: function() {
         return gl;
@@ -49,9 +47,9 @@ describe('ol.render.Replay', function() {
     });
 
     it('calculates the correct matrices', function() {
-      var sin = Math.sin(Math.PI);
+      const sin = Math.sin(Math.PI);
       replay.replay(context, [0, 0], 10, Math.PI, [10, 10], 1, 0, {}, undefined,
-          false, undefined);
+        false, undefined);
 
       expect(replay.projectionMatrix_).to.eql([-0.02, -sin * 0.02, sin * 0.02,
         -0.02, 0, 0]);

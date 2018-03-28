@@ -1,40 +1,38 @@
-
-
-goog.require('ol.Feature');
-goog.require('ol.VectorImageTile');
-goog.require('ol.VectorTile');
-goog.require('ol.events');
-goog.require('ol.format.TextFeature');
-goog.require('ol.proj');
-goog.require('ol.proj.Projection');
+import Feature from '../../../src/ol/Feature.js';
+import {defaultLoadFunction} from '../../../src/ol/VectorImageTile.js';
+import VectorTile from '../../../src/ol/VectorTile.js';
+import {listen} from '../../../src/ol/events.js';
+import TextFeature from '../../../src/ol/format/TextFeature.js';
+import {get as getProjection} from '../../../src/ol/proj.js';
+import Projection from '../../../src/ol/proj/Projection.js';
 
 
 describe('ol.VectorTile', function() {
 
   it('loader sets features on the tile and updates proj units', function(done) {
     // mock format that return a tile-pixels feature
-    var format = new ol.format.TextFeature();
+    const format = new TextFeature();
     format.readProjection = function(source) {
-      return new ol.proj.Projection({
+      return new Projection({
         code: '',
         units: 'tile-pixels'
       });
     };
     format.readFeatures = function(source, options) {
-      return [new ol.Feature()];
+      return [new Feature()];
     };
 
-    var tile = new ol.VectorTile([0, 0, 0], null, null, format);
-    var url = 'spec/ol/data/point.json';
+    const tile = new VectorTile([0, 0, 0], null, null, format);
+    const url = 'spec/ol/data/point.json';
 
-    ol.VectorImageTile.defaultLoadFunction(tile, url);
-    var loader = tile.loader_;
-    ol.events.listen(tile, 'change', function(e) {
+    defaultLoadFunction(tile, url);
+    const loader = tile.loader_;
+    listen(tile, 'change', function(e) {
       expect(tile.getFeatures().length).to.be.greaterThan(0);
       expect(tile.getProjection().getUnits()).to.be('tile-pixels');
       done();
     });
-    loader.call(tile, [], 1, ol.proj.get('EPSG:3857'));
+    loader.call(tile, [], 1, getProjection('EPSG:3857'));
   });
 
 });

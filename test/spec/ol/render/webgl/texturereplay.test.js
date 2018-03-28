@@ -1,20 +1,18 @@
-
-
-goog.require('ol.render.webgl.TextureReplay');
-goog.require('ol.render.webgl.texturereplay.defaultshader');
-goog.require('ol.render.webgl.texturereplay.defaultshader.Locations');
+import WebGLTextureReplay from '../../../../../src/ol/render/webgl/TextureReplay.js';
+import {fragment, vertex} from '../../../../../src/ol/render/webgl/texturereplay/defaultshader.js';
+import Locations from '../../../../../src/ol/render/webgl/texturereplay/defaultshader/Locations.js';
 
 describe('ol.render.webgl.TextureReplay', function() {
-  var replay;
+  let replay;
 
   beforeEach(function() {
-    var tolerance = 0.1;
-    var maxExtent = [-10000, -20000, 10000, 20000];
-    replay = new ol.render.webgl.TextureReplay(tolerance, maxExtent);
+    const tolerance = 0.1;
+    const maxExtent = [-10000, -20000, 10000, 20000];
+    replay = new WebGLTextureReplay(tolerance, maxExtent);
   });
 
   describe('#setUpProgram', function() {
-    var context, gl;
+    let context, gl;
     beforeEach(function() {
       context = {
         getProgram: function() {},
@@ -31,9 +29,8 @@ describe('ol.render.webgl.TextureReplay', function() {
     });
 
     it('returns the locations used by the shaders', function() {
-      var locations = replay.setUpProgram(gl, context, [2, 2], 1);
-      expect(locations).to.be.a(
-          ol.render.webgl.texturereplay.defaultshader.Locations);
+      const locations = replay.setUpProgram(gl, context, [2, 2], 1);
+      expect(locations).to.be.a(Locations);
     });
 
     it('gets and compiles the shaders', function() {
@@ -41,9 +38,7 @@ describe('ol.render.webgl.TextureReplay', function() {
       sinon.spy(context, 'useProgram');
 
       replay.setUpProgram(gl, context, [2, 2], 1);
-      expect(context.getProgram.calledWithExactly(
-          ol.render.webgl.texturereplay.defaultshader.fragment,
-          ol.render.webgl.texturereplay.defaultshader.vertex)).to.be(true);
+      expect(context.getProgram.calledWithExactly(fragment, vertex)).to.be(true);
       expect(context.useProgram.calledOnce).to.be(true);
     });
 
@@ -55,12 +50,12 @@ describe('ol.render.webgl.TextureReplay', function() {
       replay.setUpProgram(gl, context, [2, 2], 1);
       expect(gl.vertexAttribPointer.callCount).to.be(gl.getAttribLocation.callCount);
       expect(gl.enableVertexAttribArray.callCount).to.be(
-          gl.getAttribLocation.callCount);
+        gl.getAttribLocation.callCount);
     });
   });
 
   describe('#shutDownProgram', function() {
-    var context, gl;
+    let context, gl;
     beforeEach(function() {
       context = {
         getProgram: function() {},
@@ -81,10 +76,10 @@ describe('ol.render.webgl.TextureReplay', function() {
       sinon.spy(gl, 'getAttribLocation');
       sinon.spy(gl, 'disableVertexAttribArray');
 
-      var locations = replay.setUpProgram(gl, context, [2, 2], 1);
+      const locations = replay.setUpProgram(gl, context, [2, 2], 1);
       replay.shutDownProgram(gl, locations);
       expect(gl.disableVertexAttribArray.callCount).to.be(
-          gl.getAttribLocation.callCount);
+        gl.getAttribLocation.callCount);
     });
   });
 });

@@ -1,4 +1,6 @@
-goog.provide('ol.geom.flat.area');
+/**
+ * @module ol/geom/flat/area
+ */
 
 
 /**
@@ -8,19 +10,19 @@ goog.provide('ol.geom.flat.area');
  * @param {number} stride Stride.
  * @return {number} Area.
  */
-ol.geom.flat.area.linearRing = function(flatCoordinates, offset, end, stride) {
-  var twiceArea = 0;
-  var x1 = flatCoordinates[end - stride];
-  var y1 = flatCoordinates[end - stride + 1];
+export function linearRing(flatCoordinates, offset, end, stride) {
+  let twiceArea = 0;
+  let x1 = flatCoordinates[end - stride];
+  let y1 = flatCoordinates[end - stride + 1];
   for (; offset < end; offset += stride) {
-    var x2 = flatCoordinates[offset];
-    var y2 = flatCoordinates[offset + 1];
+    const x2 = flatCoordinates[offset];
+    const y2 = flatCoordinates[offset + 1];
     twiceArea += y1 * x2 - x1 * y2;
     x1 = x2;
     y1 = y2;
   }
   return twiceArea / 2;
-};
+}
 
 
 /**
@@ -30,16 +32,15 @@ ol.geom.flat.area.linearRing = function(flatCoordinates, offset, end, stride) {
  * @param {number} stride Stride.
  * @return {number} Area.
  */
-ol.geom.flat.area.linearRings = function(flatCoordinates, offset, ends, stride) {
-  var area = 0;
-  var i, ii;
-  for (i = 0, ii = ends.length; i < ii; ++i) {
-    var end = ends[i];
-    area += ol.geom.flat.area.linearRing(flatCoordinates, offset, end, stride);
+export function linearRings(flatCoordinates, offset, ends, stride) {
+  let area = 0;
+  for (let i = 0, ii = ends.length; i < ii; ++i) {
+    const end = ends[i];
+    area += linearRing(flatCoordinates, offset, end, stride);
     offset = end;
   }
   return area;
-};
+}
 
 
 /**
@@ -49,14 +50,12 @@ ol.geom.flat.area.linearRings = function(flatCoordinates, offset, ends, stride) 
  * @param {number} stride Stride.
  * @return {number} Area.
  */
-ol.geom.flat.area.linearRingss = function(flatCoordinates, offset, endss, stride) {
-  var area = 0;
-  var i, ii;
-  for (i = 0, ii = endss.length; i < ii; ++i) {
-    var ends = endss[i];
-    area +=
-        ol.geom.flat.area.linearRings(flatCoordinates, offset, ends, stride);
+export function linearRingss(flatCoordinates, offset, endss, stride) {
+  let area = 0;
+  for (let i = 0, ii = endss.length; i < ii; ++i) {
+    const ends = endss[i];
+    area += linearRings(flatCoordinates, offset, ends, stride);
     offset = ends[ends.length - 1];
   }
   return area;
-};
+}

@@ -1,7 +1,8 @@
-goog.provide('ol.geom.flat.interpolate');
-
-goog.require('ol.array');
-goog.require('ol.math');
+/**
+ * @module ol/geom/flat/interpolate
+ */
+import {binarySearch} from '../../array.js';
+import {lerp} from '../../math.js';
 
 
 /**
@@ -13,10 +14,10 @@ goog.require('ol.math');
  * @param {Array.<number>=} opt_dest Destination.
  * @return {Array.<number>} Destination.
  */
-ol.geom.flat.interpolate.lineString = function(flatCoordinates, offset, end, stride, fraction, opt_dest) {
-  var pointX = NaN;
-  var pointY = NaN;
-  var n = (end - offset) / stride;
+export function interpolatePoint(flatCoordinates, offset, end, stride, fraction, opt_dest) {
+  let pointX = NaN;
+  let pointY = NaN;
+  const n = (end - offset) / stride;
   if (n === 1) {
     pointX = flatCoordinates[offset];
     pointY = flatCoordinates[offset + 1];
@@ -26,29 +27,28 @@ ol.geom.flat.interpolate.lineString = function(flatCoordinates, offset, end, str
     pointY = (1 - fraction) * flatCoordinates[offset + 1] +
         fraction * flatCoordinates[offset + stride + 1];
   } else if (n !== 0) {
-    var x1 = flatCoordinates[offset];
-    var y1 = flatCoordinates[offset + 1];
-    var length = 0;
-    var cumulativeLengths = [0];
-    var i;
-    for (i = offset + stride; i < end; i += stride) {
-      var x2 = flatCoordinates[i];
-      var y2 = flatCoordinates[i + 1];
+    let x1 = flatCoordinates[offset];
+    let y1 = flatCoordinates[offset + 1];
+    let length = 0;
+    const cumulativeLengths = [0];
+    for (let i = offset + stride; i < end; i += stride) {
+      const x2 = flatCoordinates[i];
+      const y2 = flatCoordinates[i + 1];
       length += Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
       cumulativeLengths.push(length);
       x1 = x2;
       y1 = y2;
     }
-    var target = fraction * length;
-    var index = ol.array.binarySearch(cumulativeLengths, target);
+    const target = fraction * length;
+    const index = binarySearch(cumulativeLengths, target);
     if (index < 0) {
-      var t = (target - cumulativeLengths[-index - 2]) /
+      const t = (target - cumulativeLengths[-index - 2]) /
           (cumulativeLengths[-index - 1] - cumulativeLengths[-index - 2]);
-      var o = offset + (-index - 2) * stride;
-      pointX = ol.math.lerp(
-          flatCoordinates[o], flatCoordinates[o + stride], t);
-      pointY = ol.math.lerp(
-          flatCoordinates[o + 1], flatCoordinates[o + stride + 1], t);
+      const o = offset + (-index - 2) * stride;
+      pointX = lerp(
+        flatCoordinates[o], flatCoordinates[o + stride], t);
+      pointY = lerp(
+        flatCoordinates[o + 1], flatCoordinates[o + stride + 1], t);
     } else {
       pointX = flatCoordinates[offset + index * stride];
       pointY = flatCoordinates[offset + index * stride + 1];
@@ -61,7 +61,7 @@ ol.geom.flat.interpolate.lineString = function(flatCoordinates, offset, end, str
   } else {
     return [pointX, pointY];
   }
-};
+}
 
 
 /**
@@ -71,13 +71,13 @@ ol.geom.flat.interpolate.lineString = function(flatCoordinates, offset, end, str
  * @param {number} stride Stride.
  * @param {number} m M.
  * @param {boolean} extrapolate Extrapolate.
- * @return {ol.Coordinate} Coordinate.
+ * @return {module:ol/coordinate~Coordinate} Coordinate.
  */
-ol.geom.flat.interpolate.lineStringCoordinateAtM = function(flatCoordinates, offset, end, stride, m, extrapolate) {
+export function lineStringCoordinateAtM(flatCoordinates, offset, end, stride, m, extrapolate) {
   if (end == offset) {
     return null;
   }
-  var coordinate;
+  let coordinate;
   if (m < flatCoordinates[offset + stride - 1]) {
     if (extrapolate) {
       coordinate = flatCoordinates.slice(offset, offset + stride);
@@ -99,31 +99,30 @@ ol.geom.flat.interpolate.lineStringCoordinateAtM = function(flatCoordinates, off
   if (m == flatCoordinates[offset + stride - 1]) {
     return flatCoordinates.slice(offset, offset + stride);
   }
-  var lo = offset / stride;
-  var hi = end / stride;
+  let lo = offset / stride;
+  let hi = end / stride;
   while (lo < hi) {
-    var mid = (lo + hi) >> 1;
+    const mid = (lo + hi) >> 1;
     if (m < flatCoordinates[(mid + 1) * stride - 1]) {
       hi = mid;
     } else {
       lo = mid + 1;
     }
   }
-  var m0 = flatCoordinates[lo * stride - 1];
+  const m0 = flatCoordinates[lo * stride - 1];
   if (m == m0) {
     return flatCoordinates.slice((lo - 1) * stride, (lo - 1) * stride + stride);
   }
-  var m1 = flatCoordinates[(lo + 1) * stride - 1];
-  var t = (m - m0) / (m1 - m0);
+  const m1 = flatCoordinates[(lo + 1) * stride - 1];
+  const t = (m - m0) / (m1 - m0);
   coordinate = [];
-  var i;
-  for (i = 0; i < stride - 1; ++i) {
-    coordinate.push(ol.math.lerp(flatCoordinates[(lo - 1) * stride + i],
-        flatCoordinates[lo * stride + i], t));
+  for (let i = 0; i < stride - 1; ++i) {
+    coordinate.push(lerp(flatCoordinates[(lo - 1) * stride + i],
+      flatCoordinates[lo * stride + i], t));
   }
   coordinate.push(m);
   return coordinate;
-};
+}
 
 
 /**
@@ -134,15 +133,15 @@ ol.geom.flat.interpolate.lineStringCoordinateAtM = function(flatCoordinates, off
  * @param {number} m M.
  * @param {boolean} extrapolate Extrapolate.
  * @param {boolean} interpolate Interpolate.
- * @return {ol.Coordinate} Coordinate.
+ * @return {module:ol/coordinate~Coordinate} Coordinate.
  */
-ol.geom.flat.interpolate.lineStringsCoordinateAtM = function(
-    flatCoordinates, offset, ends, stride, m, extrapolate, interpolate) {
+export function lineStringsCoordinateAtM(
+  flatCoordinates, offset, ends, stride, m, extrapolate, interpolate) {
   if (interpolate) {
-    return ol.geom.flat.interpolate.lineStringCoordinateAtM(
-        flatCoordinates, offset, ends[ends.length - 1], stride, m, extrapolate);
+    return lineStringCoordinateAtM(
+      flatCoordinates, offset, ends[ends.length - 1], stride, m, extrapolate);
   }
-  var coordinate;
+  let coordinate;
   if (m < flatCoordinates[stride - 1]) {
     if (extrapolate) {
       coordinate = flatCoordinates.slice(0, stride);
@@ -161,19 +160,18 @@ ol.geom.flat.interpolate.lineStringsCoordinateAtM = function(
       return null;
     }
   }
-  var i, ii;
-  for (i = 0, ii = ends.length; i < ii; ++i) {
-    var end = ends[i];
+  for (let i = 0, ii = ends.length; i < ii; ++i) {
+    const end = ends[i];
     if (offset == end) {
       continue;
     }
     if (m < flatCoordinates[offset + stride - 1]) {
       return null;
     } else if (m <= flatCoordinates[end - 1]) {
-      return ol.geom.flat.interpolate.lineStringCoordinateAtM(
-          flatCoordinates, offset, end, stride, m, false);
+      return lineStringCoordinateAtM(
+        flatCoordinates, offset, end, stride, m, false);
     }
     offset = end;
   }
   return null;
-};
+}

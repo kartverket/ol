@@ -1,18 +1,18 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.control');
-goog.require('ol.control.ZoomToExtent');
-goog.require('ol.layer.Tile');
-goog.require('ol.source.OSM');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {defaults as defaultControls} from '../src/ol/control.js';
+import ZoomToExtent from '../src/ol/control/ZoomToExtent.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import OSM from '../src/ol/source/OSM.js';
 
 
-var map = new ol.Map({
-  controls: ol.control.defaults({
-    attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+const map = new Map({
+  controls: defaultControls({
+    attributionOptions: {
       collapsible: false
-    })
+    }
   }).extend([
-    new ol.control.ZoomToExtent({
+    new ZoomToExtent({
       extent: [
         813079.7791264898, 5929220.284081122,
         848966.9639063801, 5936863.986909639
@@ -20,12 +20,12 @@ var map = new ol.Map({
     })
   ]),
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.OSM()
+    new TileLayer({
+      source: new OSM()
     })
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [0, 0],
     zoom: 2
   })

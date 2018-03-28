@@ -1,66 +1,66 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.format.EsriJSON');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.loadingstrategy');
-goog.require('ol.proj');
-goog.require('ol.source.Vector');
-goog.require('ol.source.XYZ');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
-goog.require('ol.tilegrid');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import EsriJSON from '../src/ol/format/EsriJSON.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import {tile as tileStrategy} from '../src/ol/loadingstrategy.js';
+import {fromLonLat} from '../src/ol/proj.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import XYZ from '../src/ol/source/XYZ.js';
+import Fill from '../src/ol/style/Fill.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
+import {createXYZ} from '../src/ol/tilegrid.js';
 
 
-var serviceUrl = 'https://sampleserver3.arcgisonline.com/ArcGIS/rest/services/' +
+const serviceUrl = 'https://sampleserver3.arcgisonline.com/ArcGIS/rest/services/' +
     'Petroleum/KSFields/FeatureServer/';
-var layer = '0';
+const layer = '0';
 
-var esrijsonFormat = new ol.format.EsriJSON();
+const esrijsonFormat = new EsriJSON();
 
-var styleCache = {
-  'ABANDONED': new ol.style.Style({
-    fill: new ol.style.Fill({
+const styleCache = {
+  'ABANDONED': new Style({
+    fill: new Fill({
       color: 'rgba(225, 225, 225, 255)'
     }),
-    stroke: new ol.style.Stroke({
+    stroke: new Stroke({
       color: 'rgba(0, 0, 0, 255)',
       width: 0.4
     })
   }),
-  'GAS': new ol.style.Style({
-    fill: new ol.style.Fill({
+  'GAS': new Style({
+    fill: new Fill({
       color: 'rgba(255, 0, 0, 255)'
     }),
-    stroke: new ol.style.Stroke({
+    stroke: new Stroke({
       color: 'rgba(110, 110, 110, 255)',
       width: 0.4
     })
   }),
-  'OIL': new ol.style.Style({
-    fill: new ol.style.Fill({
+  'OIL': new Style({
+    fill: new Fill({
       color: 'rgba(56, 168, 0, 255)'
     }),
-    stroke: new ol.style.Stroke({
+    stroke: new Stroke({
       color: 'rgba(110, 110, 110, 255)',
       width: 0
     })
   }),
-  'OILGAS': new ol.style.Style({
-    fill: new ol.style.Fill({
+  'OILGAS': new Style({
+    fill: new Fill({
       color: 'rgba(168, 112, 0, 255)'
     }),
-    stroke: new ol.style.Stroke({
+    stroke: new Stroke({
       color: 'rgba(110, 110, 110, 255)',
       width: 0.4
     })
   })
 };
 
-var vectorSource = new ol.source.Vector({
+const vectorSource = new VectorSource({
   loader: function(extent, resolution, projection) {
-    var url = serviceUrl + layer + '/query/?f=json&' +
+    const url = serviceUrl + layer + '/query/?f=json&' +
         'returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=' +
         encodeURIComponent('{"xmin":' + extent[0] + ',"ymin":' +
             extent[1] + ',"xmax":' + extent[2] + ',"ymax":' + extent[3] +
@@ -73,7 +73,7 @@ var vectorSource = new ol.source.Vector({
             response.error.details.join('\n'));
       } else {
         // dataProjection will be read from document
-        var features = esrijsonFormat.readFeatures(response, {
+        const features = esrijsonFormat.readFeatures(response, {
           featureProjection: projection
         });
         if (features.length > 0) {
@@ -82,21 +82,21 @@ var vectorSource = new ol.source.Vector({
       }
     }});
   },
-  strategy: ol.loadingstrategy.tile(ol.tilegrid.createXYZ({
+  strategy: tileStrategy(createXYZ({
     tileSize: 512
   }))
 });
 
-var vector = new ol.layer.Vector({
+const vector = new VectorLayer({
   source: vectorSource,
   style: function(feature) {
-    var classify = feature.get('activeprod');
+    const classify = feature.get('activeprod');
     return styleCache[classify];
   }
 });
 
-var raster = new ol.layer.Tile({
-  source: new ol.source.XYZ({
+const raster = new TileLayer({
+  source: new XYZ({
     attributions: 'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
         'rest/services/World_Topo_Map/MapServer">ArcGIS</a>',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/' +
@@ -104,23 +104,23 @@ var raster = new ol.layer.Tile({
   })
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [raster, vector],
   target: document.getElementById('map'),
-  view: new ol.View({
-    center: ol.proj.transform([-97.6114, 38.8403], 'EPSG:4326', 'EPSG:3857'),
+  view: new View({
+    center: fromLonLat([-97.6114, 38.8403]),
     zoom: 7
   })
 });
 
-var displayFeatureInfo = function(pixel) {
-  var features = [];
+const displayFeatureInfo = function(pixel) {
+  const features = [];
   map.forEachFeatureAtPixel(pixel, function(feature) {
     features.push(feature);
   });
   if (features.length > 0) {
-    var info = [];
-    var i, ii;
+    const info = [];
+    let i, ii;
     for (i = 0, ii = features.length; i < ii; ++i) {
       info.push(features[i].get('field_name'));
     }
@@ -136,7 +136,7 @@ map.on('pointermove', function(evt) {
   if (evt.dragging) {
     return;
   }
-  var pixel = map.getEventPixel(evt.originalEvent);
+  const pixel = map.getEventPixel(evt.originalEvent);
   displayFeatureInfo(pixel);
 });
 

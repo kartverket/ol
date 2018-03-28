@@ -1,27 +1,25 @@
-
-
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.layer.Tile');
-goog.require('ol.proj');
-goog.require('ol.renderer.Map');
-goog.require('ol.renderer.canvas.TileLayer');
-goog.require('ol.source.TileWMS');
-goog.require('ol.source.XYZ');
-goog.require('ol.transform');
+import Map from '../../../../../src/ol/Map.js';
+import View from '../../../../../src/ol/View.js';
+import TileLayer from '../../../../../src/ol/layer/Tile.js';
+import {get as getProjection} from '../../../../../src/ol/proj.js';
+import MapRenderer from '../../../../../src/ol/renderer/Map.js';
+import CanvasTileLayerRenderer from '../../../../../src/ol/renderer/canvas/TileLayer.js';
+import TileWMS from '../../../../../src/ol/source/TileWMS.js';
+import XYZ from '../../../../../src/ol/source/XYZ.js';
+import {create as createTransform} from '../../../../../src/ol/transform.js';
 
 
 describe('ol.renderer.canvas.TileLayer', function() {
 
   describe('#prepareFrame', function() {
 
-    var map, target, source, tile;
+    let map, target, source, tile;
     beforeEach(function(done) {
       target = document.createElement('div');
       target.style.width = '100px';
       target.style.height = '100px';
       document.body.appendChild(target);
-      source = new ol.source.TileWMS({
+      source = new TileWMS({
         url: 'spec/ol/data/osm-0-0-0.png',
         params: {LAYERS: 'foo', TIME: '0'}
       });
@@ -29,12 +27,12 @@ describe('ol.renderer.canvas.TileLayer', function() {
         tile = e.tile;
         done();
       });
-      map = new ol.Map({
+      map = new Map({
         target: target,
-        layers: [new ol.layer.Tile({
+        layers: [new TileLayer({
           source: source
         })],
-        view: new ol.View({
+        view: new View({
           zoom: 0,
           center: [0, 0]
         })
@@ -47,10 +45,10 @@ describe('ol.renderer.canvas.TileLayer', function() {
     });
 
     it('properly handles interim tiles', function() {
-      var layer = map.getLayers().item(0);
+      const layer = map.getLayers().item(0);
       source.updateParams({TIME: '1'});
       map.renderSync();
-      var tiles = map.getRenderer().getLayerRenderer(layer).renderedTiles;
+      const tiles = map.getRenderer().getLayerRenderer(layer).renderedTiles;
       expect(tiles.length).to.be(1);
       expect(tiles[0]).to.equal(tile);
     });
@@ -58,7 +56,7 @@ describe('ol.renderer.canvas.TileLayer', function() {
 
   describe('#composeFrame()', function() {
 
-    var img = null;
+    let img = null;
     beforeEach(function(done) {
       img = new Image(1, 1);
       img.onload = function() {
@@ -72,39 +70,39 @@ describe('ol.renderer.canvas.TileLayer', function() {
     });
 
     it('uses correct draw scale when rotating (HiDPI)', function() {
-      var layer = new ol.layer.Tile({
-        source: new ol.source.XYZ({
+      const layer = new TileLayer({
+        source: new XYZ({
           tileSize: 1
         })
       });
-      var renderer = new ol.renderer.canvas.TileLayer(layer);
+      const renderer = new CanvasTileLayerRenderer(layer);
       renderer.renderedTiles = [];
-      var frameState = {
+      const frameState = {
         viewHints: [],
         time: Date.now(),
         viewState: {
           center: [10, 5],
-          projection: ol.proj.get('EPSG:3857'),
+          projection: getProjection('EPSG:3857'),
           resolution: 1,
           rotation: Math.PI
         },
         extent: [0, 0, 20, 10],
         size: [20, 10],
         pixelRatio: 2,
-        coordinateToPixelTransform: ol.transform.create(),
-        pixelToCoordinateTransform: ol.transform.create(),
+        coordinateToPixelTransform: createTransform(),
+        pixelToCoordinateTransform: createTransform(),
         usedTiles: {},
         wantedTiles: {}
       };
       renderer.getImageTransform = function() {
-        return ol.transform.create();
+        return createTransform();
       };
-      ol.renderer.Map.prototype.calculateMatrices2D(frameState);
-      var layerState = layer.getLayerState();
-      var canvas = document.createElement('canvas');
+      MapRenderer.prototype.calculateMatrices2D(frameState);
+      const layerState = layer.getLayerState();
+      const canvas = document.createElement('canvas');
       canvas.width = 200;
       canvas.height = 100;
-      var context = {
+      const context = {
         canvas: canvas,
         drawImage: sinon.spy()
       };

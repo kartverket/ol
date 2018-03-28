@@ -1,4 +1,6 @@
-goog.provide('ol.geom.flat.segments');
+/**
+ * @module ol/geom/flat/segments
+ */
 
 
 /**
@@ -9,17 +11,17 @@ goog.provide('ol.geom.flat.segments');
  * @param {number} offset Offset.
  * @param {number} end End.
  * @param {number} stride Stride.
- * @param {function(this: S, ol.Coordinate, ol.Coordinate): T} callback Function
+ * @param {function(this: S, module:ol/coordinate~Coordinate, module:ol/coordinate~Coordinate): T} callback Function
  *     called for each segment.
  * @param {S=} opt_this The object to be used as the value of 'this'
  *     within callback.
  * @return {T|boolean} Value.
  * @template T,S
  */
-ol.geom.flat.segments.forEach = function(flatCoordinates, offset, end, stride, callback, opt_this) {
-  var point1 = [flatCoordinates[offset], flatCoordinates[offset + 1]];
-  var point2 = [];
-  var ret;
+export function forEach(flatCoordinates, offset, end, stride, callback, opt_this) {
+  const point1 = [flatCoordinates[offset], flatCoordinates[offset + 1]];
+  const point2 = [];
+  let ret;
   for (; (offset + stride) < end; offset += stride) {
     point2[0] = flatCoordinates[offset + stride];
     point2[1] = flatCoordinates[offset + stride + 1];
@@ -31,4 +33,4 @@ ol.geom.flat.segments.forEach = function(flatCoordinates, offset, end, stride, c
     point1[1] = point2[1];
   }
   return false;
-};
+}

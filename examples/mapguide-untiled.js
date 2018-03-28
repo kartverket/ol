@@ -1,22 +1,22 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.layer.Image');
-goog.require('ol.source.ImageMapGuide');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import ImageLayer from '../src/ol/layer/Image.js';
+import ImageMapGuide from '../src/ol/source/ImageMapGuide.js';
 
-var mdf = 'Library://Public/Samples/Sheboygan/Maps/Sheboygan.MapDefinition';
-var agentUrl =
+const mdf = 'Library://Public/Samples/Sheboygan/Maps/Sheboygan.MapDefinition';
+const agentUrl =
     'http://www.buoyshark.com/mapguide/mapagent/mapagent.fcgi?';
-var bounds = [
+const bounds = [
   -87.865114442365922,
   43.665065564837931,
   -87.595394059497067,
   43.823852564430069
 ];
-var map = new ol.Map({
+const map = new Map({
   layers: [
-    new ol.layer.Image({
+    new ImageLayer({
       extent: bounds,
-      source: new ol.source.ImageMapGuide({
+      source: new ImageMapGuide({
         projection: 'EPSG:4326',
         url: agentUrl,
         useOverlay: false,
@@ -32,7 +32,7 @@ var map = new ol.Map({
     })
   ],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [-87.7302542509315, 43.744459064634],
     projection: 'EPSG:4326',
     zoom: 12

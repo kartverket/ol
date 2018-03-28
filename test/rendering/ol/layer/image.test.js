@@ -1,26 +1,24 @@
-
-
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.layer.Image');
-goog.require('ol.obj');
-goog.require('ol.proj');
-goog.require('ol.source.ImageStatic');
-goog.require('ol.tilegrid');
+import Map from '../../../../src/ol/Map.js';
+import View from '../../../../src/ol/View.js';
+import ImageLayer from '../../../../src/ol/layer/Image.js';
+import {assign} from '../../../../src/ol/obj.js';
+import {get as getProjection, transform, transformExtent} from '../../../../src/ol/proj.js';
+import Static from '../../../../src/ol/source/ImageStatic.js';
+import {createXYZ} from '../../../../src/ol/tilegrid.js';
 
 
 describe('ol.rendering.layer.Image', function() {
 
-  var map;
+  let map;
 
   function createMap(renderer) {
-    map = new ol.Map({
+    map = new Map({
       pixelRatio: 1,
       target: createMapDiv(50, 50),
       renderer: renderer,
-      view: new ol.View({
-        center: ol.proj.transform(
-            [-122.416667, 37.783333], 'EPSG:4326', 'EPSG:3857'),
+      view: new View({
+        center: transform(
+          [-122.416667, 37.783333], 'EPSG:4326', 'EPSG:3857'),
         zoom: 5
       })
     });
@@ -34,10 +32,10 @@ describe('ol.rendering.layer.Image', function() {
   });
 
   function waitForImages(sources, layerOptions, onImagesLoaded) {
-    var imagesLoading = 0;
-    var imagesLoaded = 0;
+    let imagesLoading = 0;
+    let imagesLoaded = 0;
 
-    var update = function() {
+    const update = function() {
       if (imagesLoading === imagesLoaded) {
         onImagesLoaded();
       }
@@ -55,23 +53,23 @@ describe('ol.rendering.layer.Image', function() {
         expect().fail('Image failed to load');
       });
 
-      var options = {
+      const options = {
         source: source
       };
-      ol.obj.assign(options, layerOptions);
-      map.addLayer(new ol.layer.Image(options));
+      assign(options, layerOptions);
+      map.addLayer(new ImageLayer(options));
     });
   }
 
   describe('single image layer', function() {
-    var source;
+    let source;
 
     beforeEach(function() {
-      source = new ol.source.ImageStatic({
+      source = new Static({
         url: 'rendering/ol/data/tiles/osm/5/5/12.png',
-        imageExtent: ol.tilegrid.createXYZ().getTileCoordExtent(
-            [5, 5, -12 - 1]),
-        projection: ol.proj.get('EPSG:3857')
+        imageExtent: createXYZ().getTileCoordExtent(
+          [5, 5, -12 - 1]),
+        projection: getProjection('EPSG:3857')
       });
     });
 
@@ -79,7 +77,7 @@ describe('ol.rendering.layer.Image', function() {
       createMap('canvas');
       waitForImages([source], {}, function() {
         expectResemble(map, 'rendering/ol/layer/expected/image-canvas.png',
-            IMAGE_TOLERANCE, done);
+          IMAGE_TOLERANCE, done);
       });
     });
 
@@ -88,19 +86,19 @@ describe('ol.rendering.layer.Image', function() {
       createMap('webgl');
       waitForImages([source], {}, function() {
         expectResemble(map, 'rendering/ol/layer/expected/image-webgl.png',
-            IMAGE_TOLERANCE, done);
+          IMAGE_TOLERANCE, done);
       });
     });
   });
 
   describe('single image layer - scaled', function() {
-    var source;
+    let source;
 
     beforeEach(function() {
-      source = new ol.source.ImageStatic({
+      source = new Static({
         url: 'rendering/ol/data/tiles/osm/5/5/12.png',
-        imageExtent: ol.proj.transformExtent(
-            [-123, 37, -122, 38], 'EPSG:4326', 'EPSG:3857')
+        imageExtent: transformExtent(
+          [-123, 37, -122, 38], 'EPSG:4326', 'EPSG:3857')
       });
     });
 
@@ -108,7 +106,7 @@ describe('ol.rendering.layer.Image', function() {
       createMap('canvas');
       waitForImages([source], {}, function() {
         expectResemble(map, 'rendering/ol/layer/expected/image-scaled.png',
-            IMAGE_TOLERANCE, done);
+          IMAGE_TOLERANCE, done);
       });
     });
   });

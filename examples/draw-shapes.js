@@ -1,63 +1,63 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.geom.Polygon');
-goog.require('ol.interaction.Draw');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.OSM');
-goog.require('ol.source.Vector');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import Polygon from '../src/ol/geom/Polygon.js';
+import Draw, {createRegularPolygon, createBox} from '../src/ol/interaction/Draw.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorSource from '../src/ol/source/Vector.js';
 
-var raster = new ol.layer.Tile({
-  source: new ol.source.OSM()
+const raster = new TileLayer({
+  source: new OSM()
 });
 
-var source = new ol.source.Vector({wrapX: false});
+const source = new VectorSource({wrapX: false});
 
-var vector = new ol.layer.Vector({
+const vector = new VectorLayer({
   source: source
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [raster, vector],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [-11000000, 4600000],
     zoom: 4
   })
 });
 
-var typeSelect = document.getElementById('type');
+const typeSelect = document.getElementById('type');
 
-var draw; // global so we can remove it later
+let draw; // global so we can remove it later
 function addInteraction() {
-  var value = typeSelect.value;
+  let value = typeSelect.value;
   if (value !== 'None') {
-    var geometryFunction;
+    let geometryFunction;
     if (value === 'Square') {
       value = 'Circle';
-      geometryFunction = ol.interaction.Draw.createRegularPolygon(4);
+      geometryFunction = createRegularPolygon(4);
     } else if (value === 'Box') {
       value = 'Circle';
-      geometryFunction = ol.interaction.Draw.createBox();
+      geometryFunction = createBox();
     } else if (value === 'Star') {
       value = 'Circle';
       geometryFunction = function(coordinates, geometry) {
         if (!geometry) {
-          geometry = new ol.geom.Polygon(null);
+          geometry = new Polygon(null);
         }
-        var center = coordinates[0];
-        var last = coordinates[1];
-        var dx = center[0] - last[0];
-        var dy = center[1] - last[1];
-        var radius = Math.sqrt(dx * dx + dy * dy);
-        var rotation = Math.atan2(dy, dx);
-        var newCoordinates = [];
-        var numPoints = 12;
-        for (var i = 0; i < numPoints; ++i) {
-          var angle = rotation + i * 2 * Math.PI / numPoints;
-          var fraction = i % 2 === 0 ? 1 : 0.5;
-          var offsetX = radius * fraction * Math.cos(angle);
-          var offsetY = radius * fraction * Math.sin(angle);
+        const center = coordinates[0];
+        const last = coordinates[1];
+        const dx = center[0] - last[0];
+        const dy = center[1] - last[1];
+        const radius = Math.sqrt(dx * dx + dy * dy);
+        const rotation = Math.atan2(dy, dx);
+        const newCoordinates = [];
+        const numPoints = 12;
+        for (let i = 0; i < numPoints; ++i) {
+          const angle = rotation + i * 2 * Math.PI / numPoints;
+          const fraction = i % 2 === 0 ? 1 : 0.5;
+          const offsetX = radius * fraction * Math.cos(angle);
+          const offsetY = radius * fraction * Math.sin(angle);
           newCoordinates.push([center[0] + offsetX, center[1] + offsetY]);
         }
         newCoordinates.push(newCoordinates[0].slice());
@@ -65,9 +65,9 @@ function addInteraction() {
         return geometry;
       };
     }
-    draw = new ol.interaction.Draw({
+    draw = new Draw({
       source: source,
-      type: /** @type {ol.geom.GeometryType} */ (value),
+      type: value,
       geometryFunction: geometryFunction
     });
     map.addInteraction(draw);

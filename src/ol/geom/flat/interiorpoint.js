@@ -1,7 +1,8 @@
-goog.provide('ol.geom.flat.interiorpoint');
-
-goog.require('ol.array');
-goog.require('ol.geom.flat.contains');
+/**
+ * @module ol/geom/flat/interiorpoint
+ */
+import {numberSafeCompareFunction} from '../../array.js';
+import {linearRingsContainsXY} from '../flat/contains.js';
 
 
 /**
@@ -17,39 +18,40 @@ goog.require('ol.geom.flat.contains');
  * @return {Array.<number>} Destination point as XYM coordinate, where M is the
  * length of the horizontal intersection that the point belongs to.
  */
-ol.geom.flat.interiorpoint.linearRings = function(flatCoordinates, offset,
-    ends, stride, flatCenters, flatCentersOffset, opt_dest) {
-  var i, ii, x, x1, x2, y1, y2;
-  var y = flatCenters[flatCentersOffset + 1];
+export function getInteriorPointOfArray(flatCoordinates, offset,
+  ends, stride, flatCenters, flatCentersOffset, opt_dest) {
+  let i, ii, x, x1, x2, y1, y2;
+  const y = flatCenters[flatCentersOffset + 1];
   /** @type {Array.<number>} */
-  var intersections = [];
+  const intersections = [];
   // Calculate intersections with the horizontal line
-  var end = ends[0];
-  x1 = flatCoordinates[end - stride];
-  y1 = flatCoordinates[end - stride + 1];
-  for (i = offset; i < end; i += stride) {
-    x2 = flatCoordinates[i];
-    y2 = flatCoordinates[i + 1];
-    if ((y <= y1 && y2 <= y) || (y1 <= y && y <= y2)) {
-      x = (y - y1) / (y2 - y1) * (x2 - x1) + x1;
-      intersections.push(x);
+  for (let r = 0, rr = ends.length; r < rr; ++r) {
+    const end = ends[r];
+    x1 = flatCoordinates[end - stride];
+    y1 = flatCoordinates[end - stride + 1];
+    for (i = offset; i < end; i += stride) {
+      x2 = flatCoordinates[i];
+      y2 = flatCoordinates[i + 1];
+      if ((y <= y1 && y2 <= y) || (y1 <= y && y <= y2)) {
+        x = (y - y1) / (y2 - y1) * (x2 - x1) + x1;
+        intersections.push(x);
+      }
+      x1 = x2;
+      y1 = y2;
     }
-    x1 = x2;
-    y1 = y2;
   }
   // Find the longest segment of the horizontal line that has its center point
   // inside the linear ring.
-  var pointX = NaN;
-  var maxSegmentLength = -Infinity;
-  intersections.sort(ol.array.numberSafeCompareFunction);
+  let pointX = NaN;
+  let maxSegmentLength = -Infinity;
+  intersections.sort(numberSafeCompareFunction);
   x1 = intersections[0];
   for (i = 1, ii = intersections.length; i < ii; ++i) {
     x2 = intersections[i];
-    var segmentLength = Math.abs(x2 - x1);
+    const segmentLength = Math.abs(x2 - x1);
     if (segmentLength > maxSegmentLength) {
       x = (x1 + x2) / 2;
-      if (ol.geom.flat.contains.linearRingsContainsXY(
-          flatCoordinates, offset, ends, stride, x, y)) {
+      if (linearRingsContainsXY(flatCoordinates, offset, ends, stride, x, y)) {
         pointX = x;
         maxSegmentLength = segmentLength;
       }
@@ -67,7 +69,7 @@ ol.geom.flat.interiorpoint.linearRings = function(flatCoordinates, offset,
   } else {
     return [pointX, y, maxSegmentLength];
   }
-};
+}
 
 
 /**
@@ -79,14 +81,13 @@ ol.geom.flat.interiorpoint.linearRings = function(flatCoordinates, offset,
  * @return {Array.<number>} Interior points as XYM coordinates, where M is the
  * length of the horizontal intersection that the point belongs to.
  */
-ol.geom.flat.interiorpoint.linearRingss = function(flatCoordinates, offset, endss, stride, flatCenters) {
-  var interiorPoints = [];
-  var i, ii;
-  for (i = 0, ii = endss.length; i < ii; ++i) {
-    var ends = endss[i];
-    interiorPoints = ol.geom.flat.interiorpoint.linearRings(flatCoordinates,
-        offset, ends, stride, flatCenters, 2 * i, interiorPoints);
+export function getInteriorPointsOfMultiArray(flatCoordinates, offset, endss, stride, flatCenters) {
+  let interiorPoints = [];
+  for (let i = 0, ii = endss.length; i < ii; ++i) {
+    const ends = endss[i];
+    interiorPoints = getInteriorPointOfArray(flatCoordinates,
+      offset, ends, stride, flatCenters, 2 * i, interiorPoints);
     offset = ends[ends.length - 1];
   }
   return interiorPoints;
-};
+}

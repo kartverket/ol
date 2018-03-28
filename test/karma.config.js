@@ -3,16 +3,9 @@
 const path = require('path');
 const pkg = require('../package.json');
 
-/**
- * The config below is not enough to run Karma.  In addition, we need to add
- * all library files in dependency order.  This could be done with a plugin if
- * Karma supported async plugins (there may be other alternatives as well).  But
- * for now we start Karma with the `tasks/test.js` script.  This script
- * sorts dependencies and adds files to the Karma config below.
- */
-
 module.exports = function(karma) {
   karma.set({
+    browserDisconnectTolerance: 2,
     frameworks: ['mocha'],
     client: {
       runInParent: true,
@@ -57,18 +50,12 @@ module.exports = function(karma) {
       '/rendering/': '/base/rendering/',
       '/spec/': '/base/spec/'
     },
+    preprocessors: {
+      '**/*.js': ['webpack']
+    },
     reporters: ['progress'],
-    coverageReporter: {
-      reporters: [
-        {
-          type: 'lcov', // produces HTML output and lcov
-          dir: '../coverage/',
-          subdir: '.'
-        },
-        {
-          type: 'text-summary' // prints the textual summary to the terminal
-        }
-      ]
+    webpackMiddleware: {
+      noInfo: true
     }
   });
 
@@ -82,11 +69,13 @@ module.exports = function(karma) {
     const customLaunchers = {
       SL_Chrome: {
         base: 'SauceLabs',
-        browserName: 'chrome'
+        browserName: 'chrome',
+        version: '62.0'
       },
       SL_Firefox: {
         base: 'SauceLabs',
-        browserName: 'firefox'
+        browserName: 'firefox',
+        version: '58'
       },
       SL_Edge: {
         base: 'SauceLabs',
@@ -113,7 +102,7 @@ module.exports = function(karma) {
         }
       },
       hostname: 'travis.dev',
-      reporters: ['dots', 'saucelabs', 'coverage'],
+      reporters: ['dots', 'saucelabs'],
       browserDisconnectTimeout: 10000,
       browserDisconnectTolerance: 1,
       captureTimeout: 240000,
@@ -121,9 +110,6 @@ module.exports = function(karma) {
       customLaunchers: customLaunchers,
       browsers: Object.keys(customLaunchers),
       preprocessors: {
-        // source files, that you wanna generate coverage for
-        // do not include tests or libraries
-        // (these files will be instrumented by Istanbul)
         '../src/**/*.js': ['coverage']
       },
       coverageReporter: {

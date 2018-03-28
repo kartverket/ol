@@ -1,22 +1,22 @@
-goog.require('ol.geom.LineString');
-goog.require('ol.geom.Point');
-goog.require('ol.geom.Polygon');
-goog.require('ol.render');
-goog.require('ol.style.Circle');
-goog.require('ol.style.Fill');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
+import LineString from '../src/ol/geom/LineString.js';
+import Point from '../src/ol/geom/Point.js';
+import Polygon from '../src/ol/geom/Polygon.js';
+import {toContext} from '../src/ol/render.js';
+import CircleStyle from '../src/ol/style/Circle.js';
+import Fill from '../src/ol/style/Fill.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
 
 
-var canvas = document.getElementById('canvas');
-var vectorContext = ol.render.toContext(canvas.getContext('2d'), {size: [100, 100]});
+const canvas = document.getElementById('canvas');
+const vectorContext = toContext(canvas.getContext('2d'), {size: [100, 100]});
 
-var fill = new ol.style.Fill({color: 'blue'});
-var stroke = new ol.style.Stroke({color: 'black'});
-var style = new ol.style.Style({
+const fill = new Fill({color: 'blue'});
+const stroke = new Stroke({color: 'black'});
+const style = new Style({
   fill: fill,
   stroke: stroke,
-  image: new ol.style.Circle({
+  image: new CircleStyle({
     radius: 10,
     fill: fill,
     stroke: stroke
@@ -24,6 +24,6 @@ var style = new ol.style.Style({
 });
 vectorContext.setStyle(style);
 
-vectorContext.drawGeometry(new ol.geom.LineString([[10, 10], [90, 90]]));
-vectorContext.drawGeometry(new ol.geom.Polygon([[[2, 2], [98, 2], [2, 98], [2, 2]]]));
-vectorContext.drawGeometry(new ol.geom.Point([88, 88]));
+vectorContext.drawGeometry(new LineString([[10, 10], [90, 90]]));
+vectorContext.drawGeometry(new Polygon([[[2, 2], [98, 2], [2, 98], [2, 2]]]));
+vectorContext.drawGeometry(new Point([88, 88]));

@@ -1,4 +1,6 @@
-goog.provide('ol.obj');
+/**
+ * @module ol/obj
+ */
 
 
 /**
@@ -10,16 +12,16 @@ goog.provide('ol.obj');
  * @param {...Object} var_sources The source object(s).
  * @return {!Object} The modified target object.
  */
-ol.obj.assign = (typeof Object.assign === 'function') ? Object.assign : function(target, var_sources) {
+export const assign = (typeof Object.assign === 'function') ? Object.assign : function(target, var_sources) {
   if (target === undefined || target === null) {
     throw new TypeError('Cannot convert undefined or null to object');
   }
 
-  var output = Object(target);
-  for (var i = 1, ii = arguments.length; i < ii; ++i) {
-    var source = arguments[i];
+  const output = Object(target);
+  for (let i = 1, ii = arguments.length; i < ii; ++i) {
+    const source = arguments[i];
     if (source !== undefined && source !== null) {
-      for (var key in source) {
+      for (const key in source) {
         if (source.hasOwnProperty(key)) {
           output[key] = source[key];
         }
@@ -34,11 +36,11 @@ ol.obj.assign = (typeof Object.assign === 'function') ? Object.assign : function
  * Removes all properties from an object.
  * @param {Object} object The object to clear.
  */
-ol.obj.clear = function(object) {
-  for (var property in object) {
+export function clear(object) {
+  for (const property in object) {
     delete object[property];
   }
-};
+}
 
 
 /**
@@ -47,13 +49,13 @@ ol.obj.clear = function(object) {
  * @return {!Array<V>} The property values.
  * @template K,V
  */
-ol.obj.getValues = function(object) {
-  var values = [];
-  for (var property in object) {
+export function getValues(object) {
+  const values = [];
+  for (const property in object) {
     values.push(object[property]);
   }
   return values;
-};
+}
 
 
 /**
@@ -61,10 +63,10 @@ ol.obj.getValues = function(object) {
  * @param {Object} object The object to check.
  * @return {boolean} The object is empty.
  */
-ol.obj.isEmpty = function(object) {
-  var property;
+export function isEmpty(object) {
+  let property;
   for (property in object) {
     return false;
   }
   return !property;
-};
+}

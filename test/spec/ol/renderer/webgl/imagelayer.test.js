@@ -1,34 +1,32 @@
-
-
-goog.require('ol.transform');
-goog.require('ol.Map');
-goog.require('ol.layer.Image');
-goog.require('ol.source.Image');
-goog.require('ol.renderer.webgl.ImageLayer');
+import {apply as applyTransform} from '../../../../../src/ol/transform.js';
+import Map from '../../../../../src/ol/Map.js';
+import ImageLayer from '../../../../../src/ol/layer/Image.js';
+import ImageSource from '../../../../../src/ol/source/Image.js';
+import WebGLImageLayerRenderer from '../../../../../src/ol/renderer/webgl/ImageLayer.js';
 
 
 describe('ol.renderer.webgl.ImageLayer', function() {
   describe('updateProjectionMatrix_', function() {
-    var map;
-    var renderer;
-    var canvasWidth;
-    var canvasHeight;
-    var pixelRatio;
-    var viewResolution;
-    var viewRotation;
-    var viewCenter;
-    var imageExtent;
+    let map;
+    let renderer;
+    let canvasWidth;
+    let canvasHeight;
+    let pixelRatio;
+    let viewResolution;
+    let viewRotation;
+    let viewCenter;
+    let imageExtent;
 
     beforeEach(function() {
-      map = new ol.Map({
+      map = new Map({
         target: document.createElement('div')
       });
-      var layer = new ol.layer.Image({
-        source: new ol.source.Image({
+      const layer = new ImageLayer({
+        source: new ImageSource({
           extent: [0, 0, 1, 1]
         })
       });
-      renderer = new ol.renderer.webgl.ImageLayer(map.renderer_, layer);
+      renderer = new WebGLImageLayerRenderer(map.renderer_, layer);
 
       // input params
       canvasWidth = 512;
@@ -51,26 +49,26 @@ describe('ol.renderer.webgl.ImageLayer', function() {
     it('produces a correct matrix', function() {
 
       renderer.updateProjectionMatrix_(canvasWidth, canvasHeight,
-          pixelRatio, viewCenter, viewResolution, viewRotation, imageExtent);
-      var matrix = renderer.getProjectionMatrix();
+        pixelRatio, viewCenter, viewResolution, viewRotation, imageExtent);
+      const matrix = renderer.getProjectionMatrix();
 
-      var output = ol.transform.apply(matrix, [-1, -1]);
+      let output = applyTransform(matrix, [-1, -1]);
       expect(output[0]).to.eql(-6);
       expect(output[1]).to.eql(-6);
 
-      output = ol.transform.apply(matrix, [1, -1]);
+      output = applyTransform(matrix, [1, -1]);
       expect(output[0]).to.eql(2);
       expect(output[1]).to.eql(-6);
 
-      output = ol.transform.apply(matrix, [-1, 1]);
+      output = applyTransform(matrix, [-1, 1]);
       expect(output[0]).to.eql(-6);
       expect(output[1]).to.eql(6);
 
-      output = ol.transform.apply(matrix, [1, 1]);
+      output = applyTransform(matrix, [1, 1]);
       expect(output[0]).to.eql(2);
       expect(output[1]).to.eql(6);
 
-      output = ol.transform.apply(matrix, [0, 0]);
+      output = applyTransform(matrix, [0, 0]);
       expect(output[0]).to.eql(-2);
       expect(output[1]).to.eql(0);
     });

@@ -1,38 +1,42 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.format.filter');
-goog.require('ol.format.WFS');
-goog.require('ol.format.GeoJSON');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.BingMaps');
-goog.require('ol.source.Vector');
-goog.require('ol.style.Stroke');
-goog.require('ol.style.Style');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {
+  equalTo as equalToFilter,
+  like as likeFilter,
+  and as andFilter
+} from '../src/ol/format/filter.js';
+import WFS from '../src/ol/format/WFS.js';
+import GeoJSON from '../src/ol/format/GeoJSON.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import BingMaps from '../src/ol/source/BingMaps.js';
+import VectorSource from '../src/ol/source/Vector.js';
+import Stroke from '../src/ol/style/Stroke.js';
+import Style from '../src/ol/style/Style.js';
 
 
-var vectorSource = new ol.source.Vector();
-var vector = new ol.layer.Vector({
+const vectorSource = new VectorSource();
+const vector = new VectorLayer({
   source: vectorSource,
-  style: new ol.style.Style({
-    stroke: new ol.style.Stroke({
+  style: new Style({
+    stroke: new Stroke({
       color: 'rgba(0, 0, 255, 1.0)',
       width: 2
     })
   })
 });
 
-var raster = new ol.layer.Tile({
-  source: new ol.source.BingMaps({
+const raster = new TileLayer({
+  source: new BingMaps({
     imagerySet: 'Aerial',
     key: 'As1HiMj1PvLPlqc_gtM7AqZfBL8ZL3VrjaS3zIb22Uvb9WKhuJObROC-qUpa81U5'
   })
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [raster, vector],
   target: document.getElementById('map'),
-  view: new ol.View({
+  view: new View({
     center: [-8908887.277395891, 5381918.072437216],
     maxZoom: 19,
     zoom: 12
@@ -40,15 +44,15 @@ var map = new ol.Map({
 });
 
 // generate a GetFeature request
-var featureRequest = new ol.format.WFS().writeGetFeature({
+const featureRequest = new WFS().writeGetFeature({
   srsName: 'EPSG:3857',
   featureNS: 'http://openstreemap.org',
   featurePrefix: 'osm',
   featureTypes: ['water_areas'],
   outputFormat: 'application/json',
-  filter: ol.format.filter.and(
-      ol.format.filter.like('name', 'Mississippi*'),
-      ol.format.filter.equalTo('waterway', 'riverbank')
+  filter: andFilter(
+    likeFilter('name', 'Mississippi*'),
+    equalToFilter('waterway', 'riverbank')
   )
 });
 
@@ -59,7 +63,7 @@ fetch('https://ahocevar.com/geoserver/wfs', {
 }).then(function(response) {
   return response.json();
 }).then(function(json) {
-  var features = new ol.format.GeoJSON().readFeatures(json);
+  const features = new GeoJSON().readFeatures(json);
   vectorSource.addFeatures(features);
   map.getView().fit(vectorSource.getExtent());
 });

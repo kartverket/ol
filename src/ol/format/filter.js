@@ -1,22 +1,23 @@
-goog.provide('ol.format.filter');
-
-goog.require('ol.format.filter.And');
-goog.require('ol.format.filter.Bbox');
-goog.require('ol.format.filter.Contains');
-goog.require('ol.format.filter.During');
-goog.require('ol.format.filter.EqualTo');
-goog.require('ol.format.filter.GreaterThan');
-goog.require('ol.format.filter.GreaterThanOrEqualTo');
-goog.require('ol.format.filter.Intersects');
-goog.require('ol.format.filter.IsBetween');
-goog.require('ol.format.filter.IsLike');
-goog.require('ol.format.filter.IsNull');
-goog.require('ol.format.filter.LessThan');
-goog.require('ol.format.filter.LessThanOrEqualTo');
-goog.require('ol.format.filter.Not');
-goog.require('ol.format.filter.NotEqualTo');
-goog.require('ol.format.filter.Or');
-goog.require('ol.format.filter.Within');
+/**
+ * @module ol/format/filter
+ */
+import And from '../format/filter/And.js';
+import Bbox from '../format/filter/Bbox.js';
+import Contains from '../format/filter/Contains.js';
+import During from '../format/filter/During.js';
+import EqualTo from '../format/filter/EqualTo.js';
+import GreaterThan from '../format/filter/GreaterThan.js';
+import GreaterThanOrEqualTo from '../format/filter/GreaterThanOrEqualTo.js';
+import Intersects from '../format/filter/Intersects.js';
+import IsBetween from '../format/filter/IsBetween.js';
+import IsLike from '../format/filter/IsLike.js';
+import IsNull from '../format/filter/IsNull.js';
+import LessThan from '../format/filter/LessThan.js';
+import LessThanOrEqualTo from '../format/filter/LessThanOrEqualTo.js';
+import Not from '../format/filter/Not.js';
+import NotEqualTo from '../format/filter/NotEqualTo.js';
+import Or from '../format/filter/Or.js';
+import Within from '../format/filter/Within.js';
 
 
 /**
@@ -26,10 +27,10 @@ goog.require('ol.format.filter.Within');
  * @returns {!ol.format.filter.And} `<And>` operator.
  * @api
  */
-ol.format.filter.and = function(conditions) {
-  var params = [null].concat(Array.prototype.slice.call(arguments));
-  return new (Function.prototype.bind.apply(ol.format.filter.And, params));
-};
+export function and(conditions) {
+  const params = [null].concat(Array.prototype.slice.call(arguments));
+  return new (Function.prototype.bind.apply(And, params));
+}
 
 
 /**
@@ -39,10 +40,10 @@ ol.format.filter.and = function(conditions) {
  * @returns {!ol.format.filter.Or} `<Or>` operator.
  * @api
  */
-ol.format.filter.or = function(conditions) {
-  var params = [null].concat(Array.prototype.slice.call(arguments));
-  return new (Function.prototype.bind.apply(ol.format.filter.Or, params));
-};
+export function or(conditions) {
+  const params = [null].concat(Array.prototype.slice.call(arguments));
+  return new (Function.prototype.bind.apply(Or, params));
+}
 
 
 /**
@@ -52,9 +53,9 @@ ol.format.filter.or = function(conditions) {
  * @returns {!ol.format.filter.Not} `<Not>` operator.
  * @api
  */
-ol.format.filter.not = function(condition) {
-  return new ol.format.filter.Not(condition);
-};
+export function not(condition) {
+  return new Not(condition);
+}
 
 
 /**
@@ -62,60 +63,60 @@ ol.format.filter.not = function(condition) {
  * intersects a fixed bounding box
  *
  * @param {!string} geometryName Geometry name to use.
- * @param {!ol.Extent} extent Extent.
+ * @param {!module:ol/extent~Extent} extent Extent.
  * @param {string=} opt_srsName SRS name. No srsName attribute will be
  *    set on geometries when this is not provided.
  * @returns {!ol.format.filter.Bbox} `<BBOX>` operator.
  * @api
  */
-ol.format.filter.bbox = function(geometryName, extent, opt_srsName) {
-  return new ol.format.filter.Bbox(geometryName, extent, opt_srsName);
-};
+export function bbox(geometryName, extent, opt_srsName) {
+  return new Bbox(geometryName, extent, opt_srsName);
+}
 
 /**
  * Create a `<Contains>` operator to test whether a geometry-valued property
  * contains a given geometry.
  *
  * @param {!string} geometryName Geometry name to use.
- * @param {!ol.geom.Geometry} geometry Geometry.
+ * @param {!module:ol/geom/Geometry~Geometry} geometry Geometry.
  * @param {string=} opt_srsName SRS name. No srsName attribute will be
  *    set on geometries when this is not provided.
  * @returns {!ol.format.filter.Contains} `<Contains>` operator.
  * @api
  */
-ol.format.filter.contains = function(geometryName, geometry, opt_srsName) {
-  return new ol.format.filter.Contains(geometryName, geometry, opt_srsName);
-};
+export function contains(geometryName, geometry, opt_srsName) {
+  return new Contains(geometryName, geometry, opt_srsName);
+}
 
 /**
  * Create a `<Intersects>` operator to test whether a geometry-valued property
  * intersects a given geometry.
  *
  * @param {!string} geometryName Geometry name to use.
- * @param {!ol.geom.Geometry} geometry Geometry.
+ * @param {!module:ol/geom/Geometry~Geometry} geometry Geometry.
  * @param {string=} opt_srsName SRS name. No srsName attribute will be
  *    set on geometries when this is not provided.
  * @returns {!ol.format.filter.Intersects} `<Intersects>` operator.
  * @api
  */
-ol.format.filter.intersects = function(geometryName, geometry, opt_srsName) {
-  return new ol.format.filter.Intersects(geometryName, geometry, opt_srsName);
-};
+export function intersects(geometryName, geometry, opt_srsName) {
+  return new Intersects(geometryName, geometry, opt_srsName);
+}
 
 /**
  * Create a `<Within>` operator to test whether a geometry-valued property
  * is within a given geometry.
  *
  * @param {!string} geometryName Geometry name to use.
- * @param {!ol.geom.Geometry} geometry Geometry.
+ * @param {!module:ol/geom/Geometry~Geometry} geometry Geometry.
  * @param {string=} opt_srsName SRS name. No srsName attribute will be
  *    set on geometries when this is not provided.
  * @returns {!ol.format.filter.Within} `<Within>` operator.
  * @api
  */
-ol.format.filter.within = function(geometryName, geometry, opt_srsName) {
-  return new ol.format.filter.Within(geometryName, geometry, opt_srsName);
-};
+export function within(geometryName, geometry, opt_srsName) {
+  return new Within(geometryName, geometry, opt_srsName);
+}
 
 
 /**
@@ -127,9 +128,9 @@ ol.format.filter.within = function(geometryName, geometry, opt_srsName) {
  * @returns {!ol.format.filter.EqualTo} `<PropertyIsEqualTo>` operator.
  * @api
  */
-ol.format.filter.equalTo = function(propertyName, expression, opt_matchCase) {
-  return new ol.format.filter.EqualTo(propertyName, expression, opt_matchCase);
-};
+export function equalTo(propertyName, expression, opt_matchCase) {
+  return new EqualTo(propertyName, expression, opt_matchCase);
+}
 
 
 /**
@@ -141,9 +142,9 @@ ol.format.filter.equalTo = function(propertyName, expression, opt_matchCase) {
  * @returns {!ol.format.filter.NotEqualTo} `<PropertyIsNotEqualTo>` operator.
  * @api
  */
-ol.format.filter.notEqualTo = function(propertyName, expression, opt_matchCase) {
-  return new ol.format.filter.NotEqualTo(propertyName, expression, opt_matchCase);
-};
+export function notEqualTo(propertyName, expression, opt_matchCase) {
+  return new NotEqualTo(propertyName, expression, opt_matchCase);
+}
 
 
 /**
@@ -154,9 +155,9 @@ ol.format.filter.notEqualTo = function(propertyName, expression, opt_matchCase) 
  * @returns {!ol.format.filter.LessThan} `<PropertyIsLessThan>` operator.
  * @api
  */
-ol.format.filter.lessThan = function(propertyName, expression) {
-  return new ol.format.filter.LessThan(propertyName, expression);
-};
+export function lessThan(propertyName, expression) {
+  return new LessThan(propertyName, expression);
+}
 
 
 /**
@@ -167,9 +168,9 @@ ol.format.filter.lessThan = function(propertyName, expression) {
  * @returns {!ol.format.filter.LessThanOrEqualTo} `<PropertyIsLessThanOrEqualTo>` operator.
  * @api
  */
-ol.format.filter.lessThanOrEqualTo = function(propertyName, expression) {
-  return new ol.format.filter.LessThanOrEqualTo(propertyName, expression);
-};
+export function lessThanOrEqualTo(propertyName, expression) {
+  return new LessThanOrEqualTo(propertyName, expression);
+}
 
 
 /**
@@ -180,9 +181,9 @@ ol.format.filter.lessThanOrEqualTo = function(propertyName, expression) {
  * @returns {!ol.format.filter.GreaterThan} `<PropertyIsGreaterThan>` operator.
  * @api
  */
-ol.format.filter.greaterThan = function(propertyName, expression) {
-  return new ol.format.filter.GreaterThan(propertyName, expression);
-};
+export function greaterThan(propertyName, expression) {
+  return new GreaterThan(propertyName, expression);
+}
 
 
 /**
@@ -193,9 +194,9 @@ ol.format.filter.greaterThan = function(propertyName, expression) {
  * @returns {!ol.format.filter.GreaterThanOrEqualTo} `<PropertyIsGreaterThanOrEqualTo>` operator.
  * @api
  */
-ol.format.filter.greaterThanOrEqualTo = function(propertyName, expression) {
-  return new ol.format.filter.GreaterThanOrEqualTo(propertyName, expression);
-};
+export function greaterThanOrEqualTo(propertyName, expression) {
+  return new GreaterThanOrEqualTo(propertyName, expression);
+}
 
 
 /**
@@ -206,9 +207,9 @@ ol.format.filter.greaterThanOrEqualTo = function(propertyName, expression) {
  * @returns {!ol.format.filter.IsNull} `<PropertyIsNull>` operator.
  * @api
  */
-ol.format.filter.isNull = function(propertyName) {
-  return new ol.format.filter.IsNull(propertyName);
-};
+export function isNull(propertyName) {
+  return new IsNull(propertyName);
+}
 
 
 /**
@@ -221,9 +222,9 @@ ol.format.filter.isNull = function(propertyName) {
  * @returns {!ol.format.filter.IsBetween} `<PropertyIsBetween>` operator.
  * @api
  */
-ol.format.filter.between = function(propertyName, lowerBoundary, upperBoundary) {
-  return new ol.format.filter.IsBetween(propertyName, lowerBoundary, upperBoundary);
-};
+export function between(propertyName, lowerBoundary, upperBoundary) {
+  return new IsBetween(propertyName, lowerBoundary, upperBoundary);
+}
 
 
 /**
@@ -242,11 +243,11 @@ ol.format.filter.between = function(propertyName, lowerBoundary, upperBoundary) 
  * @returns {!ol.format.filter.IsLike} `<PropertyIsLike>` operator.
  * @api
  */
-ol.format.filter.like = function(propertyName, pattern,
-    opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase) {
-  return new ol.format.filter.IsLike(propertyName, pattern,
-      opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase);
-};
+export function like(propertyName, pattern,
+  opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase) {
+  return new IsLike(propertyName, pattern,
+    opt_wildCard, opt_singleChar, opt_escapeChar, opt_matchCase);
+}
 
 
 /**
@@ -258,6 +259,6 @@ ol.format.filter.like = function(propertyName, pattern,
  * @returns {!ol.format.filter.During} `<During>` operator.
  * @api
  */
-ol.format.filter.during = function(propertyName, begin, end) {
-  return new ol.format.filter.During(propertyName, begin, end);
-};
+export function during(propertyName, begin, end) {
+  return new During(propertyName, begin, end);
+}

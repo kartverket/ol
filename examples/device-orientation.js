@@ -1,30 +1,26 @@
 // NOCOMPILE
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.control');
-goog.require('ol.layer.Tile');
-goog.require('ol.math');
-goog.require('ol.proj');
-goog.require('ol.source.OSM');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import {defaults as defaultControls} from '../src/ol/control.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import {toRadians} from '../src/ol/math.js';
+import OSM from '../src/ol/source/OSM.js';
 
-var projection = ol.proj.get('EPSG:3857');
-var view = new ol.View({
+const view = new View({
   center: [0, 0],
-  projection: projection,
-  extent: projection.getExtent(),
   zoom: 2
 });
-var map = new ol.Map({
+const map = new Map({
   layers: [
-    new ol.layer.Tile({
-      source: new ol.source.OSM()
+    new TileLayer({
+      source: new OSM()
     })
   ],
   target: 'map',
-  controls: ol.control.defaults({
-    attributionOptions: /** @type {olx.control.AttributionOptions} */ ({
+  controls: defaultControls({
+    attributionOptions: {
       collapsible: false
-    })
+    }
   }),
   view: view
 });
@@ -34,15 +30,15 @@ function el(id) {
 }
 
 
-var gn = new GyroNorm();
+const gn = new GyroNorm();
 
 gn.init().then(function() {
   gn.start(function(event) {
-    var center = view.getCenter();
-    var resolution = view.getResolution();
-    var alpha = ol.math.toRadians(event.do.beta);
-    var beta = ol.math.toRadians(event.do.beta);
-    var gamma = ol.math.toRadians(event.do.gamma);
+    const center = view.getCenter();
+    const resolution = view.getResolution();
+    const alpha = toRadians(event.do.beta);
+    const beta = toRadians(event.do.beta);
+    const gamma = toRadians(event.do.gamma);
 
     el('alpha').innerText = alpha + ' [rad]';
     el('beta').innerText = beta + ' [rad]';

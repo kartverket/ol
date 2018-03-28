@@ -1,33 +1,33 @@
-goog.require('ol.ImageTile');
-goog.require('ol.TileState');
-goog.require('ol.TileUrlFunction');
-goog.require('ol.events');
-goog.require('ol.proj');
-goog.require('ol.proj.EPSG3857');
-goog.require('ol.proj.Projection');
-goog.require('ol.reproj.Tile');
-goog.require('ol.source.TileImage');
-goog.require('ol.tilecoord');
-goog.require('ol.tilegrid');
+import ImageTile from '../../../../src/ol/ImageTile.js';
+import TileState from '../../../../src/ol/TileState.js';
+import {createFromTemplate} from '../../../../src/ol/tileurlfunction.js';
+import {listen} from '../../../../src/ol/events.js';
+import {addCommon, clearAllProjections, get as getProjection} from '../../../../src/ol/proj.js';
+import {register} from '../../../../src/ol/proj/proj4.js';
+import {WORLD_EXTENT} from '../../../../src/ol/proj/epsg3857.js';
+import Projection from '../../../../src/ol/proj/Projection.js';
+import ReprojTile from '../../../../src/ol/reproj/Tile.js';
+import TileImage from '../../../../src/ol/source/TileImage.js';
+import {getKeyZXY} from '../../../../src/ol/tilecoord.js';
+import {createXYZ, createForProjection} from '../../../../src/ol/tilegrid.js';
 
 
 describe('ol.source.TileImage', function() {
   function createSource(opt_proj, opt_tileGrid, opt_cacheSize) {
-    var proj = opt_proj || 'EPSG:3857';
-    return new ol.source.TileImage({
+    const proj = opt_proj || 'EPSG:3857';
+    return new TileImage({
       cacheSize: opt_cacheSize,
       projection: proj,
       tileGrid: opt_tileGrid ||
-          ol.tilegrid.createForProjection(proj, undefined, [2, 2]),
-      tileUrlFunction: ol.TileUrlFunction.createFromTemplate(
-          'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=')
+          createForProjection(proj, undefined, [2, 2]),
+      tileUrlFunction: createFromTemplate('data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=')
     });
   }
 
   describe('#getTileCacheForProjection', function() {
     it('uses the cacheSize for reprojected tile caches', function() {
-      var source = createSource(undefined, undefined, 42);
-      var tileCache = source.getTileCacheForProjection(ol.proj.get('EPSG:4326'));
+      const source = createSource(undefined, undefined, 42);
+      const tileCache = source.getTileCacheForProjection(getProjection('EPSG:4326'));
       expect(tileCache.highWaterMark).to.be(42);
       expect(tileCache).to.not.equal(source.getTileCacheForProjection(source.getProjection()));
     });
@@ -35,28 +35,28 @@ describe('ol.source.TileImage', function() {
 
   describe('#setTileGridForProjection', function() {
     it('uses the tilegrid for given projection', function() {
-      var source = createSource();
-      var tileGrid = ol.tilegrid.createForProjection('EPSG:4326', 3, [10, 20]);
+      const source = createSource();
+      const tileGrid = createForProjection('EPSG:4326', 3, [10, 20]);
       source.setTileGridForProjection('EPSG:4326', tileGrid);
-      var retrieved = source.getTileGridForProjection(ol.proj.get('EPSG:4326'));
+      const retrieved = source.getTileGridForProjection(getProjection('EPSG:4326'));
       expect(retrieved).to.be(tileGrid);
     });
   });
 
   describe('#getTileInternal', function() {
-    var source, tile;
+    let source, tile;
 
     beforeEach(function() {
       source = createSource();
       expect(source.getKey()).to.be('');
-      source.getTileInternal(0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+      source.getTileInternal(0, 0, -1, 1, getProjection('EPSG:3857'));
       expect(source.tileCache.getCount()).to.be(1);
-      tile = source.tileCache.get(ol.tilecoord.getKeyZXY(0, 0, -1));
+      tile = source.tileCache.get(getKeyZXY(0, 0, -1));
     });
 
     it('gets the tile from the cache', function() {
-      var returnedTile = source.getTileInternal(
-          0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+      const returnedTile = source.getTileInternal(
+        0, 0, -1, 1, getProjection('EPSG:3857'));
       expect(returnedTile).to.be(tile);
     });
 
@@ -67,8 +67,8 @@ describe('ol.source.TileImage', function() {
           source.getKey = function() {
             return 'key0';
           };
-          var returnedTile = source.getTileInternal(
-              0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+          const returnedTile = source.getTileInternal(
+            0, 0, -1, 1, getProjection('EPSG:3857'));
           expect(returnedTile).not.to.be(tile);
           expect(returnedTile.key).to.be('key0');
           expect(returnedTile.interimTile).to.be(null);
@@ -81,8 +81,8 @@ describe('ol.source.TileImage', function() {
             return 'key0';
           };
           tile.state = 2; // LOADED
-          var returnedTile = source.getTileInternal(
-              0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+          const returnedTile = source.getTileInternal(
+            0, 0, -1, 1, getProjection('EPSG:3857'));
           expect(returnedTile).not.to.be(tile);
           expect(returnedTile.key).to.be('key0');
           expect(returnedTile.interimTile).to.be(tile);
@@ -91,17 +91,17 @@ describe('ol.source.TileImage', function() {
 
       describe('tile is not loaded but interim tile is', function() {
         it('returns a tile with interim tile', function() {
-          var dynamicParamsKey, returnedTile;
+          let dynamicParamsKey, returnedTile;
           source.getKey = function() {
             return dynamicParamsKey;
           };
           dynamicParamsKey = 'key0';
           tile.state = 2; // LOADED
           returnedTile = source.getTileInternal(
-              0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+            0, 0, -1, 1, getProjection('EPSG:3857'));
           dynamicParamsKey = 'key1';
           returnedTile = source.getTileInternal(
-              0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+            0, 0, -1, 1, getProjection('EPSG:3857'));
           expect(returnedTile).not.to.be(tile);
           expect(returnedTile.key).to.be('key1');
           expect(returnedTile.interimTile).to.be(tile);
@@ -114,38 +114,41 @@ describe('ol.source.TileImage', function() {
 
   describe('#getTile', function() {
     it('does not do reprojection for identity', function() {
-      var source3857 = createSource('EPSG:3857');
-      var tile3857 = source3857.getTile(0, 0, -1, 1, ol.proj.get('EPSG:3857'));
-      expect(tile3857).to.be.a(ol.ImageTile);
-      expect(tile3857).not.to.be.a(ol.reproj.Tile);
+      const source3857 = createSource('EPSG:3857');
+      const tile3857 = source3857.getTile(0, 0, -1, 1, getProjection('EPSG:3857'));
+      expect(tile3857).to.be.a(ImageTile);
+      expect(tile3857).not.to.be.a(ReprojTile);
 
-      var projXXX = new ol.proj.Projection({
+      const projXXX = new Projection({
         code: 'XXX',
         units: 'degrees'
       });
-      var sourceXXX = createSource(projXXX);
-      var tileXXX = sourceXXX.getTile(0, 0, -1, 1, projXXX);
-      expect(tileXXX).to.be.a(ol.ImageTile);
-      expect(tileXXX).not.to.be.a(ol.reproj.Tile);
+      const sourceXXX = createSource(projXXX);
+      const tileXXX = sourceXXX.getTile(0, 0, -1, 1, projXXX);
+      expect(tileXXX).to.be.a(ImageTile);
+      expect(tileXXX).not.to.be.a(ReprojTile);
     });
 
     beforeEach(function() {
       proj4.defs('4326_noextentnounits', '+proj=longlat +datum=WGS84 +no_defs');
+      register(proj4);
     });
 
     afterEach(function() {
       delete proj4.defs['4326_noextentnounits'];
+      clearAllProjections();
+      addCommon();
     });
 
     it('can handle source projection without extent and units', function(done) {
-      var source = createSource('4326_noextentnounits', ol.tilegrid.createXYZ({
+      const source = createSource('4326_noextentnounits', createXYZ({
         extent: [-180, -90, 180, 90],
         tileSize: [2, 2]
       }));
-      var tile = source.getTile(0, 0, -1, 1, ol.proj.get('EPSG:3857'));
-      expect(tile).to.be.a(ol.reproj.Tile);
+      const tile = source.getTile(0, 0, -1, 1, getProjection('EPSG:3857'));
+      expect(tile).to.be.a(ReprojTile);
 
-      ol.events.listen(tile, 'change', function() {
+      listen(tile, 'change', function() {
         if (tile.getState() == 2) { // LOADED
           done();
         }
@@ -154,17 +157,17 @@ describe('ol.source.TileImage', function() {
     });
 
     it('can handle target projection without extent and units', function(done) {
-      var proj = ol.proj.get('4326_noextentnounits');
-      var source = createSource();
+      const proj = getProjection('4326_noextentnounits');
+      const source = createSource();
       source.setTileGridForProjection(proj,
-          ol.tilegrid.createXYZ({
-            extent: ol.proj.EPSG3857.WORLD_EXTENT,
-            tileSize: [2, 2]
-          }));
-      var tile = source.getTile(0, 0, -1, 1, proj);
-      expect(tile).to.be.a(ol.reproj.Tile);
+        createXYZ({
+          extent: WORLD_EXTENT,
+          tileSize: [2, 2]
+        }));
+      const tile = source.getTile(0, 0, -1, 1, proj);
+      expect(tile).to.be.a(ReprojTile);
 
-      ol.events.listen(tile, 'change', function() {
+      listen(tile, 'change', function() {
         if (tile.getState() == 2) { // LOADED
           done();
         }
@@ -175,23 +178,23 @@ describe('ol.source.TileImage', function() {
 
   describe('tile load events', function() {
 
-    var source;
+    let source;
 
     beforeEach(function() {
-      source = new ol.source.TileImage({
+      source = new TileImage({
         url: '{z}/{x}/{y}'
       });
     });
 
     it('dispatches tileloadstart and tileloadend events', function() {
       source.setTileLoadFunction(function(tile) {
-        tile.setState(ol.TileState.LOADED);
+        tile.setState(TileState.LOADED);
       });
-      var startSpy = sinon.spy();
+      const startSpy = sinon.spy();
       source.on('tileloadstart', startSpy);
-      var endSpy = sinon.spy();
+      const endSpy = sinon.spy();
       source.on('tileloadend', endSpy);
-      var tile = source.getTile(0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+      const tile = source.getTile(0, 0, -1, 1, getProjection('EPSG:3857'));
       tile.load();
       expect(startSpy.callCount).to.be(1);
       expect(endSpy.callCount).to.be(1);
@@ -200,15 +203,15 @@ describe('ol.source.TileImage', function() {
     it('works for loading-error-loading-loaded sequences', function(done) {
       source.setTileLoadFunction(function(tile) {
         tile.setState(
-            tile.state == ol.TileState.ERROR ? ol.TileState.LOADED : ol.TileState.ERROR);
+          tile.state == TileState.ERROR ? TileState.LOADED : TileState.ERROR);
       });
-      var startSpy = sinon.spy();
+      const startSpy = sinon.spy();
       source.on('tileloadstart', startSpy);
-      var errorSpy = sinon.spy();
+      const errorSpy = sinon.spy();
       source.on('tileloaderror', function(e) {
         setTimeout(function() {
-          e.tile.setState(ol.TileState.LOADING);
-          e.tile.setState(ol.TileState.LOADED);
+          e.tile.setState(TileState.LOADING);
+          e.tile.setState(TileState.LOADED);
         }, 0);
         errorSpy();
       });
@@ -217,17 +220,17 @@ describe('ol.source.TileImage', function() {
         expect(errorSpy.callCount).to.be(1);
         done();
       });
-      var tile = source.getTile(0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+      const tile = source.getTile(0, 0, -1, 1, getProjection('EPSG:3857'));
       tile.load();
     });
 
     it('dispatches tileloadend events for aborted tiles', function() {
       source.setTileLoadFunction(function() {});
-      var startSpy = sinon.spy();
+      const startSpy = sinon.spy();
       source.on('tileloadstart', startSpy);
-      var endSpy = sinon.spy();
+      const endSpy = sinon.spy();
       source.on('tileloadend', endSpy);
-      var tile = source.getTile(0, 0, -1, 1, ol.proj.get('EPSG:3857'));
+      const tile = source.getTile(0, 0, -1, 1, getProjection('EPSG:3857'));
       tile.load();
       tile.dispose();
       expect(startSpy.callCount).to.be(1);

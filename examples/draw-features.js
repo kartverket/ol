@@ -1,39 +1,39 @@
-goog.require('ol.Map');
-goog.require('ol.View');
-goog.require('ol.interaction.Draw');
-goog.require('ol.layer.Tile');
-goog.require('ol.layer.Vector');
-goog.require('ol.source.OSM');
-goog.require('ol.source.Vector');
+import Map from '../src/ol/Map.js';
+import View from '../src/ol/View.js';
+import Draw from '../src/ol/interaction/Draw.js';
+import TileLayer from '../src/ol/layer/Tile.js';
+import VectorLayer from '../src/ol/layer/Vector.js';
+import OSM from '../src/ol/source/OSM.js';
+import VectorSource from '../src/ol/source/Vector.js';
 
-var raster = new ol.layer.Tile({
-  source: new ol.source.OSM()
+const raster = new TileLayer({
+  source: new OSM()
 });
 
-var source = new ol.source.Vector({wrapX: false});
+const source = new VectorSource({wrapX: false});
 
-var vector = new ol.layer.Vector({
+const vector = new VectorLayer({
   source: source
 });
 
-var map = new ol.Map({
+const map = new Map({
   layers: [raster, vector],
   target: 'map',
-  view: new ol.View({
+  view: new View({
     center: [-11000000, 4600000],
     zoom: 4
   })
 });
 
-var typeSelect = document.getElementById('type');
+const typeSelect = document.getElementById('type');
 
-var draw; // global so we can remove it later
+let draw; // global so we can remove it later
 function addInteraction() {
-  var value = typeSelect.value;
+  const value = typeSelect.value;
   if (value !== 'None') {
-    draw = new ol.interaction.Draw({
+    draw = new Draw({
       source: source,
-      type: /** @type {ol.geom.GeometryType} */ (typeSelect.value)
+      type: typeSelect.value
     });
     map.addInteraction(draw);
   }

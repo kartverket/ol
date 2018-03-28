@@ -43,7 +43,7 @@ Unknown `serverType` configured.
 
 ### 10
 
-The default `geometryFunction` can only handle `ol.geom.Point` geometries.
+The default `geometryFunction` can only handle `ol/geom/Point` geometries.
 
 ### 11
 
@@ -164,14 +164,6 @@ Expected an `ol.style.Style` or an array of `ol.style.Style`.
 ### 43
 
 Expected `layers` to be an array or an `ol.Collection`.
-
-### 44
-
-`logo.href` should be a string.
-
-### 45
-
-`logo.src` should be a string.
 
 ### 46
 

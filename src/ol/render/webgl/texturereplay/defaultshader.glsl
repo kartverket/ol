@@ -1,4 +1,4 @@
-//! NAMESPACE=ol.render.webgl.texturereplay.defaultshader
+//! MODULE=ol/render/webgl/texturereplay/defaultshader
 
 
 //! COMMON

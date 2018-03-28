@@ -1,14 +1,20 @@
-goog.provide('ol.ResolutionConstraint');
+/**
+ * @module ol/resolutionconstraint
+ */
+import {linearFindNearest} from './array.js';
+import {clamp} from './math.js';
 
-goog.require('ol.array');
-goog.require('ol.math');
+
+/**
+ * @typedef {function((number|undefined), number, number): (number|undefined)} Type
+ */
 
 
 /**
  * @param {Array.<number>} resolutions Resolutions.
- * @return {ol.ResolutionConstraintType} Zoom function.
+ * @return {module:ol/resolutionconstraint~Type} Zoom function.
  */
-ol.ResolutionConstraint.createSnapToResolutions = function(resolutions) {
+export function createSnapToResolutions(resolutions) {
   return (
     /**
      * @param {number|undefined} resolution Resolution.
@@ -18,12 +24,11 @@ ol.ResolutionConstraint.createSnapToResolutions = function(resolutions) {
      */
     function(resolution, delta, direction) {
       if (resolution !== undefined) {
-        var z =
-              ol.array.linearFindNearest(resolutions, resolution, direction);
-        z = ol.math.clamp(z + delta, 0, resolutions.length - 1);
-        var index = Math.floor(z);
+        let z = linearFindNearest(resolutions, resolution, direction);
+        z = clamp(z + delta, 0, resolutions.length - 1);
+        const index = Math.floor(z);
         if (z != index && index < resolutions.length - 1) {
-          var power = resolutions[index] / resolutions[index + 1];
+          const power = resolutions[index] / resolutions[index + 1];
           return resolutions[index] / Math.pow(power, z - index);
         } else {
           return resolutions[index];
@@ -31,17 +36,18 @@ ol.ResolutionConstraint.createSnapToResolutions = function(resolutions) {
       } else {
         return undefined;
       }
-    });
-};
+    }
+  );
+}
 
 
 /**
  * @param {number} power Power.
  * @param {number} maxResolution Maximum resolution.
  * @param {number=} opt_maxLevel Maximum level.
- * @return {ol.ResolutionConstraintType} Zoom function.
+ * @return {module:ol/resolutionconstraint~Type} Zoom function.
  */
-ol.ResolutionConstraint.createSnapToPower = function(power, maxResolution, opt_maxLevel) {
+export function createSnapToPower(power, maxResolution, opt_maxLevel) {
   return (
     /**
      * @param {number|undefined} resolution Resolution.
@@ -51,10 +57,10 @@ ol.ResolutionConstraint.createSnapToPower = function(power, maxResolution, opt_m
      */
     function(resolution, delta, direction) {
       if (resolution !== undefined) {
-        var offset = -direction / 2 + 0.5;
-        var oldLevel = Math.floor(
-            Math.log(maxResolution / resolution) / Math.log(power) + offset);
-        var newLevel = Math.max(oldLevel + delta, 0);
+        const offset = -direction / 2 + 0.5;
+        const oldLevel = Math.floor(
+          Math.log(maxResolution / resolution) / Math.log(power) + offset);
+        let newLevel = Math.max(oldLevel + delta, 0);
         if (opt_maxLevel !== undefined) {
           newLevel = Math.min(newLevel, opt_maxLevel);
         }
@@ -63,4 +69,4 @@ ol.ResolutionConstraint.createSnapToPower = function(power, maxResolution, opt_m
         return undefined;
       }
     });
-};
+}

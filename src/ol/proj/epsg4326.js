@@ -1,8 +1,34 @@
-goog.provide('ol.proj.EPSG4326');
+/**
+ * @module ol/proj/epsg4326
+ */
+import {inherits} from '../index.js';
+import Projection from '../proj/Projection.js';
+import Units from '../proj/Units.js';
 
-goog.require('ol');
-goog.require('ol.proj.Projection');
-goog.require('ol.proj.Units');
+
+/**
+ * Semi-major radius of the WGS84 ellipsoid.
+ *
+ * @const
+ * @type {number}
+ */
+export const RADIUS = 6378137;
+
+
+/**
+ * Extent of the EPSG:4326 projection which is the whole world.
+ *
+ * @const
+ * @type {module:ol/extent~Extent}
+ */
+export const EXTENT = [-180, -90, 180, 90];
+
+
+/**
+ * @const
+ * @type {number}
+ */
+export const METERS_PER_UNIT = Math.PI * RADIUS / 180;
 
 
 /**
@@ -14,63 +40,37 @@ goog.require('ol.proj.Units');
  * OpenLayers treats EPSG:4326 as a pseudo-projection, with x,y coordinates.
  *
  * @constructor
- * @extends {ol.proj.Projection}
+ * @extends {module:ol/proj/Projection~Projection}
  * @param {string} code Code.
  * @param {string=} opt_axisOrientation Axis orientation.
- * @private
  */
-ol.proj.EPSG4326.Projection_ = function(code, opt_axisOrientation) {
-  ol.proj.Projection.call(this, {
+function EPSG4326Projection(code, opt_axisOrientation) {
+  Projection.call(this, {
     code: code,
-    units: ol.proj.Units.DEGREES,
-    extent: ol.proj.EPSG4326.EXTENT,
+    units: Units.DEGREES,
+    extent: EXTENT,
     axisOrientation: opt_axisOrientation,
     global: true,
-    metersPerUnit: ol.proj.EPSG4326.METERS_PER_UNIT,
-    worldExtent: ol.proj.EPSG4326.EXTENT
+    metersPerUnit: METERS_PER_UNIT,
+    worldExtent: EXTENT
   });
-};
-ol.inherits(ol.proj.EPSG4326.Projection_, ol.proj.Projection);
-
-
-/**
- * Radius of WGS84 sphere
- *
- * @const
- * @type {number}
- */
-ol.proj.EPSG4326.RADIUS = 6378137;
-
-
-/**
- * Extent of the EPSG:4326 projection which is the whole world.
- *
- * @const
- * @type {ol.Extent}
- */
-ol.proj.EPSG4326.EXTENT = [-180, -90, 180, 90];
-
-
-/**
- * @const
- * @type {number}
- */
-ol.proj.EPSG4326.METERS_PER_UNIT = Math.PI * ol.proj.EPSG4326.RADIUS / 180;
+}
+inherits(EPSG4326Projection, Projection);
 
 
 /**
  * Projections equal to EPSG:4326.
  *
  * @const
- * @type {Array.<ol.proj.Projection>}
+ * @type {Array.<module:ol/proj/Projection~Projection>}
  */
-ol.proj.EPSG4326.PROJECTIONS = [
-  new ol.proj.EPSG4326.Projection_('CRS:84'),
-  new ol.proj.EPSG4326.Projection_('EPSG:4326', 'neu'),
-  new ol.proj.EPSG4326.Projection_('urn:ogc:def:crs:EPSG::4326', 'neu'),
-  new ol.proj.EPSG4326.Projection_('urn:ogc:def:crs:EPSG:6.6:4326', 'neu'),
-  new ol.proj.EPSG4326.Projection_('urn:ogc:def:crs:OGC:1.3:CRS84'),
-  new ol.proj.EPSG4326.Projection_('urn:ogc:def:crs:OGC:2:84'),
-  new ol.proj.EPSG4326.Projection_('http://www.opengis.net/gml/srs/epsg.xml#4326', 'neu'),
-  new ol.proj.EPSG4326.Projection_('urn:x-ogc:def:crs:EPSG:4326', 'neu')
+export const PROJECTIONS = [
+  new EPSG4326Projection('CRS:84'),
+  new EPSG4326Projection('EPSG:4326', 'neu'),
+  new EPSG4326Projection('urn:ogc:def:crs:EPSG::4326', 'neu'),
+  new EPSG4326Projection('urn:ogc:def:crs:EPSG:6.6:4326', 'neu'),
+  new EPSG4326Projection('urn:ogc:def:crs:OGC:1.3:CRS84'),
+  new EPSG4326Projection('urn:ogc:def:crs:OGC:2:84'),
+  new EPSG4326Projection('http://www.opengis.net/gml/srs/epsg.xml#4326', 'neu'),
+  new EPSG4326Projection('urn:x-ogc:def:crs:EPSG:4326', 'neu')
 ];

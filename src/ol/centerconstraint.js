@@ -1,35 +1,42 @@
-goog.provide('ol.CenterConstraint');
-
-goog.require('ol.math');
+/**
+ * @module ol/centerconstraint
+ */
+import {clamp} from './math.js';
 
 
 /**
- * @param {ol.Extent} extent Extent.
- * @return {ol.CenterConstraintType} The constraint.
+ * @typedef {function((module:ol/coordinate~Coordinate|undefined)): (module:ol/coordinate~Coordinate|undefined)} Type
  */
-ol.CenterConstraint.createExtent = function(extent) {
+
+
+/**
+ * @param {module:ol/extent~Extent} extent Extent.
+ * @return {module:ol/centerconstraint~Type} The constraint.
+ */
+export function createExtent(extent) {
   return (
     /**
-     * @param {ol.Coordinate|undefined} center Center.
-     * @return {ol.Coordinate|undefined} Center.
+     * @param {module:ol/coordinate~Coordinate=} center Center.
+     * @return {module:ol/coordinate~Coordinate|undefined} Center.
      */
     function(center) {
       if (center) {
         return [
-          ol.math.clamp(center[0], extent[0], extent[2]),
-          ol.math.clamp(center[1], extent[1], extent[3])
+          clamp(center[0], extent[0], extent[2]),
+          clamp(center[1], extent[1], extent[3])
         ];
       } else {
         return undefined;
       }
-    });
-};
+    }
+  );
+}
 
 
 /**
- * @param {ol.Coordinate|undefined} center Center.
- * @return {ol.Coordinate|undefined} Center.
+ * @param {module:ol/coordinate~Coordinate=} center Center.
+ * @return {module:ol/coordinate~Coordinate|undefined} Center.
  */
-ol.CenterConstraint.none = function(center) {
+export function none(center) {
   return center;
-};
+}
