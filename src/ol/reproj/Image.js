@@ -11,19 +11,25 @@ import {getCenter, getIntersection, getHeight, getWidth} from '../extent.js';
 import {calculateSourceResolution, render as renderReprojected} from '../reproj.js';
 import Triangulation from '../reproj/Triangulation.js';
 
+
+/**
+ * @typedef {function(module:ol/extent~Extent, number, number) : module:ol/ImageBase} FunctionType
+ */
+
+
 /**
  * @classdesc
  * Class encapsulating single reprojected image.
- * See {@link ol.source.Image}.
+ * See {@link module:ol/source/Image~ImageSource}.
  *
  * @constructor
- * @extends {module:ol/ImageBase~ImageBase}
- * @param {module:ol/proj/Projection~Projection} sourceProj Source projection (of the data).
- * @param {module:ol/proj/Projection~Projection} targetProj Target projection.
+ * @extends {module:ol/ImageBase}
+ * @param {module:ol/proj/Projection} sourceProj Source projection (of the data).
+ * @param {module:ol/proj/Projection} targetProj Target projection.
  * @param {module:ol/extent~Extent} targetExtent Target extent.
  * @param {number} targetResolution Target resolution.
  * @param {number} pixelRatio Pixel ratio.
- * @param {ol.ReprojImageFunctionType} getImageFunction
+ * @param {module:ol/reproj/Image~FunctionType} getImageFunction
  *     Function returning source images (extent, resolution, pixelRatio).
  */
 const ReprojImage = function(sourceProj, targetProj,
@@ -31,7 +37,7 @@ const ReprojImage = function(sourceProj, targetProj,
 
   /**
    * @private
-   * @type {module:ol/proj/Projection~Projection}
+   * @type {module:ol/proj/Projection}
    */
   this.targetProj_ = targetProj;
 
@@ -53,7 +59,7 @@ const ReprojImage = function(sourceProj, targetProj,
 
   /**
    * @private
-   * @type {!ol.reproj.Triangulation}
+   * @type {!module:ol/reproj/Triangulation}
    */
   this.triangulation_ = new Triangulation(
     sourceProj, targetProj, limitedTargetExtent, this.maxSourceExtent_,
@@ -75,7 +81,7 @@ const ReprojImage = function(sourceProj, targetProj,
 
   /**
    * @private
-   * @type {module:ol/ImageBase~ImageBase}
+   * @type {module:ol/ImageBase}
    */
   this.sourceImage_ =
       getImageFunction(sourceExtent, sourceResolution, pixelRatio);
@@ -132,7 +138,7 @@ ReprojImage.prototype.getImage = function() {
 
 
 /**
- * @return {module:ol/proj/Projection~Projection} Projection.
+ * @return {module:ol/proj/Projection} Projection.
  */
 ReprojImage.prototype.getProjection = function() {
   return this.targetProj_;

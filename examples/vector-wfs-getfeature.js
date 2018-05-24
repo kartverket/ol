@@ -5,14 +5,11 @@ import {
   like as likeFilter,
   and as andFilter
 } from '../src/ol/format/filter.js';
-import WFS from '../src/ol/format/WFS.js';
-import GeoJSON from '../src/ol/format/GeoJSON.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {WFS, GeoJSON} from '../src/ol/format.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import BingMaps from '../src/ol/source/BingMaps.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {Stroke, Style} from '../src/ol/style.js';
 
 
 const vectorSource = new VectorSource();

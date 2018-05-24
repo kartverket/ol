@@ -13,12 +13,56 @@ import {createFromCapabilitiesMatrixSet} from '../tilegrid/WMTS.js';
 import {appendParams} from '../uri.js';
 
 /**
+ * @typedef {Object} Options
+ * @property {module:ol/source/Source~AttributionLike} [attributions] Attributions.
+ * @property {number} [cacheSize=2048] Cache size.
+ * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images.  Note that
+ * you must provide a `crossOrigin` value if you are using the WebGL renderer or if you want to
+ * access pixel data with the Canvas renderer.  See
+ * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image} for more detail.
+ * @property {module:ol/tilegrid/WMTS} tileGrid Tile grid.
+ * @property {module:ol/proj~ProjectionLike} projection Projection.
+ * @property {boolean} [reprojectionErrorThreshold=0.5] Maximum allowed reprojection error (in pixels).
+ * Higher values can increase reprojection performance, but decrease precision.
+ * @property {module:ol/source/WMTSRequestEncoding|string} [requestEncoding='KVP'] Request encoding.
+ * @property {string} layer Layer name as advertised in the WMTS capabilities.
+ * @property {string} style Style name as advertised in the WMTS capabilities.
+ * @property {module:ol/ImageTile~TileClass} [tileClass]  Class used to instantiate image tiles. Default is {@link module:ol/ImageTile~ImageTile}.
+ * @property {number} [tilePixelRatio=1] The pixel ratio used by the tile service.
+ * For example, if the tile service advertizes 256px by 256px tiles but actually sends 512px
+ * by 512px images (for retina/hidpi devices) then `tilePixelRatio`
+ * should be set to `2`.
+ * @property {string} [version='image/jpeg'] Image format.
+ * @property {string} [format='1.0.0'] WMTS version.
+ * @property {string} matrixSet Matrix set.
+ * @property {!Object} [dimensions] Additional "dimensions" for tile requests.
+ * This is an object with properties named like the advertised WMTS dimensions.
+ * @property {string} [url]  A URL for the service.
+ * For the RESTful request encoding, this is a URL
+ * template.  For KVP encoding, it is normal URL. A `{?-?}` template pattern,
+ * for example `subdomain{a-f}.domain.com`, may be used instead of defining
+ * each one separately in the `urls` option.
+ * @property {module:ol/Tile~LoadFunction} [tileLoadFunction] Optional function to load a tile given a URL. The default is
+ * ```js
+ * function(imageTile, src) {
+ *   imageTile.getImage().src = src;
+ * };
+ * ```
+ * @property {Array.<string>} [urls] An array of URLs.
+ * Requests will be distributed among the URLs in this array.
+ * @property {boolean} [wrapX=false] Whether to wrap the world horizontally.
+ * @property {number} [transition] Duration of the opacity transition for rendering.
+ * To disable the opacity transition, pass `transition: 0`.
+ */
+
+
+/**
  * @classdesc
  * Layer source for tile data from WMTS servers.
  *
  * @constructor
- * @extends {ol.source.TileImage}
- * @param {olx.source.WMTSOptions} options WMTS options.
+ * @extends {module:ol/source/TileImage}
+ * @param {module:ol/source/WMTS~Options=} options WMTS options.
  * @api
  */
 const WMTS = function(options) {
@@ -71,10 +115,10 @@ const WMTS = function(options) {
 
   /**
    * @private
-   * @type {ol.source.WMTSRequestEncoding}
+   * @type {module:ol/source/WMTSRequestEncoding}
    */
   this.requestEncoding_ = options.requestEncoding !== undefined ?
-    /** @type {ol.source.WMTSRequestEncoding} */ (options.requestEncoding) :
+    /** @type {module:ol/source/WMTSRequestEncoding} */ (options.requestEncoding) :
     WMTSRequestEncoding.KVP;
 
   const requestEncoding = this.requestEncoding_;
@@ -123,7 +167,7 @@ const WMTS = function(options) {
       /**
        * @param {module:ol/tilecoord~TileCoord} tileCoord Tile coordinate.
        * @param {number} pixelRatio Pixel ratio.
-       * @param {module:ol/proj/Projection~Projection} projection Projection.
+       * @param {module:ol/proj/Projection} projection Projection.
        * @return {string|undefined} Tile URL.
        */
       function(tileCoord, pixelRatio, projection) {
@@ -232,7 +276,7 @@ WMTS.prototype.getMatrixSet = function() {
 
 /**
  * Return the request encoding, either "KVP" or "REST".
- * @return {ol.source.WMTSRequestEncoding} Request encoding.
+ * @return {module:ol/source/WMTSRequestEncoding} Request encoding.
  * @api
  */
 WMTS.prototype.getRequestEncoding = function() {
@@ -306,7 +350,7 @@ WMTS.prototype.updateDimensions = function(dimensions) {
  *  - format - {string} Image format for the layer. Default is the first
  *       format returned in the GetCapabilities response.
  *  - crossOrigin - {string|null|undefined} Cross origin. Default is `undefined`.
- * @return {?olx.source.WMTSOptions} WMTS source options object or `null` if the layer was not found.
+ * @return {?module:ol/source/WMTS~Options} WMTS source options object or `null` if the layer was not found.
  * @api
  */
 export function optionsFromCapabilities(wmtsCap, config) {

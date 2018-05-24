@@ -11,13 +11,31 @@ import ImageSource, {defaultImageLoadFunction} from '../source/Image.js';
 import {appendParams} from '../uri.js';
 
 /**
+ * @typedef {Object} Options
+ * @property {string} [url] The mapagent url.
+ * @property {number} [displayDpi=96] The display resolution.
+ * @property {number} [metersPerUnit=1] The meters-per-unit value.
+ * @property {boolean} [hidpi=true] Use the `ol/Map#pixelRatio` value when requesting
+ * the image from the remote server.
+ * @property {boolean} [useOverlay] If `true`, will use `GETDYNAMICMAPOVERLAYIMAGE`.
+ * @property {module:ol/proj~ProjectionLike} projection Projection.
+ * @property {number} [ratio=1] Ratio. `1` means image requests are the size of the map viewport, `2` means
+ * twice the width and height of the map viewport, and so on. Must be `1` or higher.
+ * @property {Array.<number>} [resolutions] Resolutions.
+ * If specified, requests will be made for these resolutions only.
+ * @property {module:ol/Image~LoadFunction} [imageLoadFunction] Optional function to load an image given a URL.
+ * @property {Object} [params] Additional parameters.
+ */
+
+
+/**
  * @classdesc
  * Source for images from Mapguide servers
  *
  * @constructor
- * @fires ol.source.Image.Event
- * @extends {ol.source.Image}
- * @param {olx.source.ImageMapGuideOptions} options Options.
+ * @fires ol/source/Image~ImageSourceEvent
+ * @extends {module:ol/source/Image}
+ * @param {module:ol/source/ImageMapGuide~Options=} options ImageMapGuide options.
  * @api
  */
 const ImageMapGuide = function(options) {
@@ -88,7 +106,7 @@ const ImageMapGuide = function(options) {
 
   /**
    * @private
-   * @type {module:ol/Image~Image}
+   * @type {module:ol/Image}
    */
   this.image_ = null;
 
@@ -203,7 +221,7 @@ ImageMapGuide.prototype.updateParams = function(params) {
  * @param {Object.<string, string|number>} params Request parameters.
  * @param {module:ol/extent~Extent} extent Extent.
  * @param {module:ol/size~Size} size Size.
- * @param {module:ol/proj/Projection~Projection} projection Projection.
+ * @param {module:ol/proj/Projection} projection Projection.
  * @return {string} The mapagent map image request URL.
  */
 ImageMapGuide.prototype.getUrl = function(baseUrl, params, extent, size, projection) {
@@ -214,7 +232,7 @@ ImageMapGuide.prototype.getUrl = function(baseUrl, params, extent, size, project
     'OPERATION': this.useOverlay_ ? 'GETDYNAMICMAPOVERLAYIMAGE' : 'GETMAPIMAGE',
     'VERSION': '2.0.0',
     'LOCALE': 'en',
-    'CLIENTAGENT': 'ol.source.ImageMapGuide source',
+    'CLIENTAGENT': 'ol/source/ImageMapGuide source',
     'CLIP': '1',
     'SETDISPLAYDPI': this.displayDpi_,
     'SETDISPLAYWIDTH': Math.round(size[0]),

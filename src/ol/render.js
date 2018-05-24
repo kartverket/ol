@@ -7,12 +7,24 @@ import CanvasImmediateRenderer from './render/canvas/Immediate.js';
 
 
 /**
+ * @typedef {Object} State
+ * @property {CanvasRenderingContext2D} context Canvas context that the layer is being rendered to.
+ * @property {module:ol/Feature|module:ol/render/Feature} feature
+ * @property {module:ol/geom/SimpleGeometry} geometry
+ * @property {number} pixelRatio Pixel ratio used by the layer renderer.
+ * @property {number} resolution Resolution that the render batch was created and optimized for.
+ * This is not the view's resolution that is being rendered.
+ * @property {number} rotation Rotation of the rendered layer in radians.
+ */
+
+
+/**
  * A function to be used when sorting features before rendering.
  * It takes two instances of {@link module:ol/Feature} or
  * {@link module:ol/render/Feature} and returns a `{number}`.
  *
- * @typedef {function((module:ol/Feature~Feature|module:ol/render/Feature~Feature),
- *           (module:ol/Feature~Feature|module:ol/render/Feature~Feature)):number} OrderFunction
+ * @typedef {function((module:ol/Feature|module:ol/render/Feature),
+ *           (module:ol/Feature|module:ol/render/Feature)):number} OrderFunction
  */
 
 
@@ -48,7 +60,7 @@ import CanvasImmediateRenderer from './render/canvas/Immediate.js';
  *
  * @param {CanvasRenderingContext2D} context Canvas context.
  * @param {module:ol/render~ToContextOptions=} opt_options Options.
- * @return {module:ol/render/canvas/Immediate~Immediate} Canvas Immediate.
+ * @return {module:ol/render/canvas/Immediate} Canvas Immediate.
  * @api
  */
 export function toContext(context, opt_options) {

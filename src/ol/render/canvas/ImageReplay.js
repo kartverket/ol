@@ -7,7 +7,7 @@ import CanvasReplay from '../canvas/Replay.js';
 
 /**
  * @constructor
- * @extends {ol.render.canvas.Replay}
+ * @extends {module:ol/render/canvas/Replay}
  * @param {number} tolerance Tolerance.
  * @param {module:ol/extent~Extent} maxExtent Maximum extent.
  * @param {number} resolution Resolution.
@@ -23,7 +23,7 @@ const CanvasImageReplay = function(
 
   /**
    * @private
-   * @type {ol.DeclutterGroup}
+   * @type {module:ol/render/canvas~DeclutterGroup}
    */
   this.declutterGroup_ = null;
 
@@ -217,7 +217,7 @@ CanvasImageReplay.prototype.setImageStyle = function(imageStyle, declutterGroup)
   const origin = imageStyle.getOrigin();
   this.anchorX_ = anchor[0];
   this.anchorY_ = anchor[1];
-  this.declutterGroup_ = /** @type {ol.DeclutterGroup} */ (declutterGroup);
+  this.declutterGroup_ = /** @type {module:ol/render/canvas~DeclutterGroup} */ (declutterGroup);
   this.hitDetectionImage_ = hitDetectionImage;
   this.image_ = image;
   this.height_ = size[1];

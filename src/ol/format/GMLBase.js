@@ -31,7 +31,7 @@ export const GMLNS = 'http://www.opengis.net/gml';
 
 /**
  * @typedef {Object} Options
- * @property {Object.<string, string>|string|undefined} featureNS Feature
+ * @property {Object.<string, string>|string} [featureNS] Feature
  * namespace. If not defined will be derived from GML. If multiple
  * feature types have been configured which come from different feature
  * namespaces, this will be an object with the keys being the prefixes used
@@ -39,7 +39,7 @@ export const GMLNS = 'http://www.opengis.net/gml';
  * feature namespaces themselves. So for instance there might be a featureType
  * item `topp:states` in the `featureType` array and then there will be a key
  * `topp` in the featureNS object with value `http://www.openplans.org/topp`.
- * @property {Array.<string>|string|undefined} featureType Feature type(s) to parse.
+ * @property {Array.<string>|string} [featureType] Feature type(s) to parse.
  * If multiple feature types need to be configured
  * which come from different feature namespaces, `featureNS` will be an object
  * with the keys being the prefixes used in the entries of featureType array.
@@ -48,15 +48,15 @@ export const GMLNS = 'http://www.opengis.net/gml';
  * there will be a key named `topp` in the featureNS object with value
  * `http://www.openplans.org/topp`.
  * @property {string} srsName srsName to use when writing geometries.
- * @property {boolean|undefined} surface Write gml:Surface instead of gml:Polygon
- * elements. This also affects the elements in multi-part geometries. Default is `false`.
- * @property {boolean|undefined} curve Write gml:Curve instead of gml:LineString
- * elements. This also affects the elements in multi-part geometries. Default is `false`.
- * @property {boolean|undefined} multiCurve Write gml:MultiCurve instead of gml:MultiLineString.
- * Since the latter is deprecated in GML 3, the default is `true`.
- * @property {boolean|undefined} multiSurface Write gml:multiSurface instead of
- * gml:MultiPolygon. Since the latter is deprecated in GML 3, the default is `true`.
- * @property {string|undefined} schemaLocation Optional schemaLocation to use when
+ * @property {boolean} [surface=false] Write gml:Surface instead of gml:Polygon
+ * elements. This also affects the elements in multi-part geometries.
+ * @property {boolean} [curve=false] Write gml:Curve instead of gml:LineString
+ * elements. This also affects the elements in multi-part geometries.
+ * @property {boolean} [multiCurve=true] Write gml:MultiCurve instead of gml:MultiLineString.
+ * Since the latter is deprecated in GML 3.
+ * @property {boolean} [multiSurface=true] Write gml:multiSurface instead of
+ * gml:MultiPolygon. Since the latter is deprecated in GML 3.
+ * @property {string} [schemaLocation] Optional schemaLocation to use when
  * writing out the GML, this will override the default provided.
  */
 
@@ -67,14 +67,13 @@ export const GMLNS = 'http://www.opengis.net/gml';
  * instantiated in apps.
  * Feature base format for reading and writing data in the GML format.
  * This class cannot be instantiated, it contains only base content that
- * is shared with versioned format classes ol.format.GML2 and
- * ol.format.GML3.
+ * is shared with versioned format classes GML2 and GML3.
  *
  * @constructor
  * @abstract
  * @param {module:ol/format/GMLBase~Options=} opt_options
  *     Optional configuration object.
- * @extends {module:ol/format/XMLFeature~XMLFeature}
+ * @extends {module:ol/format/XMLFeature}
  */
 const GMLBase = function(opt_options) {
   const options = /** @type {module:ol/format/GMLBase~Options} */ (opt_options ? opt_options : {});
@@ -135,7 +134,7 @@ const ONLY_WHITESPACE_RE = /^[\s\xa0]*$/;
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {Array.<module:ol/Feature~Feature> | undefined} Features.
+ * @return {Array.<module:ol/Feature> | undefined} Features.
  */
 GMLBase.prototype.readFeaturesInternal = function(node, objectStack) {
   const localName = node.localName;
@@ -224,16 +223,18 @@ GMLBase.prototype.readFeaturesInternal = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/Geometry~Geometry|undefined} Geometry.
+ * @return {module:ol/geom/Geometry|undefined} Geometry.
  */
 GMLBase.prototype.readGeometryElement = function(node, objectStack) {
   const context = /** @type {Object} */ (objectStack[0]);
   context['srsName'] = node.firstElementChild.getAttribute('srsName');
   context['srsDimension'] = node.firstElementChild.getAttribute('srsDimension');
-  /** @type {module:ol/geom/Geometry~Geometry} */
+  /** @type {module:ol/geom/Geometry} */
   const geometry = pushParseAndPop(null, this.GEOMETRY_PARSERS_, node, objectStack, this);
   if (geometry) {
-    return /** @type {module:ol/geom/Geometry~Geometry} */ (transformWithOptions(geometry, false, context));
+    return (
+      /** @type {module:ol/geom/Geometry} */ (transformWithOptions(geometry, false, context))
+    );
   } else {
     return undefined;
   }
@@ -243,7 +244,7 @@ GMLBase.prototype.readGeometryElement = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/Feature~Feature} Feature.
+ * @return {module:ol/Feature} Feature.
  */
 GMLBase.prototype.readFeatureElement = function(node, objectStack) {
   let n;
@@ -285,7 +286,7 @@ GMLBase.prototype.readFeatureElement = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/Point~Point|undefined} Point.
+ * @return {module:ol/geom/Point|undefined} Point.
  */
 GMLBase.prototype.readPoint = function(node, objectStack) {
   const flatCoordinates = this.readFlatCoordinatesFromNode_(node, objectStack);
@@ -300,7 +301,7 @@ GMLBase.prototype.readPoint = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/MultiPoint~MultiPoint|undefined} MultiPoint.
+ * @return {module:ol/geom/MultiPoint|undefined} MultiPoint.
  */
 GMLBase.prototype.readMultiPoint = function(node, objectStack) {
   /** @type {Array.<Array.<number>>} */
@@ -317,10 +318,10 @@ GMLBase.prototype.readMultiPoint = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/MultiLineString~MultiLineString|undefined} MultiLineString.
+ * @return {module:ol/geom/MultiLineString|undefined} MultiLineString.
  */
 GMLBase.prototype.readMultiLineString = function(node, objectStack) {
-  /** @type {Array.<module:ol/geom/LineString~LineString>} */
+  /** @type {Array.<module:ol/geom/LineString>} */
   const lineStrings = pushParseAndPop([],
     this.MULTILINESTRING_PARSERS_, node, objectStack, this);
   if (lineStrings) {
@@ -336,10 +337,10 @@ GMLBase.prototype.readMultiLineString = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/MultiPolygon~MultiPolygon|undefined} MultiPolygon.
+ * @return {module:ol/geom/MultiPolygon|undefined} MultiPolygon.
  */
 GMLBase.prototype.readMultiPolygon = function(node, objectStack) {
-  /** @type {Array.<module:ol/geom/Polygon~Polygon>} */
+  /** @type {Array.<module:ol/geom/Polygon>} */
   const polygons = pushParseAndPop([], this.MULTIPOLYGON_PARSERS_, node, objectStack, this);
   if (polygons) {
     const multiPolygon = new MultiPolygon(null);
@@ -384,7 +385,7 @@ GMLBase.prototype.polygonMemberParser_ = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/LineString~LineString|undefined} LineString.
+ * @return {module:ol/geom/LineString|undefined} LineString.
  */
 GMLBase.prototype.readLineString = function(node, objectStack) {
   const flatCoordinates = this.readFlatCoordinatesFromNode_(node, objectStack);
@@ -419,7 +420,7 @@ GMLBase.prototype.readFlatLinearRing_ = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/LinearRing~LinearRing|undefined} LinearRing.
+ * @return {module:ol/geom/LinearRing|undefined} LinearRing.
  */
 GMLBase.prototype.readLinearRing = function(node, objectStack) {
   const flatCoordinates = this.readFlatCoordinatesFromNode_(node, objectStack);
@@ -436,7 +437,7 @@ GMLBase.prototype.readLinearRing = function(node, objectStack) {
 /**
  * @param {Node} node Node.
  * @param {Array.<*>} objectStack Object stack.
- * @return {module:ol/geom/Polygon~Polygon|undefined} Polygon.
+ * @return {module:ol/geom/Polygon|undefined} Polygon.
  */
 GMLBase.prototype.readPolygon = function(node, objectStack) {
   /** @type {Array.<Array.<number>>} */
@@ -573,7 +574,7 @@ GMLBase.prototype.readGeometryFromNode = function(node, opt_options) {
  * @function
  * @param {Document|Node|Object|string} source Source.
  * @param {module:ol/format/Feature~ReadOptions=} opt_options Options.
- * @return {Array.<module:ol/Feature~Feature>} Features.
+ * @return {Array.<module:ol/Feature>} Features.
  * @api
  */
 GMLBase.prototype.readFeatures;

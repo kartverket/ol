@@ -12,13 +12,53 @@ import {get as getIconImage} from '../style/IconImage.js';
 import IconOrigin from '../style/IconOrigin.js';
 import ImageStyle from '../style/Image.js';
 
+
+/**
+ * @typedef {Object} Options
+ * @property {Array.<number>} [anchor=[0.5, 0.5]] Anchor. Default value is the icon center.
+ * @property {module:ol/style/IconOrigin} [anchorOrigin] Origin of the anchor: `bottom-left`, `bottom-right`,
+ * `top-left` or `top-right`. Default is `top-left`.
+ * @property {module:ol/style/IconAnchorUnits} [anchorXUnits] Units in which the anchor x value is
+ * specified. A value of `'fraction'` indicates the x value is a fraction of the icon. A value of `'pixels'` indicates
+ * the x value in pixels. Default is `'fraction'`.
+ * @property {module:ol/style/IconAnchorUnits} [anchorYUnits] Units in which the anchor y value is
+ * specified. A value of `'fraction'` indicates the y value is a fraction of the icon. A value of `'pixels'` indicates
+ * the y value in pixels. Default is `'fraction'`.
+ * @property {module:ol/color~Color|string} [color] Color to tint the icon. If not specified,
+ * the icon will be left as is.
+ * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images. Note that you must provide a
+ * `crossOrigin` value if you are using the WebGL renderer or if you want to access pixel data with the Canvas renderer.
+ * See {@link https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image} for more detail.
+ * @property {Image|HTMLCanvasElement} [img] Image object for the icon. If the `src` option is not provided then the
+ * provided image must already be loaded. And in that case, it is required
+ * to provide the size of the image, with the `imgSize` option.
+ * @property {Array.<number>} [offset=[0, 0]] Offset, which, together with the size and the offset origin, define the
+ * sub-rectangle to use from the original icon image.
+ * @property {module:ol/style/IconOrigin} [offsetOrigin] Origin of the offset: `bottom-left`, `bottom-right`,
+ * `top-left` or `top-right`. Default is `top-left`.
+ * @property {number} [opacity=1] Opacity of the icon.
+ * @property {number} [scale=1] Scale.
+ * @property {boolean} [snapToPixel=true] If `true` integral numbers of pixels are used as the X and Y pixel coordinate
+ * when drawing the icon in the output canvas. If `false` fractional numbers may be used. Using `true` allows for
+ * "sharp" rendering (no blur), while using `false` allows for "accurate" rendering. Note that accuracy is important if
+ * the icon's position is animated. Without it, the icon may jitter noticeably.
+ * @property {boolean} [rotateWithView=false] Whether to rotate the icon with the view.
+ * @property {number} [rotation=0] Rotation in radians (positive rotation clockwise).
+ * @property {module:ol/size~Size} [size] Icon size in pixel. Can be used together with `offset` to define the
+ * sub-rectangle to use from the origin (sprite) icon image.
+ * @property {module:ol/size~Size} [imgSize] Image size in pixels. Only required if `img` is set and `src` is not, and
+ * for SVG images in Internet Explorer 11. The provided `imgSize` needs to match the actual size of the image.
+ * @property {string} [src] Image source URI.
+ */
+
+
 /**
  * @classdesc
  * Set icon style for vector features.
  *
  * @constructor
- * @param {olx.style.IconOptions=} opt_options Options.
- * @extends {ol.style.Image}
+ * @param {module:ol/style/Icon~Options=} opt_options Options.
+ * @extends {module:ol/style/Image}
  * @api
  */
 const Icon = function(opt_options) {
@@ -39,21 +79,21 @@ const Icon = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.IconOrigin}
+   * @type {module:ol/style/IconOrigin}
    */
   this.anchorOrigin_ = options.anchorOrigin !== undefined ?
     options.anchorOrigin : IconOrigin.TOP_LEFT;
 
   /**
    * @private
-   * @type {ol.style.IconAnchorUnits}
+   * @type {module:ol/style/IconAnchorUnits}
    */
   this.anchorXUnits_ = options.anchorXUnits !== undefined ?
     options.anchorXUnits : IconAnchorUnits.FRACTION;
 
   /**
    * @private
-   * @type {ol.style.IconAnchorUnits}
+   * @type {module:ol/style/IconAnchorUnits}
    */
   this.anchorYUnits_ = options.anchorYUnits !== undefined ?
     options.anchorYUnits : IconAnchorUnits.FRACTION;
@@ -92,7 +132,7 @@ const Icon = function(opt_options) {
     6); // A defined and non-empty `src` or `image` must be provided
 
   /**
-   * @type {module:ol/ImageState~ImageState}
+   * @type {module:ol/ImageState}
    */
   const imageState = options.src !== undefined ?
     ImageState.IDLE : ImageState.LOADED;
@@ -105,7 +145,7 @@ const Icon = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.IconImage}
+   * @type {module:ol/style/IconImage}
    */
   this.iconImage_ = getIconImage(
     image, /** @type {string} */ (src), imgSize, this.crossOrigin_, imageState, this.color_);
@@ -118,7 +158,7 @@ const Icon = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.IconOrigin}
+   * @type {module:ol/style/IconOrigin}
    */
   this.offsetOrigin_ = options.offsetOrigin !== undefined ?
     options.offsetOrigin : IconOrigin.TOP_LEFT;
@@ -177,7 +217,7 @@ inherits(Icon, ImageStyle);
 
 /**
  * Clones the style. The underlying Image/HTMLCanvasElement is not cloned.
- * @return {ol.style.Icon} The cloned style.
+ * @return {module:ol/style/Icon} The cloned style.
  * @api
  */
 Icon.prototype.clone = function() {

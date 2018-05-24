@@ -2,19 +2,11 @@ import {inherits} from '../src/ol/index.js';
 import Feature from '../src/ol/Feature.js';
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
-import LineString from '../src/ol/geom/LineString.js';
-import Point from '../src/ol/geom/Point.js';
-import Polygon from '../src/ol/geom/Polygon.js';
-import {defaults as defaultInteractions} from '../src/ol/interaction.js';
-import PointerInteraction from '../src/ol/interaction/Pointer.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
-import TileJSON from '../src/ol/source/TileJSON.js';
-import VectorSource from '../src/ol/source/Vector.js';
-import Fill from '../src/ol/style/Fill.js';
-import Icon from '../src/ol/style/Icon.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {LineString, Point, Polygon} from '../src/ol/geom.js';
+import {defaults as defaultInteractions, Pointer as PointerInteraction} from '../src/ol/interaction.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
+import {TileJSON, Vector as VectorSource} from '../src/ol/source.js';
+import {Fill, Icon, Stroke, Style} from '../src/ol/style.js';
 
 
 /**
@@ -25,7 +17,7 @@ const app = {};
 
 /**
  * @constructor
- * @extends {ol.interaction.Pointer}
+ * @extends {module:ol/interaction/Pointer}
  */
 app.Drag = function() {
 
@@ -37,7 +29,7 @@ app.Drag = function() {
   });
 
   /**
-   * @type {ol.Pixel}
+   * @type {module:ol~Pixel}
    * @private
    */
   this.coordinate_ = null;
@@ -157,7 +149,7 @@ const map = new Map({
         features: [pointFeature, lineFeature, polygonFeature]
       }),
       style: new Style({
-        image: new Icon(/** @type {olx.style.IconOptions} */ ({
+        image: new Icon(/** @type {module:ol/style/Icon~Options} */ ({
           anchor: [0.5, 46],
           anchorXUnits: 'fraction',
           anchorYUnits: 'pixels',

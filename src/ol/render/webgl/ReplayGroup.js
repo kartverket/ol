@@ -19,8 +19,8 @@ import WebGLTextReplay from '../webgl/TextReplay.js';
 const HIT_DETECTION_SIZE = [1, 1];
 
 /**
- * @type {Object.<ol.render.ReplayType,
- *                function(new: ol.render.webgl.Replay, number,
+ * @type {Object.<module:ol/render/ReplayType,
+ *                function(new: module:ol/render/webgl/Replay, number,
  *                module:ol/extent~Extent)>}
  */
 const BATCH_CONSTRUCTORS = {
@@ -34,7 +34,7 @@ const BATCH_CONSTRUCTORS = {
 
 /**
  * @constructor
- * @extends {ol.render.ReplayGroup}
+ * @extends {module:ol/render/ReplayGroup}
  * @param {number} tolerance Tolerance.
  * @param {module:ol/extent~Extent} maxExtent Max extent.
  * @param {number=} opt_renderBuffer Render buffer.
@@ -64,7 +64,7 @@ const WebGLReplayGroup = function(tolerance, maxExtent, opt_renderBuffer) {
   /**
    * @private
    * @type {!Object.<string,
-   *        Object.<ol.render.ReplayType, ol.render.webgl.Replay>>}
+   *        Object.<module:ol/render/ReplayType, module:ol/render/webgl/Replay>>}
    */
   this.replaysByZIndex_ = {};
 
@@ -74,14 +74,14 @@ inherits(WebGLReplayGroup, ReplayGroup);
 
 
 /**
- * @param {ol.style.Style} style Style.
+ * @param {module:ol/style/Style} style Style.
  * @param {boolean} group Group with previous replay.
  */
 WebGLReplayGroup.prototype.addDeclutter = function(style, group) {};
 
 
 /**
- * @param {module:ol/webgl/Context~WebGLContext} context WebGL context.
+ * @param {module:ol/webgl/Context} context WebGL context.
  * @return {function()} Delete resources function.
  */
 WebGLReplayGroup.prototype.getDeleteResourcesFunction = function(context) {
@@ -106,7 +106,7 @@ WebGLReplayGroup.prototype.getDeleteResourcesFunction = function(context) {
 
 
 /**
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  */
 WebGLReplayGroup.prototype.finish = function(context) {
   let zKey;
@@ -151,15 +151,14 @@ WebGLReplayGroup.prototype.isEmpty = function() {
 
 
 /**
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  * @param {module:ol/coordinate~Coordinate} center Center.
  * @param {number} resolution Resolution.
  * @param {number} rotation Rotation.
  * @param {module:ol/size~Size} size Size.
  * @param {number} pixelRatio Pixel ratio.
  * @param {number} opacity Global opacity.
- * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
- *  to skip.
+ * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features to skip.
  */
 WebGLReplayGroup.prototype.replay = function(context,
   center, resolution, rotation, size, pixelRatio,
@@ -186,16 +185,15 @@ WebGLReplayGroup.prototype.replay = function(context,
 
 /**
  * @private
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  * @param {module:ol/coordinate~Coordinate} center Center.
  * @param {number} resolution Resolution.
  * @param {number} rotation Rotation.
  * @param {module:ol/size~Size} size Size.
  * @param {number} pixelRatio Pixel ratio.
  * @param {number} opacity Global opacity.
- * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
- *  to skip.
- * @param {function((module:ol/Feature~Feature|ol.render.Feature)): T|undefined} featureCallback Feature callback.
+ * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features to skip.
+ * @param {function((module:ol/Feature|module:ol/render/Feature)): T|undefined} featureCallback Feature callback.
  * @param {boolean} oneByOne Draw features one-by-one for the hit-detecion.
  * @param {module:ol/extent~Extent=} opt_hitExtent Hit extent: Only features intersecting
  *  this extent are checked.
@@ -232,16 +230,15 @@ WebGLReplayGroup.prototype.replayHitDetection_ = function(context,
 
 /**
  * @param {module:ol/coordinate~Coordinate} coordinate Coordinate.
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  * @param {module:ol/coordinate~Coordinate} center Center.
  * @param {number} resolution Resolution.
  * @param {number} rotation Rotation.
  * @param {module:ol/size~Size} size Size.
  * @param {number} pixelRatio Pixel ratio.
  * @param {number} opacity Global opacity.
- * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
- *  to skip.
- * @param {function((module:ol/Feature~Feature|ol.render.Feature)): T|undefined} callback Feature callback.
+ * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features to skip.
+ * @param {function((module:ol/Feature|module:ol/render/Feature)): T|undefined} callback Feature callback.
  * @return {T|undefined} Callback result.
  * @template T
  */
@@ -268,7 +265,7 @@ WebGLReplayGroup.prototype.forEachFeatureAtCoordinate = function(
     coordinate, resolution, rotation, HIT_DETECTION_SIZE,
     pixelRatio, opacity, skippedFeaturesHash,
     /**
-     * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
+     * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
      * @return {?} Callback result.
      */
     function(feature) {
@@ -287,15 +284,14 @@ WebGLReplayGroup.prototype.forEachFeatureAtCoordinate = function(
 
 /**
  * @param {module:ol/coordinate~Coordinate} coordinate Coordinate.
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  * @param {module:ol/coordinate~Coordinate} center Center.
  * @param {number} resolution Resolution.
  * @param {number} rotation Rotation.
  * @param {module:ol/size~Size} size Size.
  * @param {number} pixelRatio Pixel ratio.
  * @param {number} opacity Global opacity.
- * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
- *  to skip.
+ * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features to skip.
  * @return {boolean} Is there a feature at the given coordinate?
  */
 WebGLReplayGroup.prototype.hasFeatureAtCoordinate = function(
@@ -309,7 +305,7 @@ WebGLReplayGroup.prototype.hasFeatureAtCoordinate = function(
     coordinate, resolution, rotation, HIT_DETECTION_SIZE,
     pixelRatio, opacity, skippedFeaturesHash,
     /**
-     * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
+     * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
      * @return {boolean} Is there a feature?
      */
     function(feature) {

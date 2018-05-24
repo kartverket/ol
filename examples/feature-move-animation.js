@@ -3,15 +3,10 @@ import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import Polyline from '../src/ol/format/Polyline.js';
 import Point from '../src/ol/geom/Point.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import BingMaps from '../src/ol/source/BingMaps.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import CircleStyle from '../src/ol/style/Circle.js';
-import Fill from '../src/ol/style/Fill.js';
-import Icon from '../src/ol/style/Icon.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {Circle as CircleStyle, Fill, Icon, Stroke, Style} from '../src/ol/style.js';
 
 // This long string is placed here due to jsFiddle limitations.
 // It is usually loaded with AJAX.

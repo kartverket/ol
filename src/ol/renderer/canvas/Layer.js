@@ -14,8 +14,8 @@ import {create as createTransform, apply as applyTransform, compose as composeTr
 /**
  * @constructor
  * @abstract
- * @extends {ol.renderer.Layer}
- * @param {module:ol/layer/Layer~Layer} layer Layer.
+ * @extends {module:ol/renderer/Layer}
+ * @param {module:ol/layer/Layer} layer Layer.
  */
 const CanvasLayerRenderer = function(layer) {
 
@@ -72,7 +72,7 @@ CanvasLayerRenderer.prototype.clip = function(context, frameState, extent) {
 
 
 /**
- * @param {ol.render.EventType} type Event type.
+ * @param {module:ol/render/EventType} type Event type.
  * @param {CanvasRenderingContext2D} context Context.
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @param {module:ol/transform~Transform=} opt_transform Transform.
@@ -101,7 +101,7 @@ CanvasLayerRenderer.prototype.dispatchComposeEvent_ = function(type, context, fr
 /**
  * @param {module:ol/coordinate~Coordinate} coordinate Coordinate.
  * @param {module:ol/PluggableMap~FrameState} frameState FrameState.
- * @param {function(this: S, module:ol/layer/Layer~Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer
+ * @param {function(this: S, module:ol/layer/Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer
  *     callback.
  * @param {S} thisArg Value to use as `this` when executing `callback`.
  * @return {T|undefined} Callback result.

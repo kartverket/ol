@@ -7,6 +7,15 @@ import Atlas from '../style/Atlas.js';
 
 
 /**
+ * @typedef {Object} Options
+ * @property {number} [initialSize=256] The size in pixels of the first atlas image.
+ * @property {number} [maxSize] The maximum size in pixels of atlas images. Default is
+ * `WEBGL_MAX_TEXTURE_SIZE` or 2048 if WebGL is not supported.
+ * @property {number} [space=1] The space in pixels between images.
+ */
+
+
+/**
  * Provides information for an image inside an atlas manager.
  * `offsetX` and `offsetY` is the position of the image inside
  * the atlas image `image` and the position of the hit-detection image
@@ -47,7 +56,7 @@ const MAX_ATLAS_SIZE = -1;
  * @constructor
  * @struct
  * @api
- * @param {olx.style.AtlasManagerOptions=} opt_options Options.
+ * @param {module:ol/style/AtlasManager~Options=} opt_options Options.
  */
 const AtlasManager = function(opt_options) {
 
@@ -80,7 +89,7 @@ const AtlasManager = function(opt_options) {
 
   /**
    * @private
-   * @type {Array.<ol.style.Atlas>}
+   * @type {Array.<module:ol/style/Atlas>}
    */
   this.atlases_ = [new Atlas(this.currentSize_, this.space_)];
 
@@ -93,7 +102,7 @@ const AtlasManager = function(opt_options) {
 
   /**
    * @private
-   * @type {Array.<ol.style.Atlas>}
+   * @type {Array.<module:ol/style/Atlas>}
    */
   this.hitAtlases_ = [new Atlas(this.currentHitSize_, this.space_)];
 };
@@ -119,7 +128,7 @@ AtlasManager.prototype.getInfo = function(id) {
 
 /**
  * @private
- * @param {Array.<ol.style.Atlas>} atlases The atlases to search.
+ * @param {Array.<module:ol/style/Atlas>} atlases The atlases to search.
  * @param {string} id The identifier of the entry to check.
  * @return {?module:ol/style/Atlas~AtlasInfo} The position and atlas image for the entry,
  *    or `null` if the entry is not part of the atlases.
@@ -145,12 +154,14 @@ AtlasManager.prototype.getInfo_ = function(atlases, id) {
  *    entry, or `null` if the entry is not part of the atlases.
  */
 AtlasManager.prototype.mergeInfos_ = function(info, hitInfo) {
-  return /** @type {module:ol/style/AtlasManager~AtlasManagerInfo} */ ({
-    offsetX: info.offsetX,
-    offsetY: info.offsetY,
-    image: info.image,
-    hitImage: hitInfo.image
-  });
+  return (
+    /** @type {module:ol/style/AtlasManager~AtlasManagerInfo} */ ({
+      offsetX: info.offsetX,
+      offsetY: info.offsetY,
+      image: info.image,
+      hitImage: hitInfo.image
+    })
+  );
 };
 
 
@@ -184,8 +195,7 @@ AtlasManager.prototype.add = function(id, width, height,
   }
 
   /** @type {?module:ol/style/Atlas~AtlasInfo} */
-  const info = this.add_(false,
-    id, width, height, renderCallback, opt_this);
+  const info = this.add_(false, id, width, height, renderCallback, opt_this);
   if (!info) {
     return null;
   }
@@ -216,8 +226,7 @@ AtlasManager.prototype.add = function(id, width, height,
  * @return {?module:ol/style/Atlas~AtlasInfo}  The position and atlas image for the entry,
  *    or `null` if the image is too big.
  */
-AtlasManager.prototype.add_ = function(isHitAtlas, id, width, height,
-  renderCallback, opt_this) {
+AtlasManager.prototype.add_ = function(isHitAtlas, id, width, height, renderCallback, opt_this) {
   const atlases = (isHitAtlas) ? this.hitAtlases_ : this.atlases_;
   let atlas, info, i, ii;
   for (i = 0, ii = atlases.length; i < ii; ++i) {

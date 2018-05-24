@@ -3,12 +3,10 @@ import Map from '../src/ol/Map.js';
 import Overlay from '../src/ol/Overlay.js';
 import View from '../src/ol/View.js';
 import Point from '../src/ol/geom/Point.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import TileJSON from '../src/ol/source/TileJSON.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import Icon from '../src/ol/style/Icon.js';
-import Style from '../src/ol/style/Style.js';
+import {Icon, Style} from '../src/ol/style.js';
 
 
 const iconFeature = new Feature({
@@ -19,7 +17,7 @@ const iconFeature = new Feature({
 });
 
 const iconStyle = new Style({
-  image: new Icon(/** @type {olx.style.IconOptions} */ ({
+  image: new Icon(/** @type {module:ol/style/Icon~Options} */ ({
     anchor: [0.5, 46],
     anchorXUnits: 'fraction',
     anchorYUnits: 'pixels',

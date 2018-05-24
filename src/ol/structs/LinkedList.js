@@ -2,6 +2,15 @@
  * @module ol/structs/LinkedList
  */
 
+
+/**
+ * @typedef {Object} Item
+ * @property {module:ol/structs/LinkedList~Item} [prev]
+ * @property {module:ol/structs/LinkedList~Item} [next]
+ * @property {?} data
+ */
+
+
 /**
  * Creates an empty linked list structure.
  *
@@ -14,21 +23,21 @@ const LinkedList = function(opt_circular) {
 
   /**
    * @private
-   * @type {ol.LinkedListItem|undefined}
+   * @type {module:ol/structs/LinkedList~Item|undefined}
    */
-  this.first_ = undefined;
+  this.first_;
 
   /**
    * @private
-   * @type {ol.LinkedListItem|undefined}
+   * @type {module:ol/structs/LinkedList~Item|undefined}
    */
-  this.last_ = undefined;
+  this.last_;
 
   /**
    * @private
-   * @type {ol.LinkedListItem|undefined}
+   * @type {module:ol/structs/LinkedList~Item|undefined}
    */
-  this.head_ = undefined;
+  this.head_;
 
   /**
    * @private
@@ -50,7 +59,7 @@ const LinkedList = function(opt_circular) {
  */
 LinkedList.prototype.insertItem = function(data) {
 
-  /** @type {ol.LinkedListItem} */
+  /** @type {module:ol/structs/LinkedList~Item} */
   const item = {
     prev: undefined,
     next: undefined,
@@ -216,7 +225,7 @@ LinkedList.prototype.setFirstItem = function() {
 
 /**
  * Concatenates two lists.
- * @param {ol.structs.LinkedList} list List to merge into the current list.
+ * @param {module:ol/structs/LinkedList} list List to merge into the current list.
  */
 LinkedList.prototype.concat = function(list) {
   if (list.head_) {

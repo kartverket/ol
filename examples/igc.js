@@ -3,16 +3,11 @@ import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import {defaults as defaultControls} from '../src/ol/control.js';
 import IGC from '../src/ol/format/IGC.js';
-import LineString from '../src/ol/geom/LineString.js';
-import Point from '../src/ol/geom/Point.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {LineString, Point} from '../src/ol/geom.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import OSM, {ATTRIBUTION} from '../src/ol/source/OSM.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import CircleStyle from '../src/ol/style/Circle.js';
-import Fill from '../src/ol/style/Fill.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {Circle as CircleStyle, Fill, Stroke, Style} from '../src/ol/style.js';
 
 
 const colors = {

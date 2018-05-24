@@ -16,10 +16,28 @@ import {assign} from '../obj.js';
 import CanvasImageLayerRenderer from '../renderer/canvas/ImageLayer.js';
 import CanvasTileLayerRenderer from '../renderer/canvas/TileLayer.js';
 import ImageSource from '../source/Image.js';
-import RasterOperationType from '../source/RasterOperationType.js';
 import SourceState from '../source/State.js';
 import TileSource from '../source/Tile.js';
 import {create as createTransform} from '../transform.js';
+
+
+/**
+ * A function that takes an array of input data, performs some operation, and
+ * returns an array of output data.
+ * For `pixel` type operations, the function will be called with an array of
+ * pixels, where each pixel is an array of four numbers (`[r, g, b, a]`) in the
+ * range of 0 - 255. It should return a single pixel array.
+ * For `'image'` type operations, functions will be called with an array of
+ * {@link ImageData https://developer.mozilla.org/en-US/docs/Web/API/ImageData}
+ * and should return a single {@link ImageData
+ * https://developer.mozilla.org/en-US/docs/Web/API/ImageData}.  The operations
+ * are called with a second "data" argument, which can be used for storage.  The
+ * data object is accessible from raster events, where it can be initialized in
+ * "beforeoperations" and accessed again in "afteroperations".
+ *
+ * @typedef {function((Array.<Array.<number>>|Array.<ImageData>), Object):
+ *     (Array.<number>|ImageData)} Operation
+ */
 
 
 /**
@@ -28,14 +46,14 @@ import {create as createTransform} from '../transform.js';
 const RasterEventType = {
   /**
    * Triggered before operations are run.
-   * @event ol.source.Raster.Event#beforeoperations
+   * @event ol/source/Raster~RasterSourceEvent#beforeoperations
    * @api
    */
   BEFOREOPERATIONS: 'beforeoperations',
 
   /**
    * Triggered after operations are run.
-   * @event ol.source.Raster.Event#afteroperations
+   * @event ol/source/Raster~RasterSourceEvent#afteroperations
    * @api
    */
   AFTEROPERATIONS: 'afteroperations'
@@ -43,13 +61,22 @@ const RasterEventType = {
 
 
 /**
+ * Raster operation type. Supported values are `'pixel'` and `'image'`.
+ * @enum {string}
+ */
+const RasterOperationType = {
+  PIXEL: 'pixel',
+  IMAGE: 'image'
+};
+
+
+/**
  * @classdesc
- * Events emitted by {@link ol.source.Raster} instances are instances of this
+ * Events emitted by {@link module:ol/source/Raster} instances are instances of this
  * type.
  *
  * @constructor
- * @extends {module:ol/events/Event~Event}
- * @implements {oli.source.RasterEvent}
+ * @extends {module:ol/events/Event}
  * @param {string} type Type.
  * @param {module:ol/PluggableMap~FrameState} frameState The frame state.
  * @param {Object} data An object made available to operations.
@@ -82,17 +109,36 @@ const RasterSourceEvent = function(type, frameState, data) {
 };
 inherits(RasterSourceEvent, Event);
 
+/**
+ * @typedef {Object} Options
+ * @property {Array.<module:ol/source/Source>} sources Input sources.
+ * @property {module:ol/source/Raster~Operation} [operation] Raster operation.
+ * The operation will be called with data from input sources
+ * and the output will be assigned to the raster source.
+ * @property {Object} [lib] Functions that will be made available to operations run in a worker.
+ * @property {number} [threads] By default, operations will be run in a single worker thread.
+ * To avoid using workers altogether, set `threads: 0`.  For pixel operations, operations can
+ * be run in multiple worker threads.  Note that there is additional overhead in
+ * transferring data to multiple workers, and that depending on the user's
+ * system, it may not be possible to parallelize the work.
+ * @property {module:ol/source/Raster~RasterOperationType} [operationType='pixel'] Operation type.
+ * Supported values are `'pixel'` and `'image'`.  By default,
+ * `'pixel'` operations are assumed, and operations will be called with an
+ * array of pixels from input sources.  If set to `'image'`, operations will
+ * be called with an array of ImageData objects from input sources.
+ */
+
 
 /**
  * @classdesc
  * A source that transforms data from any number of input sources using an
- * {@link ol.RasterOperation} function to transform input pixel values into
+ * {@link module:ol/source/Raster~Operation} function to transform input pixel values into
  * output pixel values.
  *
  * @constructor
- * @extends {ol.source.Image}
- * @fires ol.source.Raster.Event
- * @param {olx.source.RasterOptions} options Options.
+ * @extends {module:ol/source/Image}
+ * @fires ol/source/Raster~RasterSourceEvent
+ * @param {module:ol/source/Raster~Options=} options Options.
  * @api
  */
 const RasterSource = function(options) {
@@ -105,7 +151,7 @@ const RasterSource = function(options) {
 
   /**
    * @private
-   * @type {ol.source.RasterOperationType}
+   * @type {module:ol/source/Raster~RasterOperationType}
    */
   this.operationType_ = options.operationType !== undefined ?
     options.operationType : RasterOperationType.PIXEL;
@@ -118,7 +164,7 @@ const RasterSource = function(options) {
 
   /**
    * @private
-   * @type {Array.<ol.renderer.canvas.Layer>}
+   * @type {Array.<module:ol/renderer/canvas/Layer>}
    */
   this.renderers_ = createRenderers(options.sources);
 
@@ -129,7 +175,7 @@ const RasterSource = function(options) {
 
   /**
    * @private
-   * @type {module:ol/TileQueue~TileQueue}
+   * @type {module:ol/TileQueue}
    */
   this.tileQueue_ = new TileQueue(
     function() {
@@ -152,7 +198,7 @@ const RasterSource = function(options) {
 
   /**
    * The most recently rendered image canvas.
-   * @type {module:ol/ImageCanvas~ImageCanvas}
+   * @type {module:ol/ImageCanvas}
    * @private
    */
   this.renderedImageCanvas_ = null;
@@ -203,7 +249,7 @@ inherits(RasterSource, ImageSource);
 
 /**
  * Set the operation.
- * @param {ol.RasterOperation} operation New operation.
+ * @param {module:ol/source/Raster~Operation} operation New operation.
  * @param {Object=} opt_lib Functions that will be available to operations run
  *     in a worker.
  * @api
@@ -224,7 +270,7 @@ RasterSource.prototype.setOperation = function(operation, opt_lib) {
  * Update the stored frame state.
  * @param {module:ol/extent~Extent} extent The view extent (in map units).
  * @param {number} resolution The view resolution.
- * @param {module:ol/proj/Projection~Projection} projection The view projection.
+ * @param {module:ol/proj/Projection} projection The view projection.
  * @return {module:ol/PluggableMap~FrameState} The updated frame state.
  * @private
  */
@@ -281,7 +327,7 @@ RasterSource.prototype.getImage = function(extent, resolution, pixelRatio, proje
   const frameState = this.updateFrameState_(extent, resolution, projection);
   this.requestedFrameState_ = frameState;
 
-  // check if we can't reuse the existing ol.ImageCanvas
+  // check if we can't reuse the existing ol/ImageCanvas
   if (this.renderedImageCanvas_) {
     const renderedResolution = this.renderedImageCanvas_.getResolution();
     const renderedExtent = this.renderedImageCanvas_.getExtent();
@@ -377,7 +423,7 @@ let sharedContext = null;
 
 /**
  * Get image data from a renderer.
- * @param {ol.renderer.canvas.Layer} renderer Layer renderer.
+ * @param {module:ol/renderer/canvas/Layer} renderer Layer renderer.
  * @param {module:ol/PluggableMap~FrameState} frameState The frame state.
  * @param {module:ol/layer/Layer~State} layerState The layer state.
  * @return {ImageData} The image data.
@@ -405,7 +451,7 @@ function getImageData(renderer, frameState, layerState) {
 
 /**
  * Get a list of layer states from a list of renderers.
- * @param {Array.<ol.renderer.canvas.Layer>} renderers Layer renderers.
+ * @param {Array.<module:ol/renderer/canvas/Layer>} renderers Layer renderers.
  * @return {Array.<module:ol/layer/Layer~State>} The layer states.
  */
 function getLayerStatesArray(renderers) {
@@ -417,8 +463,8 @@ function getLayerStatesArray(renderers) {
 
 /**
  * Create renderers for all sources.
- * @param {Array.<ol.source.Source>} sources The sources.
- * @return {Array.<ol.renderer.canvas.Layer>} Array of layer renderers.
+ * @param {Array.<module:ol/source/Source>} sources The sources.
+ * @return {Array.<module:ol/renderer/canvas/Layer>} Array of layer renderers.
  */
 function createRenderers(sources) {
   const len = sources.length;
@@ -432,8 +478,8 @@ function createRenderers(sources) {
 
 /**
  * Create a renderer for the provided source.
- * @param {ol.source.Source} source The source.
- * @return {ol.renderer.canvas.Layer} The renderer.
+ * @param {module:ol/source/Source} source The source.
+ * @return {module:ol/renderer/canvas/Layer} The renderer.
  */
 function createRenderer(source) {
   let renderer = null;
@@ -448,8 +494,8 @@ function createRenderer(source) {
 
 /**
  * Create an image renderer for the provided source.
- * @param {ol.source.Image} source The source.
- * @return {ol.renderer.canvas.Layer} The renderer.
+ * @param {module:ol/source/Image} source The source.
+ * @return {module:ol/renderer/canvas/Layer} The renderer.
  */
 function createImageRenderer(source) {
   const layer = new ImageLayer({source: source});
@@ -459,8 +505,8 @@ function createImageRenderer(source) {
 
 /**
  * Create a tile renderer for the provided source.
- * @param {ol.source.Tile} source The source.
- * @return {ol.renderer.canvas.Layer} The renderer.
+ * @param {module:ol/source/Tile} source The source.
+ * @return {module:ol/renderer/canvas/Layer} The renderer.
  */
 function createTileRenderer(source) {
   const layer = new TileLayer({source: source});

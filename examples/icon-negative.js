@@ -3,17 +3,15 @@ import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import Point from '../src/ol/geom/Point.js';
 import Select from '../src/ol/interaction/Select.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import Stamen from '../src/ol/source/Stamen.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import Icon from '../src/ol/style/Icon.js';
-import Style from '../src/ol/style/Style.js';
+import {Icon, Style} from '../src/ol/style.js';
 
 
 function createStyle(src, img) {
   return new Style({
-    image: new Icon(/** @type {olx.style.IconOptions} */ ({
+    image: new Icon(/** @type {module:ol/style/Icon~Options} */ ({
       anchor: [0.5, 0.96],
       crossOrigin: 'anonymous',
       src: src,

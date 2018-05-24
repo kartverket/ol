@@ -7,7 +7,7 @@ import {createCanvasContext2D} from '../../dom.js';
 import {intersects} from '../../extent.js';
 import {matchingChunk} from '../../geom/flat/straightchunk.js';
 import GeometryType from '../../geom/GeometryType.js';
-import {CANVAS_LINE_DASH, SAFARI} from '../../has.js';
+import {CANVAS_LINE_DASH} from '../../has.js';
 import {labelCache, measureTextWidth, defaultTextAlign, measureTextHeight, defaultPadding, defaultLineCap, defaultLineDashOffset, defaultLineDash, defaultLineJoin, defaultFillStyle, checkFont, defaultFont, defaultLineWidth, defaultMiterLimit, defaultStrokeStyle, defaultTextBaseline} from '../canvas.js';
 import CanvasInstruction from '../canvas/Instruction.js';
 import CanvasReplay from '../canvas/Replay.js';
@@ -16,7 +16,7 @@ import TextPlacement from '../../style/TextPlacement.js';
 
 /**
  * @constructor
- * @extends {ol.render.canvas.Replay}
+ * @extends {module:ol/render/canvas/Replay}
  * @param {number} tolerance Tolerance.
  * @param {module:ol/extent~Extent} maxExtent Maximum extent.
  * @param {number} resolution Resolution.
@@ -32,7 +32,7 @@ const CanvasTextReplay = function(
 
   /**
    * @private
-   * @type {ol.DeclutterGroup}
+   * @type {module:ol/render/canvas~DeclutterGroup}
    */
   this.declutterGroup_;
 
@@ -74,34 +74,34 @@ const CanvasTextReplay = function(
 
   /**
    * @private
-   * @type {?ol.CanvasFillState}
+   * @type {?module:ol/render/canvas~FillState}
    */
   this.textFillState_ = null;
 
   /**
-   * @type {!Object.<string, ol.CanvasFillState>}
+   * @type {!Object.<string, module:ol/render/canvas~FillState>}
    */
   this.fillStates = {};
 
   /**
    * @private
-   * @type {?ol.CanvasStrokeState}
+   * @type {?module:ol/render/canvas~StrokeState}
    */
   this.textStrokeState_ = null;
 
   /**
-   * @type {!Object.<string, ol.CanvasStrokeState>}
+   * @type {!Object.<string, module:ol/render/canvas~StrokeState>}
    */
   this.strokeStates = {};
 
   /**
    * @private
-   * @type {ol.CanvasTextState}
+   * @type {module:ol/render/canvas~TextState}
    */
-  this.textState_ = /** @type {ol.CanvasTextState} */ ({});
+  this.textState_ = /** @type {module:ol/render/canvas~TextState} */ ({});
 
   /**
-   * @type {!Object.<string, ol.CanvasTextState>}
+   * @type {!Object.<string, module:ol/render/canvas~TextState>}
    */
   this.textStates = {};
 
@@ -226,24 +226,24 @@ CanvasTextReplay.prototype.drawText = function(geometry, feature) {
         end = flatCoordinates.length;
         break;
       case GeometryType.LINE_STRING:
-        flatCoordinates = /** @type {module:ol/geom/LineString~LineString} */ (geometry).getFlatMidpoint();
+        flatCoordinates = /** @type {module:ol/geom/LineString} */ (geometry).getFlatMidpoint();
         break;
       case GeometryType.CIRCLE:
-        flatCoordinates = /** @type {module:ol/geom/Circle~Circle} */ (geometry).getCenter();
+        flatCoordinates = /** @type {module:ol/geom/Circle} */ (geometry).getCenter();
         break;
       case GeometryType.MULTI_LINE_STRING:
-        flatCoordinates = /** @type {module:ol/geom/MultiLineString~MultiLineString} */ (geometry).getFlatMidpoints();
+        flatCoordinates = /** @type {module:ol/geom/MultiLineString} */ (geometry).getFlatMidpoints();
         end = flatCoordinates.length;
         break;
       case GeometryType.POLYGON:
-        flatCoordinates = /** @type {module:ol/geom/Polygon~Polygon} */ (geometry).getFlatInteriorPoint();
+        flatCoordinates = /** @type {module:ol/geom/Polygon} */ (geometry).getFlatInteriorPoint();
         if (!textState.overflow && flatCoordinates[2] / this.resolution < width) {
           return;
         }
         stride = 3;
         break;
       case GeometryType.MULTI_POLYGON:
-        const interiorPoints = /** @type {module:ol/geom/MultiPolygon~MultiPolygon} */ (geometry).getFlatInteriorPoints();
+        const interiorPoints = /** @type {module:ol/geom/MultiPolygon} */ (geometry).getFlatInteriorPoints();
         flatCoordinates = [];
         for (i = 0, ii = interiorPoints.length; i < ii; i += 3) {
           if (textState.overflow || interiorPoints[i + 2] / this.resolution >= width) {
@@ -258,14 +258,18 @@ CanvasTextReplay.prototype.drawText = function(geometry, feature) {
       default:
     }
     end = this.appendFlatCoordinates(flatCoordinates, 0, end, stride, false, false);
-    this.beginGeometry(geometry, feature);
     if (textState.backgroundFill || textState.backgroundStroke) {
       this.setFillStrokeStyle(textState.backgroundFill, textState.backgroundStroke);
-      this.updateFillStyle(this.state, this.createFill, geometry);
-      this.hitDetectionInstructions.push(this.createFill(this.state, geometry));
-      this.updateStrokeStyle(this.state, this.applyStroke);
-      this.hitDetectionInstructions.push(this.createStroke(this.state));
+      if (textState.backgroundFill) {
+        this.updateFillStyle(this.state, this.createFill, geometry);
+        this.hitDetectionInstructions.push(this.createFill(this.state, geometry));
+      }
+      if (textState.backgroundStroke) {
+        this.updateStrokeStyle(this.state, this.applyStroke);
+        this.hitDetectionInstructions.push(this.createStroke(this.state));
+      }
     }
+    this.beginGeometry(geometry, feature);
     this.drawTextImage_(label, begin, end);
     this.endGeometry(geometry, feature);
   }
@@ -310,7 +314,7 @@ CanvasTextReplay.prototype.getImage = function(text, textKey, fillKey, strokeKey
     context.font = textState.font;
     if (strokeKey) {
       context.strokeStyle = strokeState.strokeStyle;
-      context.lineWidth = strokeWidth * (SAFARI ? scale : 1);
+      context.lineWidth = strokeWidth;
       context.lineCap = strokeState.lineCap;
       context.lineJoin = strokeState.lineJoin;
       context.miterLimit = strokeState.miterLimit;
@@ -381,7 +385,7 @@ CanvasTextReplay.prototype.drawTextImage_ = function(label, begin, end) {
  * @private
  * @param {number} begin Begin.
  * @param {number} end End.
- * @param {ol.DeclutterGroup} declutterGroup Declutter group.
+ * @param {module:ol/render/canvas~DeclutterGroup} declutterGroup Declutter group.
  */
 CanvasTextReplay.prototype.drawChars_ = function(begin, end, declutterGroup) {
   const strokeState = this.textStrokeState_;
@@ -391,7 +395,7 @@ CanvasTextReplay.prototype.drawChars_ = function(begin, end, declutterGroup) {
   const strokeKey = this.strokeKey_;
   if (strokeState) {
     if (!(strokeKey in this.strokeStates)) {
-      this.strokeStates[strokeKey] = /** @type {ol.CanvasStrokeState} */ ({
+      this.strokeStates[strokeKey] = /** @type {module:ol/render/canvas~StrokeState} */ ({
         strokeStyle: strokeState.strokeStyle,
         lineCap: strokeState.lineCap,
         lineDashOffset: strokeState.lineDashOffset,
@@ -404,7 +408,7 @@ CanvasTextReplay.prototype.drawChars_ = function(begin, end, declutterGroup) {
   }
   const textKey = this.textKey_;
   if (!(this.textKey_ in this.textStates)) {
-    this.textStates[this.textKey_] = /** @type {ol.CanvasTextState} */ ({
+    this.textStates[this.textKey_] = /** @type {module:ol/render/canvas~TextState} */ ({
       font: textState.font,
       textAlign: textState.textAlign || defaultTextAlign,
       scale: textState.scale
@@ -413,7 +417,7 @@ CanvasTextReplay.prototype.drawChars_ = function(begin, end, declutterGroup) {
   const fillKey = this.fillKey_;
   if (fillState) {
     if (!(fillKey in this.fillStates)) {
-      this.fillStates[fillKey] = /** @type {ol.CanvasFillState} */ ({
+      this.fillStates[fillKey] = /** @type {module:ol/render/canvas~FillState} */ ({
         fillStyle: fillState.fillStyle
       });
     }
@@ -466,7 +470,7 @@ CanvasTextReplay.prototype.setTextStyle = function(textStyle, declutterGroup) {
   if (!textStyle) {
     this.text_ = '';
   } else {
-    this.declutterGroup_ = /** @type {ol.DeclutterGroup} */ (declutterGroup);
+    this.declutterGroup_ = /** @type {module:ol/render/canvas~DeclutterGroup} */ (declutterGroup);
 
     const textFillStyle = textStyle.getFill();
     if (!textFillStyle) {
@@ -474,7 +478,7 @@ CanvasTextReplay.prototype.setTextStyle = function(textStyle, declutterGroup) {
     } else {
       fillState = this.textFillState_;
       if (!fillState) {
-        fillState = this.textFillState_ = /** @type {ol.CanvasFillState} */ ({});
+        fillState = this.textFillState_ = /** @type {module:ol/render/canvas~FillState} */ ({});
       }
       fillState.fillStyle = asColorLike(
         textFillStyle.getColor() || defaultFillStyle);
@@ -486,7 +490,7 @@ CanvasTextReplay.prototype.setTextStyle = function(textStyle, declutterGroup) {
     } else {
       strokeState = this.textStrokeState_;
       if (!strokeState) {
-        strokeState = this.textStrokeState_ = /** @type {ol.CanvasStrokeState} */ ({});
+        strokeState = this.textStrokeState_ = /** @type {module:ol/render/canvas~StrokeState} */ ({});
       }
       const lineDash = textStrokeStyle.getLineDash();
       const lineDashOffset = textStrokeStyle.getLineDashOffset();

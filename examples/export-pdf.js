@@ -1,13 +1,10 @@
-// NOCOMPILE
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import {defaults as defaultControls} from '../src/ol/control.js';
 import WKT from '../src/ol/format/WKT.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import {unByKey} from '../src/ol/Observable.js';
-import OSM from '../src/ol/source/OSM.js';
-import VectorSource from '../src/ol/source/Vector.js';
+import {OSM, Vector as VectorSource} from '../src/ol/source.js';
 
 const raster = new TileLayer({
   source: new OSM()
@@ -66,7 +63,7 @@ exportButton.addEventListener('click', function() {
   const dim = dims[format];
   const width = Math.round(dim[0] * resolution / 25.4);
   const height = Math.round(dim[1] * resolution / 25.4);
-  const size = /** @type {ol.Size} */ (map.getSize());
+  const size = /** @type {module:ol/size~Size} */ (map.getSize());
   const extent = map.getView().calculateExtent(size);
 
   const source = raster.getSource();

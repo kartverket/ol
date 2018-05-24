@@ -27,13 +27,13 @@ import {assign} from '../obj.js';
  * @classdesc
  * Abstract base class; normally only used for creating subclasses and not
  * instantiated in apps.
- * Note that with `module:ol/layer/Base~BaseLayer` and all its subclasses, any property set in
- * the options is set as a {@link module:ol/Object~BaseObject} property on the layer object, so
+ * Note that with {@link module:ol/layer/Base} and all its subclasses, any property set in
+ * the options is set as a {@link module:ol/Object} property on the layer object, so
  * is observable, and has get/set accessors.
  *
  * @constructor
  * @abstract
- * @extends {module:ol/Object~BaseObject}
+ * @extends {module:ol/Object}
  * @param {module:ol/layer/Base~Options} options Layer options.
  * @api
  */
@@ -63,13 +63,13 @@ const BaseLayer = function(options) {
    * @private
    */
   this.state_ = /** @type {module:ol/layer/Layer~State} */ ({
-    layer: /** @type {module:ol/layer/Layer~Layer} */ (this),
+    layer: /** @type {module:ol/layer/Layer} */ (this),
     managed: true
   });
 
   /**
    * The layer type.
-   * @type {module:ol/LayerType~LayerType}
+   * @type {module:ol/LayerType}
    * @protected;
    */
   this.type;
@@ -81,7 +81,7 @@ inherits(BaseLayer, BaseObject);
 
 /**
  * Get the layer type (used when creating a layer renderer).
- * @return {module:ol/LayerType~LayerType} The layer type.
+ * @return {module:ol/LayerType} The layer type.
  */
 BaseLayer.prototype.getType = function() {
   return this.type;
@@ -106,9 +106,9 @@ BaseLayer.prototype.getLayerState = function() {
 
 /**
  * @abstract
- * @param {Array.<module:ol/layer/Layer~Layer>=} opt_array Array of layers (to be
+ * @param {Array.<module:ol/layer/Layer>=} opt_array Array of layers (to be
  *     modified in place).
- * @return {Array.<module:ol/layer/Layer~Layer>} Array of layers.
+ * @return {Array.<module:ol/layer/Layer>} Array of layers.
  */
 BaseLayer.prototype.getLayersArray = function(opt_array) {};
 
@@ -130,7 +130,9 @@ BaseLayer.prototype.getLayerStatesArray = function(opt_states) {};
  * @api
  */
 BaseLayer.prototype.getExtent = function() {
-  return /** @type {module:ol/extent~Extent|undefined} */ (this.get(LayerProperty.EXTENT));
+  return (
+    /** @type {module:ol/extent~Extent|undefined} */ (this.get(LayerProperty.EXTENT))
+  );
 };
 
 
@@ -169,7 +171,7 @@ BaseLayer.prototype.getOpacity = function() {
 
 /**
  * @abstract
- * @return {ol.source.State} Source state.
+ * @return {module:ol/source/State} Source state.
  */
 BaseLayer.prototype.getSourceState = function() {};
 

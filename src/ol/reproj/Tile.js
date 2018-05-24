@@ -12,22 +12,28 @@ import {clamp} from '../math.js';
 import {calculateSourceResolution, render as renderReprojected} from '../reproj.js';
 import Triangulation from '../reproj/Triangulation.js';
 
+
+/**
+ * @typedef {function(number, number, number, number) : module:ol/Tile} FunctionType
+ */
+
+
 /**
  * @classdesc
  * Class encapsulating single reprojected tile.
- * See {@link ol.source.TileImage}.
+ * See {@link module:ol/source/TileImage~TileImage}.
  *
  * @constructor
- * @extends {module:ol/Tile~Tile}
- * @param {module:ol/proj/Projection~Projection} sourceProj Source projection.
- * @param {module:ol/tilegrid/TileGrid~TileGrid} sourceTileGrid Source tile grid.
- * @param {module:ol/proj/Projection~Projection} targetProj Target projection.
- * @param {module:ol/tilegrid/TileGrid~TileGrid} targetTileGrid Target tile grid.
+ * @extends {module:ol/Tile}
+ * @param {module:ol/proj/Projection} sourceProj Source projection.
+ * @param {module:ol/tilegrid/TileGrid} sourceTileGrid Source tile grid.
+ * @param {module:ol/proj/Projection} targetProj Target projection.
+ * @param {module:ol/tilegrid/TileGrid} targetTileGrid Target tile grid.
  * @param {module:ol/tilecoord~TileCoord} tileCoord Coordinate of the tile.
  * @param {module:ol/tilecoord~TileCoord} wrappedTileCoord Coordinate of the tile wrapped in X.
  * @param {number} pixelRatio Pixel ratio.
  * @param {number} gutter Gutter of the source tiles.
- * @param {ol.ReprojTileFunctionType} getTileFunction
+ * @param {module:ol/reproj/Tile~FunctionType} getTileFunction
  *     Function returning source tiles (z, x, y, pixelRatio).
  * @param {number=} opt_errorThreshold Acceptable reprojection error (in px).
  * @param {boolean=} opt_renderEdges Render reprojection edges.
@@ -64,13 +70,13 @@ const ReprojTile = function(sourceProj, sourceTileGrid,
 
   /**
    * @private
-   * @type {module:ol/tilegrid/TileGrid~TileGrid}
+   * @type {module:ol/tilegrid/TileGrid}
    */
   this.sourceTileGrid_ = sourceTileGrid;
 
   /**
    * @private
-   * @type {module:ol/tilegrid/TileGrid~TileGrid}
+   * @type {module:ol/tilegrid/TileGrid}
    */
   this.targetTileGrid_ = targetTileGrid;
 
@@ -82,7 +88,7 @@ const ReprojTile = function(sourceProj, sourceTileGrid,
 
   /**
    * @private
-   * @type {!Array.<module:ol/Tile~Tile>}
+   * @type {!Array.<module:ol/Tile>}
    */
   this.sourceTiles_ = [];
 
@@ -140,7 +146,7 @@ const ReprojTile = function(sourceProj, sourceTileGrid,
 
   /**
    * @private
-   * @type {!ol.reproj.Triangulation}
+   * @type {!module:ol/reproj/Triangulation}
    */
   this.triangulation_ = new Triangulation(
     sourceProj, targetProj, limitedTargetExtent, maxSourceExtent,

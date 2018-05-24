@@ -2,15 +2,11 @@ import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import KML from '../src/ol/format/KML.js';
 import Polygon from '../src/ol/geom/Polygon.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import {toContext} from '../src/ol/render.js';
 import Stamen from '../src/ol/source/Stamen.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import Fill from '../src/ol/style/Fill.js';
-import Icon from '../src/ol/style/Icon.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {Fill, Icon, Stroke, Style} from '../src/ol/style.js';
 
 
 const symbol = [[0, 0], [4, 2], [6, 0], [10, 5], [6, 3], [4, 5], [0, 0]];

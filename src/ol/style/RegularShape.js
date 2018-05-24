@@ -9,6 +9,43 @@ import ImageState from '../ImageState.js';
 import {defaultStrokeStyle, defaultFillStyle, defaultLineCap, defaultLineWidth, defaultLineJoin, defaultMiterLimit} from '../render/canvas.js';
 import ImageStyle from '../style/Image.js';
 
+
+/**
+ * Specify radius for regular polygons, or radius1 and radius2 for stars.
+ * @typedef {Object} Options
+ * @property {module:ol/style/Fill} [fill] Fill style.
+ * @property {number} points Number of points for stars and regular polygons. In case of a polygon, the number of points
+ * is the number of sides.
+ * @property {number} [radius] Radius of a regular polygon.
+ * @property {number} [radius1] Outer radius of a star.
+ * @property {number} [radius2] Inner radius of a star.
+ * @property {number} [angle=0] Shape's angle in radians. A value of 0 will have one of the shape's point facing up.
+ * @property {boolean} [snapToPixel=true] If `true` integral numbers of pixels are used as the X and Y pixel coordinate
+ * when drawing the shape in the output canvas. If `false` fractional numbers may be used. Using `true` allows for
+ * "sharp" rendering (no blur), while using `false` allows for "accurate" rendering. Note that accuracy is important if
+ * the shape's position is animated. Without it, the shape may jitter noticeably.
+ * @property {module:ol/style/Stroke} [stroke] Stroke style.
+ * @property {number} [rotation=0] Rotation in radians (positive rotation clockwise).
+ * @property {boolean} [rotateWithView=false] Whether to rotate the shape with the view.
+ * @property {module:ol/style/AtlasManager} [atlasManager] The atlas manager to use for this symbol. When
+ * using WebGL it is recommended to use an atlas manager to avoid texture switching. If an atlas manager is given, the
+ * symbol is added to an atlas. By default no atlas manager is used.
+ */
+
+
+/**
+ * @typedef {Object} RenderOptions
+ * @property {module:ol/colorlike~ColorLike} [strokeStyle]
+ * @property {number} strokeWidth
+ * @property {number} size
+ * @property {string} lineCap
+ * @property {Array.<number>} lineDash
+ * @property {number} lineDashOffset
+ * @property {string} lineJoin
+ * @property {number} miterLimit
+ */
+
+
 /**
  * @classdesc
  * Set regular shape style for vector features. The resulting shape will be
@@ -16,8 +53,8 @@ import ImageStyle from '../style/Image.js';
  * `radius2` are provided.
  *
  * @constructor
- * @param {olx.style.RegularShapeOptions} options Options.
- * @extends {ol.style.Image}
+ * @param {module:ol/style/RegularShape~Options} options Options.
+ * @extends {module:ol/style/Image}
  * @api
  */
 const RegularShape = function(options) {
@@ -41,7 +78,7 @@ const RegularShape = function(options) {
 
   /**
    * @private
-   * @type {ol.style.Fill}
+   * @type {module:ol/style/Fill}
    */
   this.fill_ = options.fill !== undefined ? options.fill : null;
 
@@ -78,7 +115,7 @@ const RegularShape = function(options) {
 
   /**
    * @private
-   * @type {ol.style.Stroke}
+   * @type {module:ol/style/Stroke}
    */
   this.stroke_ = options.stroke !== undefined ? options.stroke : null;
 
@@ -108,7 +145,7 @@ const RegularShape = function(options) {
 
   /**
    * @protected
-   * @type {ol.style.AtlasManager|undefined}
+   * @type {module:ol/style/AtlasManager|undefined}
    */
   this.atlasManager_ = options.atlasManager;
 
@@ -140,7 +177,7 @@ inherits(RegularShape, ImageStyle);
 
 /**
  * Clones the style. If an atlasmanager was provided to the original style it will be used in the cloned style, too.
- * @return {ol.style.RegularShape} The cloned style.
+ * @return {module:ol/style/RegularShape} The cloned style.
  * @api
  */
 RegularShape.prototype.clone = function() {
@@ -183,7 +220,7 @@ RegularShape.prototype.getAngle = function() {
 
 /**
  * Get the fill style for the shape.
- * @return {ol.style.Fill} Fill style.
+ * @return {module:ol/style/Fill} Fill style.
  * @api
  */
 RegularShape.prototype.getFill = function() {
@@ -282,7 +319,7 @@ RegularShape.prototype.getSize = function() {
 
 /**
  * Get the stroke style for the shape.
- * @return {ol.style.Stroke} Stroke style.
+ * @return {module:ol/style/Stroke} Stroke style.
  * @api
  */
 RegularShape.prototype.getStroke = function() {
@@ -310,7 +347,7 @@ RegularShape.prototype.unlistenImageChange = function(listener, thisArg) {};
 
 /**
  * @protected
- * @param {ol.style.AtlasManager|undefined} atlasManager An atlas manager.
+ * @param {module:ol/style/AtlasManager|undefined} atlasManager An atlas manager.
  */
 RegularShape.prototype.render_ = function(atlasManager) {
   let imageSize;
@@ -354,7 +391,7 @@ RegularShape.prototype.render_ = function(atlasManager) {
 
   let size = 2 * (this.radius_ + strokeWidth) + 1;
 
-  /** @type {ol.RegularShapeRenderOptions} */
+  /** @type {module:ol/style/RegularShape~RenderOptions} */
   const renderOptions = {
     strokeStyle: strokeStyle,
     strokeWidth: strokeWidth,
@@ -417,7 +454,7 @@ RegularShape.prototype.render_ = function(atlasManager) {
 
 /**
  * @private
- * @param {ol.RegularShapeRenderOptions} renderOptions Render options.
+ * @param {module:ol/style/RegularShape~RenderOptions} renderOptions Render options.
  * @param {CanvasRenderingContext2D} context The rendering context.
  * @param {number} x The origin for the symbol (x).
  * @param {number} y The origin for the symbol (y).
@@ -478,7 +515,7 @@ RegularShape.prototype.draw_ = function(renderOptions, context, x, y) {
 
 /**
  * @private
- * @param {ol.RegularShapeRenderOptions} renderOptions Render options.
+ * @param {module:ol/style/RegularShape~RenderOptions} renderOptions Render options.
  */
 RegularShape.prototype.createHitDetectionCanvas_ = function(renderOptions) {
   this.hitDetectionImageSize_ = [renderOptions.size, renderOptions.size];
@@ -498,7 +535,7 @@ RegularShape.prototype.createHitDetectionCanvas_ = function(renderOptions) {
 
 /**
  * @private
- * @param {ol.RegularShapeRenderOptions} renderOptions Render options.
+ * @param {module:ol/style/RegularShape~RenderOptions} renderOptions Render options.
  * @param {CanvasRenderingContext2D} context The context.
  * @param {number} x The origin for the symbol (x).
  * @param {number} y The origin for the symbol (y).

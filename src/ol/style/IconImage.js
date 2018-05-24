@@ -7,7 +7,7 @@ import {listenOnce, unlistenByKey} from '../events.js';
 import EventTarget from '../events/EventTarget.js';
 import EventType from '../events/EventType.js';
 import ImageState from '../ImageState.js';
-import {iconImageCache} from '../style.js';
+import {shared as iconImageCache} from '../style/IconImageCache.js';
 
 /**
  * @constructor
@@ -15,9 +15,9 @@ import {iconImageCache} from '../style.js';
  * @param {string|undefined} src Src.
  * @param {module:ol/size~Size} size Size.
  * @param {?string} crossOrigin Cross origin.
- * @param {module:ol/ImageState~ImageState} imageState Image state.
+ * @param {module:ol/ImageState} imageState Image state.
  * @param {module:ol/color~Color} color Color.
- * @extends {module:ol/events/EventTarget~EventTarget}
+ * @extends {module:ol/events/EventTarget}
  */
 const IconImage = function(image, src, size, crossOrigin, imageState, color) {
 
@@ -61,7 +61,7 @@ const IconImage = function(image, src, size, crossOrigin, imageState, color) {
 
   /**
    * @private
-   * @type {module:ol/ImageState~ImageState}
+   * @type {module:ol/ImageState}
    */
   this.imageState_ = imageState;
 
@@ -96,9 +96,9 @@ inherits(IconImage, EventTarget);
  * @param {string} src Src.
  * @param {module:ol/size~Size} size Size.
  * @param {?string} crossOrigin Cross origin.
- * @param {module:ol/ImageState~ImageState} imageState Image state.
+ * @param {module:ol/ImageState} imageState Image state.
  * @param {module:ol/color~Color} color Color.
- * @return {ol.style.IconImage} Icon image.
+ * @return {module:ol/style/IconImage} Icon image.
  */
 export function get(image, src, size, crossOrigin, imageState, color) {
   let iconImage = iconImageCache.get(src, crossOrigin, color);
@@ -169,7 +169,7 @@ IconImage.prototype.getImage = function(pixelRatio) {
 
 
 /**
- * @return {module:ol/ImageState~ImageState} Image state.
+ * @return {module:ol/ImageState} Image state.
  */
 IconImage.prototype.getImageState = function() {
   return this.imageState_;

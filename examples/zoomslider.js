@@ -1,6 +1,6 @@
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
-import ZoomSlider from '../src/ol/control/ZoomSlider.js';
+import {ZoomSlider} from '../src/ol/control.js';
 import TileLayer from '../src/ol/layer/Tile.js';
 import OSM from '../src/ol/source/OSM.js';
 
@@ -9,7 +9,7 @@ import OSM from '../src/ol/source/OSM.js';
  * Helper method for map-creation.
  *
  * @param {string} divId The id of the div for the map.
- * @return {ol.PluggableMap} The ol.Map instance.
+ * @return {module:ol/PluggableMap} The map instance.
  */
 function createMap(divId) {
   const source = new OSM();

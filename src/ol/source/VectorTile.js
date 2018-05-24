@@ -4,11 +4,53 @@
 import {inherits} from '../index.js';
 import TileState from '../TileState.js';
 import VectorImageTile, {defaultLoadFunction} from '../VectorImageTile.js';
-import VectorTile from '../VectorTile.js';
+import Tile from '../VectorTile.js';
 import {toSize} from '../size.js';
 import UrlTile from '../source/UrlTile.js';
 import {getKeyZXY} from '../tilecoord.js';
 import {createXYZ, extentFromProjection, createForProjection} from '../tilegrid.js';
+
+/**
+ * @typedef {Object} Options
+ * @property {module:ol/source/Source~AttributionLike} [attributions] Attributions.
+ * @property {number} [cacheSize=128] Cache size.
+ * @property {module:ol/format/Feature} [format] Feature format for tiles. Used and required by the default.
+ * @property {boolean} [overlaps=true] This source may have overlapping geometries. Setting this
+ * to `false` (e.g. for sources with polygons that represent administrative
+ * boundaries or TopoJSON sources) allows the renderer to optimise fill and
+ * stroke operations.
+ * @property {module:ol/proj~ProjectionLike} projection Projection.
+ * @property {module:ol/source/State} [state] Source state.
+ * @property {module:ol/VectorTile~TileClass} [tileClass] Class used to instantiate image tiles.
+ * Default is {@link module:ol/VectorTile}.
+ * @property {module:ol/tilegrid/TileGrid} [tileGrid] Tile grid.
+ * @property {module:ol/Tile~LoadFunction} [tileLoadFunction]
+ * Optional function to load a tile given a URL. Could look like this:
+ * ```js
+ * function(tile, url) {
+ *   tile.setLoader(function() {
+ *     var data = // ... fetch data
+ *     var format = tile.getFormat();
+ *     tile.setFeatures(format.readFeatures(data, {
+ *       // uncomment the line below for ol/format/MVT only
+ *       extent: tile.getExtent(),
+ *       featureProjection: map.getView().getProjection()
+ *     }));
+ *   };
+ * });
+ * @property {module:ol/Tile~UrlFunction} [tileUrlFunction] Optional function to get tile URL given a tile coordinate and the projection.
+ * @property {string} [url] URL template. Must include `{x}`, `{y}` or `{-y}`, and `{z}` placeholders.
+ * A `{?-?}` template pattern, for example `subdomain{a-f}.domain.com`, may be
+ * used instead of defining each one separately in the `urls` option.
+ * @property {Array.<string>} [urls] An array of URL templates.
+ * @property {boolean} [wrapX=true] Whether to wrap the world horizontally.
+ * When set to `false`, only one world
+ * will be rendered. When set to `true`, tiles will be wrapped horizontally to
+ * render multiple worlds.
+ * @property {number} [transition] Duration of the opacity transition for rendering.
+ * To disable the opacity transition, pass `transition: 0`.
+ */
+
 
 /**
  * @classdesc
@@ -17,16 +59,16 @@ import {createXYZ, extentFromProjection, createForProjection} from '../tilegrid.
  * with vector features from the server, it is not meant for feature editing.
  * Features are optimized for rendering, their geometries are clipped at or near
  * tile boundaries and simplified for a view resolution. See
- * {@link ol.source.Vector} for vector sources that are suitable for feature
+ * {@link module:ol/source/Vector} for vector sources that are suitable for feature
  * editing.
  *
  * @constructor
- * @fires ol.source.Tile.Event
- * @extends {ol.source.UrlTile}
- * @param {olx.source.VectorTileOptions} options Vector tile options.
+ * @fires module:ol/source/Tile~TileSourceEvent
+ * @extends {module:ol/source/UrlTile}
+ * @param {module:ol/source/VectorTile~Options=} options Vector tile options.
  * @api
  */
-const VectorTileSource = function(options) {
+const VectorTile = function(options) {
   const projection = options.projection || 'EPSG:3857';
 
   const extent = options.extent || extentFromProjection(projection);
@@ -56,14 +98,14 @@ const VectorTileSource = function(options) {
 
   /**
    * @private
-   * @type {module:ol/format/Feature~FeatureFormat}
+   * @type {module:ol/format/Feature}
    */
   this.format_ = options.format ? options.format : null;
 
   /**
-   * @private
-   * @type {Object.<string, module:ol/VectorTile~VectorTile>}
-   */
+     * @private
+     * @type {Object.<string, module:ol/VectorTile>}
+     */
   this.sourceTiles_ = {};
 
   /**
@@ -73,27 +115,27 @@ const VectorTileSource = function(options) {
   this.overlaps_ = options.overlaps == undefined ? true : options.overlaps;
 
   /**
-   * @protected
-   * @type {function(new: module:ol/VectorTile~VectorTile, module:ol/tilecoord~TileCoord, module:ol/TileState~TileState, string,
-   *        module:ol/format/Feature~FeatureFormat, module:ol/Tile~LoadFunction)}
-   */
-  this.tileClass = options.tileClass ? options.tileClass : VectorTile;
+     * @protected
+     * @type {function(new: module:ol/VectorTile, module:ol/tilecoord~TileCoord, module:ol/TileState, string,
+     *        module:ol/format/Feature, module:ol/Tile~LoadFunction)}
+     */
+  this.tileClass = options.tileClass ? options.tileClass : Tile;
 
   /**
    * @private
-   * @type {Object.<string, module:ol/tilegrid/TileGrid~TileGrid>}
+   * @type {Object.<string, module:ol/tilegrid/TileGrid>}
    */
   this.tileGrids_ = {};
 
 };
 
-inherits(VectorTileSource, UrlTile);
+inherits(VectorTile, UrlTile);
 
 
 /**
  * @return {boolean} The source can have overlapping geometries.
  */
-VectorTileSource.prototype.getOverlaps = function() {
+VectorTile.prototype.getOverlaps = function() {
   return this.overlaps_;
 };
 
@@ -101,7 +143,7 @@ VectorTileSource.prototype.getOverlaps = function() {
  * clear {@link module:ol/TileCache~TileCache} and delete all source tiles
  * @api
  */
-VectorTileSource.prototype.clear = function() {
+VectorTile.prototype.clear = function() {
   this.tileCache.clear();
   this.sourceTiles_ = {};
 };
@@ -109,10 +151,12 @@ VectorTileSource.prototype.clear = function() {
 /**
  * @inheritDoc
  */
-VectorTileSource.prototype.getTile = function(z, x, y, pixelRatio, projection) {
+VectorTile.prototype.getTile = function(z, x, y, pixelRatio, projection) {
   const tileCoordKey = getKeyZXY(z, x, y);
   if (this.tileCache.containsKey(tileCoordKey)) {
-    return /** @type {!module:ol/Tile~Tile} */ (this.tileCache.get(tileCoordKey));
+    return (
+      /** @type {!module:ol/Tile} */ (this.tileCache.get(tileCoordKey))
+    );
   } else {
     const tileCoord = [z, x, y];
     const urlTileCoord = this.getTileCoordForTileUrlFunction(
@@ -136,7 +180,7 @@ VectorTileSource.prototype.getTile = function(z, x, y, pixelRatio, projection) {
 /**
  * @inheritDoc
  */
-VectorTileSource.prototype.getTileGridForProjection = function(projection) {
+VectorTile.prototype.getTileGridForProjection = function(projection) {
   const code = projection.getCode();
   let tileGrid = this.tileGrids_[code];
   if (!tileGrid) {
@@ -153,7 +197,7 @@ VectorTileSource.prototype.getTileGridForProjection = function(projection) {
 /**
  * @inheritDoc
  */
-VectorTileSource.prototype.getTilePixelRatio = function(pixelRatio) {
+VectorTile.prototype.getTilePixelRatio = function(pixelRatio) {
   return pixelRatio;
 };
 
@@ -161,9 +205,9 @@ VectorTileSource.prototype.getTilePixelRatio = function(pixelRatio) {
 /**
  * @inheritDoc
  */
-VectorTileSource.prototype.getTilePixelSize = function(z, pixelRatio, projection) {
+VectorTile.prototype.getTilePixelSize = function(z, pixelRatio, projection) {
   const tileGrid = this.getTileGridForProjection(projection);
   const tileSize = toSize(tileGrid.getTileSize(z), this.tmpSize);
   return [Math.round(tileSize[0] * pixelRatio), Math.round(tileSize[1] * pixelRatio)];
 };
-export default VectorTileSource;
+export default VectorTile;

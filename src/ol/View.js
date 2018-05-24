@@ -148,7 +148,7 @@ import Units from './proj/Units.js';
  * during a rotation or resolution animation.
  * @property {number} [duration=1000] The duration of the animation in milliseconds.
  * @property {function(number):number} [easing] The easing function used
- * during the animation (defaults to {@link ol.easing.inAndOut}).
+ * during the animation (defaults to {@link module:ol/easing~inAndOut}).
  * The function will be called for each frame with a number representing a
  * fraction of the animation's duration.  The function should return a number
  * between 0 and 1 representing the progress toward the destination state.
@@ -158,7 +158,7 @@ import Units from './proj/Units.js';
 /**
  * @typedef {Object} State
  * @property {module:ol/coordinate~Coordinate} center
- * @property {module:ol/proj/Projection~Projection} projection
+ * @property {module:ol/proj/Projection} projection
  * @property {number} resolution
  * @property {number} rotation
  * @property {number} zoom
@@ -225,7 +225,7 @@ const DEFAULT_MIN_ZOOM = 0;
  * default the center is not constrained at all.
  *
  * @constructor
- * @extends {module:ol/Object~Object}
+ * @extends {module:ol/Object}
  * @param {module:ol/View~ViewOptions=} opt_options View options.
  * @api
  */
@@ -257,7 +257,7 @@ const View = function(opt_options) {
   /**
    * @private
    * @const
-   * @type {module:ol/proj/Projection~Projection}
+   * @type {module:ol/proj/Projection}
    */
   this.projection_ = createProjection(options.projection, 'EPSG:3857');
 
@@ -280,8 +280,7 @@ View.prototype.applyOptions_ = function(options) {
   properties[ViewProperty.CENTER] = options.center !== undefined ?
     options.center : null;
 
-  const resolutionConstraintInfo = createResolutionConstraint(
-    options);
+  const resolutionConstraintInfo = createResolutionConstraint(options);
 
   /**
    * @private
@@ -638,10 +637,8 @@ View.prototype.calculateCenterZoom = function(resolution, anchor) {
   const currentCenter = this.getCenter();
   const currentResolution = this.getResolution();
   if (currentCenter !== undefined && currentResolution !== undefined) {
-    const x = anchor[0] -
-        resolution * (anchor[0] - currentCenter[0]) / currentResolution;
-    const y = anchor[1] -
-        resolution * (anchor[1] - currentCenter[1]) / currentResolution;
+    const x = anchor[0] - resolution * (anchor[0] - currentCenter[0]) / currentResolution;
+    const y = anchor[1] - resolution * (anchor[1] - currentCenter[1]) / currentResolution;
     center = [x, y];
   }
   return center;
@@ -711,7 +708,9 @@ View.prototype.constrainRotation = function(rotation, opt_delta) {
  * @api
  */
 View.prototype.getCenter = function() {
-  return /** @type {module:ol/coordinate~Coordinate|undefined} */ (this.get(ViewProperty.CENTER));
+  return (
+    /** @type {module:ol/coordinate~Coordinate|undefined} */ (this.get(ViewProperty.CENTER))
+  );
 };
 
 
@@ -823,7 +822,7 @@ View.prototype.setMinZoom = function(zoom) {
 
 /**
  * Get the view projection.
- * @return {module:ol/proj/Projection~Projection} The projection of the view.
+ * @return {module:ol/proj/Projection} The projection of the view.
  * @api
  */
 View.prototype.getProjection = function() {
@@ -920,8 +919,7 @@ View.prototype.getValueForResolutionFunction = function(opt_power) {
      * @return {number} Value.
      */
     function(resolution) {
-      const value =
-            (Math.log(maxResolution / resolution) / Math.log(power)) / max;
+      const value = (Math.log(maxResolution / resolution) / Math.log(power)) / max;
       return value;
     });
 };
@@ -935,13 +933,15 @@ View.prototype.getState = function() {
   const projection = this.getProjection();
   const resolution = /** @type {number} */ (this.getResolution());
   const rotation = this.getRotation();
-  return /** @type {module:ol/View~State} */ ({
-    center: center.slice(),
-    projection: projection !== undefined ? projection : null,
-    resolution: resolution,
-    rotation: rotation,
-    zoom: this.getZoom()
-  });
+  return (
+    /** @type {module:ol/View~State} */ ({
+      center: center.slice(),
+      projection: projection !== undefined ? projection : null,
+      resolution: resolution,
+      rotation: rotation,
+      zoom: this.getZoom()
+    })
+  );
 };
 
 
@@ -1005,7 +1005,7 @@ View.prototype.getResolutionForZoom = function(zoom) {
  * The size is pixel dimensions of the box to fit the extent into.
  * In most cases you will want to use the map size, that is `map.getSize()`.
  * Takes care of the map angle.
- * @param {module:ol/geom/SimpleGeometry~SimpleGeometry|module:ol/extent~Extent} geometryOrExtent The geometry or
+ * @param {module:ol/geom/SimpleGeometry|module:ol/extent~Extent} geometryOrExtent The geometry or
  *     extent to fit the view to.
  * @param {module:ol/View~FitOptions=} opt_options Options.
  * @api
@@ -1016,7 +1016,7 @@ View.prototype.fit = function(geometryOrExtent, opt_options) {
   if (!size) {
     size = this.getSizeFromViewport_();
   }
-  /** @type {module:ol/geom/SimpleGeometry~SimpleGeometry} */
+  /** @type {module:ol/geom/SimpleGeometry} */
   let geometry;
   if (!(geometryOrExtent instanceof SimpleGeometry)) {
     assert(Array.isArray(geometryOrExtent),
@@ -1171,7 +1171,7 @@ View.prototype.setCenter = function(center) {
 
 
 /**
- * @param {module:ol/ViewHint~ViewHint} hint Hint.
+ * @param {module:ol/ViewHint} hint Hint.
  * @param {number} delta Delta.
  * @return {number} New value.
  */
@@ -1236,7 +1236,7 @@ export function createCenterConstraint(options) {
 /**
  * @param {module:ol/View~ViewOptions} options View options.
  * @return {{constraint: module:ol/resolutionconstraint~Type, maxResolution: number,
- *     minResolution: number, zoomFactor: number}} The constraint.
+ *     minResolution: number, minZoom: number, zoomFactor: number}} The constraint.
  */
 export function createResolutionConstraint(options) {
   let resolutionConstraint;

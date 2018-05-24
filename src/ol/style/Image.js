@@ -1,15 +1,27 @@
 /**
  * @module ol/style/Image
  */
+
+
+/**
+ * @typedef {Object} Options
+ * @property {number} opacity
+ * @property {boolean} rotateWithView
+ * @property {number} rotation
+ * @property {number} scale
+ * @property {boolean} snapToPixel
+ */
+
+
 /**
  * @classdesc
  * A base class used for creating subclasses and not instantiated in
- * apps. Base class for {@link ol.style.Icon}, {@link ol.style.Circle} and
- * {@link ol.style.RegularShape}.
+ * apps. Base class for {@link module:ol/style/Icon~Icon}, {@link module:ol/style/Circle~CircleStyle} and
+ * {@link module:ol/style/RegularShape~RegularShape}.
  *
  * @constructor
  * @abstract
- * @param {ol.StyleImageOptions} options Options.
+ * @param {module:ol/style/Image~Options} options Options.
  * @api
  */
 const ImageStyle = function(options) {
@@ -125,7 +137,7 @@ ImageStyle.prototype.getHitDetectionImage = function(pixelRatio) {};
 
 /**
  * @abstract
- * @return {module:ol/ImageState~ImageState} Image state.
+ * @return {module:ol/ImageState} Image state.
  */
 ImageStyle.prototype.getImageState = function() {};
 
@@ -175,6 +187,7 @@ ImageStyle.prototype.setOpacity = function(opacity) {
  * Set whether to rotate the style with the view.
  *
  * @param {boolean} rotateWithView Rotate with map.
+ * @api
  */
 ImageStyle.prototype.setRotateWithView = function(rotateWithView) {
   this.rotateWithView_ = rotateWithView;
@@ -207,6 +220,7 @@ ImageStyle.prototype.setScale = function(scale) {
  * Set whether to snap the image to the closest pixel.
  *
  * @param {boolean} snapToPixel Snap to pixel?
+ * @api
  */
 ImageStyle.prototype.setSnapToPixel = function(snapToPixel) {
   this.snapToPixel_ = snapToPixel;
@@ -215,7 +229,7 @@ ImageStyle.prototype.setSnapToPixel = function(snapToPixel) {
 
 /**
  * @abstract
- * @param {function(this: T, module:ol/events/Event~Event)} listener Listener function.
+ * @param {function(this: T, module:ol/events/Event)} listener Listener function.
  * @param {T} thisArg Value to use as `this` when executing `listener`.
  * @return {module:ol/events~EventsKey|undefined} Listener key.
  * @template T
@@ -232,7 +246,7 @@ ImageStyle.prototype.load = function() {};
 
 /**
  * @abstract
- * @param {function(this: T, module:ol/events/Event~Event)} listener Listener function.
+ * @param {function(this: T, module:ol/events/Event)} listener Listener function.
  * @param {T} thisArg Value to use as `this` when executing `listener`.
  * @template T
  */

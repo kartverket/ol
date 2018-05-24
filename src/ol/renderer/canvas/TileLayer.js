@@ -8,14 +8,13 @@ import TileState from '../../TileState.js';
 import ViewHint from '../../ViewHint.js';
 import {createCanvasContext2D} from '../../dom.js';
 import {containsExtent, createEmpty, equals, getIntersection, isEmpty} from '../../extent.js';
-import RendererType from '../Type.js';
 import IntermediateCanvasRenderer from '../canvas/IntermediateCanvas.js';
 import {create as createTransform, compose as composeTransform} from '../../transform.js';
 
 /**
  * @constructor
- * @extends {ol.renderer.canvas.IntermediateCanvas}
- * @param {module:ol/layer/Tile~TileLayer|module:ol/layer/VectorTile~VectorTile} tileLayer Tile layer.
+ * @extends {module:ol/renderer/canvas/IntermediateCanvas}
+ * @param {module:ol/layer/Tile|module:ol/layer/VectorTile} tileLayer Tile layer.
  * @api
  */
 const CanvasTileLayerRenderer = function(tileLayer) {
@@ -48,7 +47,7 @@ const CanvasTileLayerRenderer = function(tileLayer) {
 
   /**
    * @protected
-   * @type {!Array.<module:ol/Tile~Tile>}
+   * @type {!Array.<module:ol/Tile>}
    */
   this.renderedTiles = [];
 
@@ -60,7 +59,7 @@ const CanvasTileLayerRenderer = function(tileLayer) {
 
   /**
    * @private
-   * @type {module:ol/TileRange~TileRange}
+   * @type {module:ol/TileRange}
    */
   this.tmpTileRange_ = new TileRange(0, 0, 0, 0);
 
@@ -83,29 +82,28 @@ inherits(CanvasTileLayerRenderer, IntermediateCanvasRenderer);
 
 /**
  * Determine if this renderer handles the provided layer.
- * @param {ol.renderer.Type} type The renderer type.
- * @param {module:ol/layer/Layer~Layer} layer The candidate layer.
+ * @param {module:ol/layer/Layer} layer The candidate layer.
  * @return {boolean} The renderer can render the layer.
  */
-CanvasTileLayerRenderer['handles'] = function(type, layer) {
-  return type === RendererType.CANVAS && layer.getType() === LayerType.TILE;
+CanvasTileLayerRenderer['handles'] = function(layer) {
+  return layer.getType() === LayerType.TILE;
 };
 
 
 /**
  * Create a layer renderer.
- * @param {ol.renderer.Map} mapRenderer The map renderer.
- * @param {module:ol/layer/Layer~Layer} layer The layer to be rendererd.
- * @return {ol.renderer.canvas.TileLayer} The layer renderer.
+ * @param {module:ol/renderer/Map} mapRenderer The map renderer.
+ * @param {module:ol/layer/Layer} layer The layer to be rendererd.
+ * @return {module:ol/renderer/canvas/TileLayer} The layer renderer.
  */
 CanvasTileLayerRenderer['create'] = function(mapRenderer, layer) {
-  return new CanvasTileLayerRenderer(/** @type {module:ol/layer/Tile~TileLayer} */ (layer));
+  return new CanvasTileLayerRenderer(/** @type {module:ol/layer/Tile} */ (layer));
 };
 
 
 /**
  * @private
- * @param {module:ol/Tile~Tile} tile Tile.
+ * @param {module:ol/Tile} tile Tile.
  * @return {boolean} Tile is drawable.
  */
 CanvasTileLayerRenderer.prototype.isDrawableTile_ = function(tile) {
@@ -129,7 +127,7 @@ CanvasTileLayerRenderer.prototype.prepareFrame = function(frameState, layerState
   const viewCenter = viewState.center;
 
   const tileLayer = this.getLayer();
-  const tileSource = /** @type {ol.source.Tile} */ (tileLayer.getSource());
+  const tileSource = /** @type {module:ol/source/Tile} */ (tileLayer.getSource());
   const sourceRevision = tileSource.getRevision();
   const tileGrid = tileSource.getTileGridForProjection(projection);
   const z = tileGrid.getZForResolution(viewResolution, this.zDirection);
@@ -151,7 +149,7 @@ CanvasTileLayerRenderer.prototype.prepareFrame = function(frameState, layerState
   const tilePixelRatio = tileSource.getTilePixelRatio(pixelRatio);
 
   /**
-   * @type {Object.<number, Object.<string, module:ol/Tile~Tile>>}
+   * @type {Object.<number, Object.<string, module:ol/Tile>>}
    */
   const tilesToDrawByZ = {};
   tilesToDrawByZ[z] = {};
@@ -298,7 +296,7 @@ CanvasTileLayerRenderer.prototype.prepareFrame = function(frameState, layerState
 
 
 /**
- * @param {module:ol/Tile~Tile} tile Tile.
+ * @param {module:ol/Tile} tile Tile.
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @param {module:ol/layer/Layer~State} layerState Layer state.
  * @param {number} x Left of the tile.
@@ -348,7 +346,7 @@ CanvasTileLayerRenderer.prototype.getImage = function() {
 
 /**
  * @function
- * @return {module:ol/layer/Tile~TileLayer|module:ol/layer/VectorTile~VectorTile}
+ * @return {module:ol/layer/Tile|module:ol/layer/VectorTile}
  */
 CanvasTileLayerRenderer.prototype.getLayer;
 

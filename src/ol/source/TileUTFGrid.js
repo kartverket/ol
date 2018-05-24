@@ -19,9 +19,9 @@ import {createXYZ, extentFromProjection} from '../tilegrid.js';
 
 /**
  * @constructor
- * @extends {module:ol/Tile~Tile}
+ * @extends {module:ol/Tile}
  * @param {module:ol/tilecoord~TileCoord} tileCoord Tile coordinate.
- * @param {module:ol/TileState~TileState} state State.
+ * @param {module:ol/TileState} state State.
  * @param {string} src Image source URI.
  * @param {module:ol/extent~Extent} extent Extent of the tile.
  * @param {boolean} preemptive Load the tile when visible (before it's needed).
@@ -250,12 +250,29 @@ CustomTile.prototype.load = function() {
 
 
 /**
+ * @typedef {Object} Options
+ * @property {boolean} [preemptive=true]
+ * If `true` the TileUTFGrid source loads the tiles based on their "visibility".
+ * This improves the speed of response, but increases traffic.
+ * Note that if set to `false`, you need to pass `true` as `opt_request`
+ * to the `forDataAtCoordinateAndResolution` method otherwise no data
+ * will ever be loaded.
+ * @property {boolean} [jsonp=false] Use JSONP with callback to load the TileJSON.
+ * Useful when the server does not support CORS..
+ * @property {tileJSON} [tileJSON] TileJSON configuration for this source.
+ * If not provided, `url` must be configured.
+ * @property {string} [url] TileJSON endpoint that provides the configuration for this source.
+ * Request will be made through JSONP. If not provided, `tileJSON` must be configured.
+ */
+
+
+/**
  * @classdesc
  * Layer source for UTFGrid interaction data loaded from TileJSON format.
  *
  * @constructor
- * @extends {ol.source.Tile}
- * @param {olx.source.TileUTFGridOptions} options Source options.
+ * @extends {module:ol/source/Tile}
+ * @param {module:ol/source/TileUTFGrid~Options=} options Source options.
  * @api
  */
 const UTFGrid = function(options) {
@@ -367,7 +384,7 @@ UTFGrid.prototype.forDataAtCoordinateAndResolution = function(
   if (this.tileGrid) {
     const tileCoord = this.tileGrid.getTileCoordForCoordAndResolution(
       coordinate, resolution);
-    const tile = /** @type {!ol.source.CustomTile} */(this.getTile(
+    const tile = /** @type {!module:ol/source/TileUTFGrid~CustomTile} */(this.getTile(
       tileCoord[0], tileCoord[1], tileCoord[2], 1, this.getProjection()));
     tile.forDataAtCoordinate(coordinate, callback, null, opt_request);
   } else {
@@ -391,7 +408,7 @@ UTFGrid.prototype.handleTileJSONError = function() {
 
 
 /**
- * TODO: very similar to ol.source.TileJSON#handleTileJSONResponse
+ * TODO: very similar to ol/source/TileJSON#handleTileJSONResponse
  * @protected
  * @param {TileJSON} tileJSON Tile JSON.
  */
@@ -449,7 +466,9 @@ UTFGrid.prototype.handleTileJSONResponse = function(tileJSON) {
 UTFGrid.prototype.getTile = function(z, x, y, pixelRatio, projection) {
   const tileCoordKey = getKeyZXY(z, x, y);
   if (this.tileCache.containsKey(tileCoordKey)) {
-    return /** @type {!module:ol/Tile~Tile} */ (this.tileCache.get(tileCoordKey));
+    return (
+      /** @type {!module:ol/Tile} */ (this.tileCache.get(tileCoordKey))
+    );
   } else {
     const tileCoord = [z, x, y];
     const urlTileCoord =

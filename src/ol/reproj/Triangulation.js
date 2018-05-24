@@ -8,6 +8,14 @@ import {getTransform} from '../proj.js';
 
 
 /**
+ * Single triangle; consists of 3 source points and 3 target points.
+ * @typedef {Object} Triangle
+ * @property {Array.<module:ol/coordinate~Coordinate>} source
+ * @property {Array.<module:ol/coordinate~Coordinate>} target
+ */
+
+
+/**
  * Maximum number of subdivision steps during raster reprojection triangulation.
  * Prevents high memory usage and large number of proj4 calls (for certain
  * transformations and areas). At most `2*(2^this)` triangles are created for
@@ -33,8 +41,8 @@ const MAX_TRIANGLE_WIDTH = 0.25;
  * Class containing triangulation of the given target extent.
  * Used for determining source data and the reprojection itself.
  *
- * @param {module:ol/proj/Projection~Projection} sourceProj Source projection.
- * @param {module:ol/proj/Projection~Projection} targetProj Target projection.
+ * @param {module:ol/proj/Projection} sourceProj Source projection.
+ * @param {module:ol/proj/Projection} targetProj Target projection.
  * @param {module:ol/extent~Extent} targetExtent Target extent to triangulate.
  * @param {module:ol/extent~Extent} maxSourceExtent Maximal source extent that can be used.
  * @param {number} errorThreshold Acceptable error (in source units).
@@ -44,13 +52,13 @@ const Triangulation = function(sourceProj, targetProj, targetExtent,
   maxSourceExtent, errorThreshold) {
 
   /**
-   * @type {module:ol/proj/Projection~Projection}
+   * @type {module:ol/proj/Projection}
    * @private
    */
   this.sourceProj_ = sourceProj;
 
   /**
-   * @type {module:ol/proj/Projection~Projection}
+   * @type {module:ol/proj/Projection}
    * @private
    */
   this.targetProj_ = targetProj;
@@ -85,7 +93,7 @@ const Triangulation = function(sourceProj, targetProj, targetExtent,
   this.errorThresholdSquared_ = errorThreshold * errorThreshold;
 
   /**
-   * @type {Array.<ol.ReprojTriangle>}
+   * @type {Array.<module:ol/reproj/Triangulation~Triangle>}
    * @private
    */
   this.triangles_ = [];
@@ -340,7 +348,7 @@ Triangulation.prototype.calculateSourceExtent = function() {
 
 
 /**
- * @return {Array.<ol.ReprojTriangle>} Array of the calculated triangles.
+ * @return {Array.<module:ol/reproj/Triangulation~Triangle>} Array of the calculated triangles.
  */
 Triangulation.prototype.getTriangles = function() {
   return this.triangles_;

@@ -4,13 +4,13 @@
 import {asString} from '../color.js';
 
 /**
- * Singleton class. Available through {@link ol.style.iconImageCache}.
+ * Singleton class. Available through {@link module:ol/style/IconImageCache~shared}.
  * @constructor
  */
 const IconImageCache = function() {
 
   /**
-   * @type {!Object.<string, ol.style.IconImage>}
+   * @type {!Object.<string, module:ol/style/IconImage>}
    * @private
    */
   this.cache_ = {};
@@ -71,7 +71,7 @@ IconImageCache.prototype.expire = function() {
  * @param {string} src Src.
  * @param {?string} crossOrigin Cross origin.
  * @param {module:ol/color~Color} color Color.
- * @return {ol.style.IconImage} Icon image.
+ * @return {module:ol/style/IconImage} Icon image.
  */
 IconImageCache.prototype.get = function(src, crossOrigin, color) {
   const key = getKey(src, crossOrigin, color);
@@ -83,7 +83,7 @@ IconImageCache.prototype.get = function(src, crossOrigin, color) {
  * @param {string} src Src.
  * @param {?string} crossOrigin Cross origin.
  * @param {module:ol/color~Color} color Color.
- * @param {ol.style.IconImage} iconImage Icon image.
+ * @param {module:ol/style/IconImage} iconImage Icon image.
  */
 IconImageCache.prototype.set = function(src, crossOrigin, color, iconImage) {
   const key = getKey(src, crossOrigin, color);
@@ -104,3 +104,11 @@ IconImageCache.prototype.setSize = function(maxCacheSize) {
   this.expire();
 };
 export default IconImageCache;
+
+
+/**
+ * The {@link module:ol/style/IconImageCache~IconImageCache} for
+ * {@link module:ol/style/Icon~Icon} images.
+ * @api
+ */
+export const shared = new IconImageCache();

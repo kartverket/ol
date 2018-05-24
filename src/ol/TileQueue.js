@@ -9,13 +9,13 @@ import PriorityQueue from './structs/PriorityQueue.js';
 
 
 /**
- * @typedef {function(module:ol/Tile~Tile, string, module:ol/coordinate~Coordinate, number): number} PriorityFunction
+ * @typedef {function(module:ol/Tile, string, module:ol/coordinate~Coordinate, number): number} PriorityFunction
  */
 
 
 /**
  * @constructor
- * @extends {module:ol/structs/PriorityQueue~PriorityQueue.<Array>}
+ * @extends {module:ol/structs/PriorityQueue.<Array>}
  * @param {module:ol/TileQueue~PriorityFunction} tilePriorityFunction
  *     Tile priority function.
  * @param {function(): ?} tileChangeCallback
@@ -27,18 +27,18 @@ const TileQueue = function(tilePriorityFunction, tileChangeCallback) {
   PriorityQueue.call(
     this,
     /**
-       * @param {Array} element Element.
-       * @return {number} Priority.
-       */
+     * @param {Array} element Element.
+     * @return {number} Priority.
+     */
     function(element) {
       return tilePriorityFunction.apply(null, element);
     },
     /**
-       * @param {Array} element Element.
-       * @return {string} Key.
-       */
+     * @param {Array} element Element.
+     * @return {string} Key.
+     */
     function(element) {
-      return /** @type {module:ol/Tile~Tile} */ (element[0]).getKey();
+      return (/** @type {module:ol/Tile} */ (element[0]).getKey());
     });
 
   /**
@@ -71,8 +71,7 @@ TileQueue.prototype.enqueue = function(element) {
   const added = PriorityQueue.prototype.enqueue.call(this, element);
   if (added) {
     const tile = element[0];
-    listen(tile, EventType.CHANGE,
-      this.handleTileChange, this);
+    listen(tile, EventType.CHANGE, this.handleTileChange, this);
   }
   return added;
 };
@@ -87,16 +86,15 @@ TileQueue.prototype.getTilesLoading = function() {
 
 
 /**
- * @param {module:ol/events/Event~Event} event Event.
+ * @param {module:ol/events/Event} event Event.
  * @protected
  */
 TileQueue.prototype.handleTileChange = function(event) {
-  const tile = /** @type {module:ol/Tile~Tile} */ (event.target);
+  const tile = /** @type {module:ol/Tile} */ (event.target);
   const state = tile.getState();
   if (state === TileState.LOADED || state === TileState.ERROR ||
       state === TileState.EMPTY || state === TileState.ABORT) {
-    unlisten(tile, EventType.CHANGE,
-      this.handleTileChange, this);
+    unlisten(tile, EventType.CHANGE, this.handleTileChange, this);
     const tileKey = tile.getKey();
     if (tileKey in this.tilesLoadingKeys_) {
       delete this.tilesLoadingKeys_[tileKey];
@@ -117,7 +115,7 @@ TileQueue.prototype.loadMoreTiles = function(maxTotalLoading, maxNewLoads) {
   let state, tile, tileKey;
   while (this.tilesLoading_ < maxTotalLoading && newLoads < maxNewLoads &&
          this.getCount() > 0) {
-    tile = /** @type {module:ol/Tile~Tile} */ (this.dequeue()[0]);
+    tile = /** @type {module:ol/Tile} */ (this.dequeue()[0]);
     tileKey = tile.getKey();
     state = tile.getState();
     if (state === TileState.ABORT) {

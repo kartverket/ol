@@ -12,7 +12,7 @@ import {containsExtent} from './extent.js';
 
 
 /**
- * @typedef {Object} OverlayOptions
+ * @typedef {Object} Options
  * @property {number|string} [id] Set the overlay id. The overlay id can be used
  * with the {@link module:ol/Map~Map#getOverlayById} method.
  * @property {Element} [element] The overlay element.
@@ -23,7 +23,7 @@ import {containsExtent} from './extent.js';
  * shifts the overlay down.
  * @property {module:ol/coordinate~Coordinate} [position] The overlay position
  * in map projection.
- * @property {module:ol/OverlayPositioning~OverlayPositioning} [positioning='top-left'] Defines how
+ * @property {module:ol/OverlayPositioning} [positioning='top-left'] Defines how
  * the overlay is actually positioned with respect to its `position` property.
  * Possible values are `'bottom-left'`, `'bottom-center'`, `'bottom-right'`,
  * `'center-left'`, `'center-center'`, `'center-right'`, `'top-left'`,
@@ -41,7 +41,7 @@ import {containsExtent} from './extent.js';
  * @property {boolean} [autoPan=false] If set to `true` the map is panned when
  * calling `setPosition`, so that the overlay is entirely visible in the current
  * viewport.
- * @property {module:ol/Overlay~OverlayPanOptions} [autoPanAnimation] The
+ * @property {module:ol/Overlay~PanOptions} [autoPanAnimation] The
  * animation options used to pan the overlay into view. This animation is only
  * used when `autoPan` is enabled. A `duration` and `easing` may be provided to
  * customize the animation.
@@ -53,7 +53,7 @@ import {containsExtent} from './extent.js';
 
 
 /**
- * @typedef {Object} OverlayPanOptions
+ * @typedef {Object} PanOptions
  * @property {number} [duration=1000] The duration of the animation in
  * milliseconds.
  * @property {function(number):number} [easing] The easing function to use. Can
@@ -94,8 +94,8 @@ const Property = {
  *     map.addOverlay(popup);
  *
  * @constructor
- * @extends {module:ol/Object~Object}
- * @param {module:ol/Overlay~OverlayOptions} options Overlay options.
+ * @extends {module:ol/Object}
+ * @param {module:ol/Overlay~Options} options Overlay options.
  * @api
  */
 const Overlay = function(options) {
@@ -104,7 +104,7 @@ const Overlay = function(options) {
 
   /**
    * @protected
-   * @type {module:ol/Overlay~OverlayOptions}
+   * @type {module:ol/Overlay~Options}
    */
   this.options = options;
 
@@ -144,9 +144,9 @@ const Overlay = function(options) {
 
   /**
    * @protected
-   * @type {module:ol/Overlay~OverlayPanOptions}
+   * @type {module:ol/Overlay~PanOptions}
    */
-  this.autoPanAnimation = options.autoPanAnimation || /** @type {module:ol/Overlay~OverlayPanOptions} */ ({});
+  this.autoPanAnimation = options.autoPanAnimation || /** @type {module:ol/Overlay~PanOptions} */ ({});
 
   /**
    * @protected
@@ -204,7 +204,7 @@ const Overlay = function(options) {
   this.setOffset(options.offset !== undefined ? options.offset : [0, 0]);
 
   this.setPositioning(options.positioning !== undefined ?
-    /** @type {module:ol/OverlayPositioning~OverlayPositioning} */ (options.positioning) :
+    /** @type {module:ol/OverlayPositioning} */ (options.positioning) :
     OverlayPositioning.TOP_LEFT);
 
   if (options.position !== undefined) {
@@ -239,13 +239,15 @@ Overlay.prototype.getId = function() {
 
 /**
  * Get the map associated with this overlay.
- * @return {module:ol/PluggableMap~PluggableMap|undefined} The map that the
+ * @return {module:ol/PluggableMap|undefined} The map that the
  * overlay is part of.
  * @observable
  * @api
  */
 Overlay.prototype.getMap = function() {
-  return /** @type {module:ol/PluggableMap~PluggableMap|undefined} */ (this.get(Property.MAP));
+  return (
+    /** @type {module:ol/PluggableMap|undefined} */ (this.get(Property.MAP))
+  );
 };
 
 
@@ -268,19 +270,23 @@ Overlay.prototype.getOffset = function() {
  * @api
  */
 Overlay.prototype.getPosition = function() {
-  return /** @type {module:ol/coordinate~Coordinate|undefined} */ (this.get(Property.POSITION));
+  return (
+    /** @type {module:ol/coordinate~Coordinate|undefined} */ (this.get(Property.POSITION))
+  );
 };
 
 
 /**
  * Get the current positioning of this overlay.
- * @return {module:ol/OverlayPositioning~OverlayPositioning} How the overlay is positioned
+ * @return {module:ol/OverlayPositioning} How the overlay is positioned
  *     relative to its point on the map.
  * @observable
  * @api
  */
 Overlay.prototype.getPositioning = function() {
-  return /** @type {module:ol/OverlayPositioning~OverlayPositioning} */ (this.get(Property.POSITIONING));
+  return (
+    /** @type {module:ol/OverlayPositioning} */ (this.get(Property.POSITIONING))
+  );
 };
 
 
@@ -369,7 +375,7 @@ Overlay.prototype.setElement = function(element) {
 
 /**
  * Set the map to be associated with this overlay.
- * @param {module:ol/PluggableMap~PluggableMap|undefined} map The map that the
+ * @param {module:ol/PluggableMap|undefined} map The map that the
  * overlay is part of.
  * @observable
  * @api
@@ -483,7 +489,7 @@ Overlay.prototype.getRect = function(element, size) {
 
 /**
  * Set the positioning for this overlay.
- * @param {module:ol/OverlayPositioning~OverlayPositioning} positioning how the overlay is
+ * @param {module:ol/OverlayPositioning} positioning how the overlay is
  *     positioned relative to its point on the map.
  * @observable
  * @api
@@ -592,7 +598,7 @@ Overlay.prototype.updateRenderedPosition = function(pixel, mapSize) {
 
 /**
  * returns the options this Overlay has been created with
- * @return {module:ol/Overlay~OverlayOptions} overlay options
+ * @return {module:ol/Overlay~Options} overlay options
  */
 Overlay.prototype.getOptions = function() {
   return this.options;

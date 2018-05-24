@@ -37,7 +37,7 @@ const Instruction = {
 
 /**
  * @constructor
- * @extends {ol.render.webgl.Replay}
+ * @extends {module:ol/render/webgl/Replay}
  * @param {number} tolerance Tolerance.
  * @param {module:ol/extent~Extent} maxExtent Max extent.
  * @struct
@@ -47,7 +47,7 @@ const WebGLLineStringReplay = function(tolerance, maxExtent) {
 
   /**
    * @private
-   * @type {ol.render.webgl.linestringreplay.defaultshader.Locations}
+   * @type {module:ol/render/webgl/linestringreplay/defaultshader/Locations}
    */
   this.defaultLocations_ = null;
 
@@ -396,7 +396,7 @@ WebGLLineStringReplay.prototype.drawPolygonCoordinates = function(
 
 
 /**
- * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
+ * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
  * @param {number=} opt_index Index count.
  */
 WebGLLineStringReplay.prototype.setPolygonStyle = function(feature, opt_index) {
@@ -549,7 +549,7 @@ WebGLLineStringReplay.prototype.drawReplay = function(gl, context, skippedFeatur
 /**
  * @private
  * @param {WebGLRenderingContext} gl gl.
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  * @param {Object} skippedFeaturesHash Ids of features to skip.
  */
 WebGLLineStringReplay.prototype.drawReplaySkipping_ = function(gl, context, skippedFeaturesHash) {

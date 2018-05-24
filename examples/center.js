@@ -2,14 +2,9 @@ import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import {defaults as defaultControls} from '../src/ol/control.js';
 import GeoJSON from '../src/ol/format/GeoJSON.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
-import OSM from '../src/ol/source/OSM.js';
-import VectorSource from '../src/ol/source/Vector.js';
-import CircleStyle from '../src/ol/style/Circle.js';
-import Fill from '../src/ol/style/Fill.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
+import {OSM, Vector as VectorSource} from '../src/ol/source.js';
+import {Circle as CircleStyle, Fill, Stroke, Style} from '../src/ol/style.js';
 
 const source = new VectorSource({
   url: 'data/geojson/switzerland.geojson',
@@ -92,6 +87,6 @@ const centerlausanne = document.getElementById('centerlausanne');
 centerlausanne.addEventListener('click', function() {
   const feature = source.getFeatures()[1];
   const point = /** @type {module:ol/geom/Point~Point} */ (feature.getGeometry());
-  const size = /** @type {ol.Size} */ (map.getSize());
+  const size = /** @type {module:ol/size~Size} */ (map.getSize());
   view.centerOn(point.getCoordinates(), size, [570, 500]);
 }, false);

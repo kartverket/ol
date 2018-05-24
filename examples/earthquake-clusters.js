@@ -2,19 +2,10 @@ import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import {createEmpty, getWidth, getHeight, extend} from '../src/ol/extent.js';
 import KML from '../src/ol/format/KML.js';
-import {defaults as defaultInteractions} from '../src/ol/interaction.js';
-import Select from '../src/ol/interaction/Select.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
-import Cluster from '../src/ol/source/Cluster.js';
-import Stamen from '../src/ol/source/Stamen.js';
-import VectorSource from '../src/ol/source/Vector.js';
-import CircleStyle from '../src/ol/style/Circle.js';
-import Fill from '../src/ol/style/Fill.js';
-import RegularShape from '../src/ol/style/RegularShape.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
-import Text from '../src/ol/style/Text.js';
+import {defaults as defaultInteractions, Select} from '../src/ol/interaction.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
+import {Cluster, Stamen, Vector as VectorSource} from '../src/ol/source.js';
+import {Circle as CircleStyle, Fill, RegularShape, Stroke, Style, Text} from '../src/ol/style.js';
 
 
 const earthquakeFill = new Fill({

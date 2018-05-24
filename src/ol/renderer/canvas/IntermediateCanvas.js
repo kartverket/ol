@@ -12,8 +12,8 @@ import {create as createTransform, apply as applyTransform} from '../../transfor
 /**
  * @constructor
  * @abstract
- * @extends {ol.renderer.canvas.Layer}
- * @param {module:ol/layer/Layer~Layer} layer Layer.
+ * @extends {module:ol/renderer/canvas/Layer}
+ * @param {module:ol/layer/Layer} layer Layer.
  */
 const IntermediateCanvasRenderer = function(layer) {
 
@@ -107,9 +107,9 @@ IntermediateCanvasRenderer.prototype.forEachFeatureAtCoordinate = function(coord
   return source.forEachFeatureAtCoordinate(
     coordinate, resolution, rotation, hitTolerance, skippedFeatureUids,
     /**
-       * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
-       * @return {?} Callback result.
-       */
+     * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
+     * @return {?} Callback result.
+     */
     function(feature) {
       return callback.call(thisArg, feature, layer);
     });

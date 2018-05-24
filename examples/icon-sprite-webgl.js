@@ -1,11 +1,10 @@
 import Feature from '../src/ol/Feature.js';
-import Map from '../src/ol/Map.js';
+import Map from '../src/ol/WebGLMap.js';
 import View from '../src/ol/View.js';
 import Point from '../src/ol/geom/Point.js';
 import VectorLayer from '../src/ol/layer/Vector.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import Icon from '../src/ol/style/Icon.js';
-import Style from '../src/ol/style/Style.js';
+import {Icon, Style} from '../src/ol/style.js';
 
 
 const iconInfo = [{
@@ -80,7 +79,6 @@ const vector = new VectorLayer({
 });
 
 const map = new Map({
-  renderer: /** @type {Array<ol.renderer.Type>} */ (['webgl', 'canvas']),
   layers: [vector],
   target: document.getElementById('map'),
   view: new View({

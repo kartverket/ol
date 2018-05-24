@@ -21,14 +21,14 @@ import {createEditingStyle} from '../style/Style.js';
  * @typedef {Object} Options
  * @property {module:ol/extent~Extent} [extent] Initial extent. Defaults to no
  * initial extent.
- * @property {module:ol/style/Style~Style|Array.<module:ol/style/Style~Style>|module:ol/style~StyleFunction} [boxStyle]
+ * @property {module:ol/style/Style|Array.<module:ol/style/Style>|module:ol/style/Style~StyleFunction} [boxStyle]
  * Style for the drawn extent box. Defaults to
- * {@link module:ol/style/Style~createEditing()[module:ol/geom/GeometryType~GeometryType.POLYGON]}
+ * {@link module:ol/style/Style~createEditing()['Polygon']}
  * @property {number} [pixelTolerance=10] Pixel tolerance for considering the
  * pointer close enough to a segment or vertex for editing.
- * @property {module:ol/style/Style~Style|Array.<module:ol/style/Style~Style>|module:ol/style~StyleFunction} [pointerStyle]
+ * @property {module:ol/style/Style|Array.<module:ol/style/Style>|module:ol/style/Style~StyleFunction} [pointerStyle]
  * Style for the cursor used to draw the extent. Defaults to
- * {@link module:ol/style/Style~createEditing()[module:ol/geom/GeometryType~GeometryType.POINT]}
+ * {@link module:ol/style/Style~createEditing()['Point']}
  * @property {boolean} [wrapX=false] Wrap the drawn extent across multiple maps
  * in the X direction? Only affects visuals, not functionality.
  */
@@ -53,9 +53,8 @@ const ExtentEventType = {
  * instances of this type.
  *
  * @constructor
- * @implements {oli.ExtentEvent}
  * @param {module:ol/extent~Extent} extent the new extent
- * @extends {module:ol/events/Event~Event}
+ * @extends {module:ol/events/Event}
  */
 const ExtentInteractionEvent = function(extent) {
   Event.call(this, ExtentEventType.EXTENTCHANGED);
@@ -78,7 +77,7 @@ inherits(ExtentInteractionEvent, Event);
  * This interaction is only supported for mouse devices.
  *
  * @constructor
- * @extends {module:ol/interaction/Pointer~Pointer}
+ * @extends {module:ol/interaction/Pointer}
  * @fires module:ol/interaction/Extent~Event
  * @param {module:ol/interaction/Extent~Options=} opt_options Options.
  * @api
@@ -118,14 +117,14 @@ const ExtentInteraction = function(opt_options) {
 
   /**
    * Feature for displaying the visible extent
-   * @type {module:ol/Feature~Feature}
+   * @type {module:ol/Feature}
    * @private
    */
   this.extentFeature_ = null;
 
   /**
    * Feature for displaying the visible pointer
-   * @type {module:ol/Feature~Feature}
+   * @type {module:ol/Feature}
    * @private
    */
   this.vertexFeature_ = null;
@@ -143,7 +142,7 @@ const ExtentInteraction = function(opt_options) {
 
   /**
    * Layer for the extentFeature
-   * @type {module:ol/layer/Vector~Vector}
+   * @type {module:ol/layer/Vector}
    * @private
    */
   this.extentOverlay_ = new VectorLayer({
@@ -158,7 +157,7 @@ const ExtentInteraction = function(opt_options) {
 
   /**
    * Layer for the vertexFeature
-   * @type {module:ol/layer/Vector~Vector}
+   * @type {module:ol/layer/Vector}
    * @private
    */
   this.vertexOverlay_ = new VectorLayer({
@@ -179,7 +178,7 @@ const ExtentInteraction = function(opt_options) {
 inherits(ExtentInteraction, PointerInteraction);
 
 /**
- * @param {module:ol/MapBrowserEvent~MapBrowserEvent} mapBrowserEvent Event.
+ * @param {module:ol/MapBrowserEvent} mapBrowserEvent Event.
  * @return {boolean} Propagate event?
  * @this {module:ol/interaction/Extent~Extent}
  */
@@ -198,7 +197,7 @@ function handleEvent(mapBrowserEvent) {
 }
 
 /**
- * @param {module:ol/MapBrowserPointerEvent~MapBrowserPointerEvent} mapBrowserEvent Event.
+ * @param {module:ol/MapBrowserPointerEvent} mapBrowserEvent Event.
  * @return {boolean} Event handled?
  * @this {module:ol/interaction/Extent~Extent}
  */
@@ -257,7 +256,7 @@ function handleDownEvent(mapBrowserEvent) {
 }
 
 /**
- * @param {module:ol/MapBrowserPointerEvent~MapBrowserPointerEvent} mapBrowserEvent Event.
+ * @param {module:ol/MapBrowserPointerEvent} mapBrowserEvent Event.
  * @return {boolean} Event handled?
  * @this {module:ol/interaction/Extent~Extent}
  */
@@ -271,7 +270,7 @@ function handleDragEvent(mapBrowserEvent) {
 }
 
 /**
- * @param {module:ol/MapBrowserPointerEvent~MapBrowserPointerEvent} mapBrowserEvent Event.
+ * @param {module:ol/MapBrowserPointerEvent} mapBrowserEvent Event.
  * @return {boolean} Stop drag sequence?
  * @this {module:ol/interaction/Extent~Extent}
  */
@@ -288,7 +287,7 @@ function handleUpEvent(mapBrowserEvent) {
 /**
  * Returns the default style for the drawn bbox
  *
- * @return {module:ol/style~StyleFunction} Default Extent style
+ * @return {module:ol/style/Style~StyleFunction} Default Extent style
  */
 function getDefaultExtentStyleFunction() {
   const style = createEditingStyle();
@@ -300,7 +299,7 @@ function getDefaultExtentStyleFunction() {
 /**
  * Returns the default style for the pointer
  *
- * @return {module:ol/style~StyleFunction} Default pointer style
+ * @return {module:ol/style/Style~StyleFunction} Default pointer style
  */
 function getDefaultPointerStyleFunction() {
   const style = createEditingStyle();
@@ -353,7 +352,7 @@ function getSegments(extent) {
 
 /**
  * @param {module:ol~Pixel} pixel cursor location
- * @param {module:ol/PluggableMap~PluggableMap} map map
+ * @param {module:ol/PluggableMap} map map
  * @returns {module:ol/coordinate~Coordinate|null} snapped vertex on extent
  * @private
  */
@@ -394,7 +393,7 @@ ExtentInteraction.prototype.snapToVertex_ = function(pixel, map) {
 };
 
 /**
- * @param {module:ol/MapBrowserEvent~MapBrowserEvent} mapBrowserEvent pointer move event
+ * @param {module:ol/MapBrowserEvent} mapBrowserEvent pointer move event
  * @private
  */
 ExtentInteraction.prototype.handlePointerMove_ = function(mapBrowserEvent) {
@@ -410,7 +409,7 @@ ExtentInteraction.prototype.handlePointerMove_ = function(mapBrowserEvent) {
 
 /**
  * @param {module:ol/extent~Extent} extent extent
- * @returns {module:ol/Feature~Feature} extent as featrue
+ * @returns {module:ol/Feature} extent as featrue
  * @private
  */
 ExtentInteraction.prototype.createOrUpdateExtentFeature_ = function(extent) {
@@ -437,7 +436,7 @@ ExtentInteraction.prototype.createOrUpdateExtentFeature_ = function(extent) {
 
 /**
  * @param {module:ol/coordinate~Coordinate} vertex location of feature
- * @returns {module:ol/Feature~Feature} vertex as feature
+ * @returns {module:ol/Feature} vertex as feature
  * @private
  */
 ExtentInteraction.prototype.createOrUpdatePointerFeature_ = function(vertex) {
@@ -447,7 +446,7 @@ ExtentInteraction.prototype.createOrUpdatePointerFeature_ = function(vertex) {
     this.vertexFeature_ = vertexFeature;
     this.vertexOverlay_.getSource().addFeature(vertexFeature);
   } else {
-    const geometry = /** @type {module:ol/geom/Point~Point} */ (vertexFeature.getGeometry());
+    const geometry = /** @type {module:ol/geom/Point} */ (vertexFeature.getGeometry());
     geometry.setCoordinates(vertex);
   }
   return vertexFeature;

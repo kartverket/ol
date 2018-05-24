@@ -16,7 +16,7 @@ import {clear} from '../obj.js';
  *
  * @constructor
  * @abstract
- * @extends {module:ol/geom/Geometry~Geometry}
+ * @extends {module:ol/geom/Geometry}
  * @api
  */
 const SimpleGeometry = function() {
@@ -25,7 +25,7 @@ const SimpleGeometry = function() {
 
   /**
    * @protected
-   * @type {module:ol/geom/GeometryLayout~GeometryLayout}
+   * @type {module:ol/geom/GeometryLayout}
    */
   this.layout = GeometryLayout.XY;
 
@@ -48,7 +48,7 @@ inherits(SimpleGeometry, Geometry);
 
 /**
  * @param {number} stride Stride.
- * @return {module:ol/geom/GeometryLayout~GeometryLayout} layout Layout.
+ * @return {module:ol/geom/GeometryLayout} layout Layout.
  */
 function getLayoutForStride(stride) {
   let layout;
@@ -59,12 +59,14 @@ function getLayoutForStride(stride) {
   } else if (stride == 4) {
     layout = GeometryLayout.XYZM;
   }
-  return /** @type {module:ol/geom/GeometryLayout~GeometryLayout} */ (layout);
+  return (
+    /** @type {module:ol/geom/GeometryLayout} */ (layout)
+  );
 }
 
 
 /**
- * @param {module:ol/geom/GeometryLayout~GeometryLayout} layout Layout.
+ * @param {module:ol/geom/GeometryLayout} layout Layout.
  * @return {number} Stride.
  */
 export function getStrideForLayout(layout) {
@@ -132,7 +134,7 @@ SimpleGeometry.prototype.getLastCoordinate = function() {
 
 /**
  * Return the {@link module:ol/geom/GeometryLayout~GeometryLayout layout} of the geometry.
- * @return {module:ol/geom/GeometryLayout~GeometryLayout} Layout.
+ * @return {module:ol/geom/GeometryLayout} Layout.
  * @api
  */
 SimpleGeometry.prototype.getLayout = function() {
@@ -182,7 +184,7 @@ SimpleGeometry.prototype.getSimplifiedGeometry = function(squaredTolerance) {
 
 /**
  * @param {number} squaredTolerance Squared tolerance.
- * @return {module:ol/geom/SimpleGeometry~SimpleGeometry} Simplified geometry.
+ * @return {module:ol/geom/SimpleGeometry} Simplified geometry.
  * @protected
  */
 SimpleGeometry.prototype.getSimplifiedGeometryInternal = function(squaredTolerance) {
@@ -199,7 +201,7 @@ SimpleGeometry.prototype.getStride = function() {
 
 
 /**
- * @param {module:ol/geom/GeometryLayout~GeometryLayout} layout Layout.
+ * @param {module:ol/geom/GeometryLayout} layout Layout.
  * @param {Array.<number>} flatCoordinates Flat coordinates.
  * @protected
  */
@@ -213,13 +215,13 @@ SimpleGeometry.prototype.setFlatCoordinatesInternal = function(layout, flatCoord
 /**
  * @abstract
  * @param {Array} coordinates Coordinates.
- * @param {module:ol/geom/GeometryLayout~GeometryLayout=} opt_layout Layout.
+ * @param {module:ol/geom/GeometryLayout=} opt_layout Layout.
  */
 SimpleGeometry.prototype.setCoordinates = function(coordinates, opt_layout) {};
 
 
 /**
- * @param {module:ol/geom/GeometryLayout~GeometryLayout|undefined} layout Layout.
+ * @param {module:ol/geom/GeometryLayout|undefined} layout Layout.
  * @param {Array} coordinates Coordinates.
  * @param {number} nesting Nesting.
  * @protected
@@ -316,7 +318,7 @@ SimpleGeometry.prototype.translate = function(deltaX, deltaY) {
 
 
 /**
- * @param {module:ol/geom/SimpleGeometry~SimpleGeometry} simpleGeometry Simple geometry.
+ * @param {module:ol/geom/SimpleGeometry} simpleGeometry Simple geometry.
  * @param {module:ol/transform~Transform} transform Transform.
  * @param {Array.<number>=} opt_dest Destination.
  * @return {Array.<number>} Transformed flat coordinates.

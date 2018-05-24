@@ -12,7 +12,7 @@ import {getKeyZXY} from '../tilecoord.js';
 
 /**
  * @constructor
- * @extends {module:ol/Tile~Tile}
+ * @extends {module:ol/Tile}
  * @param {module:ol/tilecoord~TileCoord} tileCoord Tile coordinate.
  * @param {module:ol/size~Size} tileSize Tile size.
  * @param {string} text Text.
@@ -76,6 +76,14 @@ LabeledTile.prototype.load = function() {};
 
 
 /**
+ * @typedef {Object} Options
+ * @property {module:ol/proj~ProjectionLike} projection Projection.
+ * @property {module:ol/tilegrid/TileGrid} [tileGrid] Tile grid.
+ * @property {boolean} [wrapX=true] Whether to wrap the world horizontally.
+ */
+
+
+/**
  * @classdesc
  * A pseudo tile source, which does not fetch tiles from a server, but renders
  * a grid outline for the tile grid/projection along with the coordinates for
@@ -84,8 +92,8 @@ LabeledTile.prototype.load = function() {};
  * Uses Canvas context2d, so requires Canvas support.
  *
  * @constructor
- * @extends {ol.source.Tile}
- * @param {olx.source.TileDebugOptions} options Debug tile options.
+ * @extends {module:ol/source/Tile}
+ * @param {module:ol/source/TileDebug~Options=} options Debug tile options.
  * @api
  */
 const TileDebug = function(options) {
@@ -108,7 +116,7 @@ inherits(TileDebug, TileSource);
 TileDebug.prototype.getTile = function(z, x, y) {
   const tileCoordKey = getKeyZXY(z, x, y);
   if (this.tileCache.containsKey(tileCoordKey)) {
-    return /** @type {!ol.source.LabeledTile} */ (this.tileCache.get(tileCoordKey));
+    return /** @type {!module:ol/source/TileDebug~LabeledTile} */ (this.tileCache.get(tileCoordKey));
   } else {
     const tileSize = toSize(this.tileGrid.getTileSize(z));
     const tileCoord = [z, x, y];

@@ -1,13 +1,9 @@
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import GeoJSON from '../src/ol/format/GeoJSON.js';
-import {defaults as defaultInteractions} from '../src/ol/interaction.js';
-import Modify from '../src/ol/interaction/Modify.js';
-import Select from '../src/ol/interaction/Select.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
-import OSM from '../src/ol/source/OSM.js';
-import VectorSource from '../src/ol/source/Vector.js';
+import {defaults as defaultInteractions, Modify, Select} from '../src/ol/interaction.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
+import {OSM, Vector as VectorSource} from '../src/ol/source.js';
 
 
 const raster = new TileLayer({

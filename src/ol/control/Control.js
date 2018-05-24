@@ -14,7 +14,7 @@ import {listen, unlistenByKey} from '../events.js';
  * @property {Element} [element] The element is the control's
  * container element. This only needs to be specified if you're developing
  * a custom control.
- * @property {function(module:ol/MapEvent~MapEvent)} [render] Function called when
+ * @property {function(module:ol/MapEvent)} [render] Function called when
  * the control should be re-rendered. This is called in a `requestAnimationFrame`
  * callback.
  * @property {Element|string} [target] Specify a target if you want
@@ -45,8 +45,7 @@ import {listen, unlistenByKey} from '../events.js';
  * examples/custom-controls for an example of how to do this.
  *
  * @constructor
- * @extends {module:ol/Object~BaseObject}
- * @implements {oli.control.Control}
+ * @extends {module:ol/Object}
  * @param {module:ol/control/Control~Options} options Control options.
  * @api
  */
@@ -68,7 +67,7 @@ const Control = function(options) {
 
   /**
    * @private
-   * @type {module:ol/PluggableMap~PluggableMap}
+   * @type {module:ol/PluggableMap}
    */
   this.map_ = null;
 
@@ -79,7 +78,7 @@ const Control = function(options) {
   this.listenerKeys = [];
 
   /**
-   * @type {function(module:ol/MapEvent~MapEvent)}
+   * @type {function(module:ol/MapEvent)}
    */
   this.render = options.render ? options.render : UNDEFINED;
 
@@ -103,7 +102,7 @@ Control.prototype.disposeInternal = function() {
 
 /**
  * Get the map associated with this control.
- * @return {module:ol/PluggableMap~PluggableMap} Map.
+ * @return {module:ol/PluggableMap} Map.
  * @api
  */
 Control.prototype.getMap = function() {
@@ -115,8 +114,7 @@ Control.prototype.getMap = function() {
  * Remove the control from its current map and attach it to the new map.
  * Subclasses may set up event handlers to get notified about changes to
  * the map here.
- * @param {module:ol/PluggableMap~PluggableMap} map Map.
- * @override
+ * @param {module:ol/PluggableMap} map Map.
  * @api
  */
 Control.prototype.setMap = function(map) {

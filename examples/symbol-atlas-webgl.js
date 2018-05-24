@@ -1,15 +1,10 @@
 import Feature from '../src/ol/Feature.js';
-import Map from '../src/ol/Map.js';
+import Map from '../src/ol/WebGLMap.js';
 import View from '../src/ol/View.js';
 import Point from '../src/ol/geom/Point.js';
 import VectorLayer from '../src/ol/layer/Vector.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import AtlasManager from '../src/ol/style/AtlasManager.js';
-import CircleStyle from '../src/ol/style/Circle.js';
-import Fill from '../src/ol/style/Fill.js';
-import RegularShape from '../src/ol/style/RegularShape.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {AtlasManager, Circle as CircleStyle, Fill, RegularShape, Stroke, Style} from '../src/ol/style.js';
 
 const atlasManager = new AtlasManager({
   // we increase the initial size so that all symbols fit into
@@ -107,7 +102,6 @@ const vector = new VectorLayer({
 });
 
 const map = new Map({
-  renderer: /** @type {Array<ol.renderer.Type>} */ (['webgl', 'canvas']),
   layers: [vector],
   target: document.getElementById('map'),
   view: new View({

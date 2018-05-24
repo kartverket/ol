@@ -23,9 +23,8 @@ const Property = {
  * type.
  *
  * @constructor
- * @extends {module:ol/events/Event~Event}
- * @implements {oli.CollectionEvent}
- * @param {module:ol/CollectionEventType~CollectionEventType} type Type.
+ * @extends {module:ol/events/Event}
+ * @param {module:ol/CollectionEventType} type Type.
  * @param {*=} opt_element Element.
  */
 export const CollectionEvent = function(type, opt_element) {
@@ -45,7 +44,7 @@ inherits(CollectionEvent, Event);
 
 
 /**
- * @typedef {Object} CollectionOptions
+ * @typedef {Object} Options
  * @property {boolean} [unique=false] Disallow the same item from being added to
  * the collection twice.
  */
@@ -59,10 +58,10 @@ inherits(CollectionEvent, Event);
  * Collection as a whole.
  *
  * @constructor
- * @extends {module:ol/Object~Object}
+ * @extends {module:ol/Object}
  * @fires module:ol/Collection~CollectionEvent
  * @param {Array.<T>=} opt_array Array.
- * @param {module:ol/Collection~CollectionOptions=} opt_options Collection options.
+ * @param {module:ol/Collection~Options=} opt_options Collection options.
  * @template T
  * @api
  */
@@ -112,12 +111,11 @@ Collection.prototype.clear = function() {
  * Add elements to the collection.  This pushes each item in the provided array
  * to the end of the collection.
  * @param {!Array.<T>} arr Array.
- * @return {module:ol/Collection~Collection.<T>} This collection.
+ * @return {module:ol/Collection.<T>} This collection.
  * @api
  */
 Collection.prototype.extend = function(arr) {
-  let i, ii;
-  for (i = 0, ii = arr.length; i < ii; ++i) {
+  for (let i = 0, ii = arr.length; i < ii; ++i) {
     this.push(arr[i]);
   }
   return this;
@@ -226,8 +224,7 @@ Collection.prototype.push = function(elem) {
  */
 Collection.prototype.remove = function(elem) {
   const arr = this.array_;
-  let i, ii;
-  for (i = 0, ii = arr.length; i < ii; ++i) {
+  for (let i = 0, ii = arr.length; i < ii; ++i) {
     if (arr[i] === elem) {
       return this.removeAt(i);
     }
@@ -271,8 +268,7 @@ Collection.prototype.setAt = function(index, elem) {
     this.dispatchEvent(
       new CollectionEvent(CollectionEventType.ADD, elem));
   } else {
-    let j;
-    for (j = n; j < index; ++j) {
+    for (let j = n; j < index; ++j) {
       this.insertAt(j, undefined);
     }
     this.insertAt(index, elem);

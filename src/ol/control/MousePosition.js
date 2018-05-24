@@ -26,12 +26,16 @@ const COORDINATE_FORMAT = 'coordinateFormat';
  * @property {string} [className='ol-mouse-position'] CSS class name.
  * @property {module:ol/coordinate~CoordinateFormat} [coordinateFormat] Coordinate format.
  * @property {module:ol/proj~ProjectionLike} projection Projection.
- * @property {function(module:ol/MapEvent~MapEvent)} [render] Function called when the
+ * @property {function(module:ol/MapEvent)} [render] Function called when the
  * control should be re-rendered. This is called in a `requestAnimationFrame`
  * callback.
  * @property {Element|string} [target] Specify a target if you want the
  * control to be rendered outside of the map's viewport.
- * @property {string} [undefinedHTML=''] Markup for undefined coordinates.
+ * @property {string} [undefinedHTML='&nbsp;'] Markup to show when coordinates are not
+ * available (e.g. when the pointer leaves the map viewport).  By default, the last position
+ * will be replaced with `'&nbsp;'` when the pointer leaves the viewport.  To
+ * retain the last rendered position, set this option to something falsey (like an empty
+ * string `''`).
  */
 
 
@@ -43,7 +47,7 @@ const COORDINATE_FORMAT = 'coordinateFormat';
  * can be changed by using the css selector `.ol-mouse-position`.
  *
  * @constructor
- * @extends {module:ol/control/Control~Control}
+ * @extends {module:ol/control/Control}
  * @param {module:ol/control/MousePosition~Options=} opt_options Mouse position
  *     options.
  * @api
@@ -76,7 +80,13 @@ const MousePosition = function(opt_options) {
    * @private
    * @type {string}
    */
-  this.undefinedHTML_ = options.undefinedHTML !== undefined ? options.undefinedHTML : '';
+  this.undefinedHTML_ = 'undefinedHTML' in options ? options.undefinedHTML : '&nbsp;';
+
+  /**
+   * @private
+   * @type {boolean}
+   */
+  this.renderOnMouseOut_ = !!this.undefinedHTML_;
 
   /**
    * @private
@@ -86,7 +96,7 @@ const MousePosition = function(opt_options) {
 
   /**
    * @private
-   * @type {module:ol/proj/Projection~Projection}
+   * @type {module:ol/proj/Projection}
    */
   this.mapProjection_ = null;
 
@@ -109,8 +119,8 @@ inherits(MousePosition, Control);
 
 /**
  * Update the mouseposition element.
- * @param {module:ol/MapEvent~MapEvent} mapEvent Map event.
- * @this {module:ol/control/MousePosition~MousePosition}
+ * @param {module:ol/MapEvent} mapEvent Map event.
+ * @this {module:ol/control/MousePosition}
  * @api
  */
 export function render(mapEvent) {
@@ -144,19 +154,23 @@ MousePosition.prototype.handleProjectionChanged_ = function() {
  * @api
  */
 MousePosition.prototype.getCoordinateFormat = function() {
-  return /** @type {module:ol/coordinate~CoordinateFormat|undefined} */ (this.get(COORDINATE_FORMAT));
+  return (
+    /** @type {module:ol/coordinate~CoordinateFormat|undefined} */ (this.get(COORDINATE_FORMAT))
+  );
 };
 
 
 /**
  * Return the projection that is used to report the mouse position.
- * @return {module:ol/proj/Projection~Projection|undefined} The projection to report mouse
+ * @return {module:ol/proj/Projection|undefined} The projection to report mouse
  *     position in.
  * @observable
  * @api
  */
 MousePosition.prototype.getProjection = function() {
-  return /** @type {module:ol/proj/Projection~Projection|undefined} */ (this.get(PROJECTION));
+  return (
+    /** @type {module:ol/proj/Projection|undefined} */ (this.get(PROJECTION))
+  );
 };
 
 
@@ -190,11 +204,13 @@ MousePosition.prototype.setMap = function(map) {
   if (map) {
     const viewport = map.getViewport();
     this.listenerKeys.push(
-      listen(viewport, EventType.MOUSEMOVE,
-        this.handleMouseMove, this),
-      listen(viewport, EventType.MOUSEOUT,
-        this.handleMouseOut, this)
+      listen(viewport, EventType.MOUSEMOVE, this.handleMouseMove, this)
     );
+    if (this.renderOnMouseOut_) {
+      this.listenerKeys.push(
+        listen(viewport, EventType.MOUSEOUT, this.handleMouseOut, this)
+      );
+    }
   }
 };
 
@@ -251,7 +267,7 @@ MousePosition.prototype.updateHTML_ = function(pixel) {
       }
     }
   }
-  if (!this.renderedHTML_ || html != this.renderedHTML_) {
+  if (!this.renderedHTML_ || html !== this.renderedHTML_) {
     this.element.innerHTML = html;
     this.renderedHTML_ = html;
   }

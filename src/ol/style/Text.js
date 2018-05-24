@@ -15,11 +15,42 @@ const DEFAULT_FILL_COLOR = '#333';
 
 
 /**
+ * @typedef {Object} Options
+ * @property {string} [font] Font style as CSS 'font' value, see:
+ * {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/font}. Default is '10px sans-serif'
+ * @property {number} [maxAngle] When `placement` is set to `'line'`, allow a maximum angle between adjacent characters.
+ * The expected value is in radians, and the default is 45° (`Math.PI / 4`).
+ * @property {number} [offsetX=0] Horizontal text offset in pixels. A positive will shift the text right.
+ * @property {number} [offsetY=0] Vertical text offset in pixels. A positive will shift the text down.
+ * @property {boolean} [overflow=false] For polygon labels or when `placement` is set to `'line'`, allow text to exceed
+ * the width of the polygon at the label position or the length of the path that it follows.
+ * @property {module:ol/style/TextPlacement|string} [placement] Text placement.
+ * @property {number} [scale] Scale.
+ * @property {boolean} [rotateWithView=false] Whether to rotate the text with the view.
+ * @property {number} [rotation=0] Rotation in radians (positive rotation clockwise).
+ * @property {string} [text] Text content.
+ * @property {string} [textAlign] Text alignment. Possible values: 'left', 'right', 'center', 'end' or 'start'.
+ * Default is 'center' for `placement: 'point'`. For `placement: 'line'`, the default is to let the renderer choose a
+ * placement where `maxAngle` is not exceeded.
+ * @property {string} [textBaseline='middle'] Text base line. Possible values: 'bottom', 'top', 'middle', 'alphabetic',
+ * 'hanging', 'ideographic'.
+ * @property {module:ol/style/Fill} [fill] Fill style. If none is provided, we'll use a dark fill-style (#333).
+ * @property {module:ol/style/Stroke} [stroke] Stroke style.
+ * @property {module:ol/style/Fill} [backgroundFill] Fill style for the text background when `placement` is
+ * `'point'`. Default is no fill.
+ * @property {module:ol/style/Stroke} [backgroundStroke] Stroke style for the text background  when `placement`
+ * is `'point'`. Default is no stroke.
+ * @property {Array.<number>} [padding=[0, 0, 0, 0]] Padding in pixels around the text for decluttering and background. The order of
+ * values in the array is `[top, right, bottom, left]`.
+ */
+
+
+/**
  * @classdesc
  * Set text style for vector features.
  *
  * @constructor
- * @param {olx.style.TextOptions=} opt_options Options.
+ * @param {module:ol/style/Text~Options=} opt_options Options.
  * @api
  */
 const Text = function(opt_options) {
@@ -70,7 +101,7 @@ const Text = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.Fill}
+   * @type {module:ol/style/Fill}
    */
   this.fill_ = options.fill !== undefined ? options.fill :
     new Fill({color: DEFAULT_FILL_COLOR});
@@ -83,7 +114,7 @@ const Text = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.TextPlacement|string}
+   * @type {module:ol/style/TextPlacement|string}
    */
   this.placement_ = options.placement !== undefined ? options.placement : TextPlacement.POINT;
 
@@ -95,7 +126,7 @@ const Text = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.Stroke}
+   * @type {module:ol/style/Stroke}
    */
   this.stroke_ = options.stroke !== undefined ? options.stroke : null;
 
@@ -113,13 +144,13 @@ const Text = function(opt_options) {
 
   /**
    * @private
-   * @type {ol.style.Fill}
+   * @type {module:ol/style/Fill}
    */
   this.backgroundFill_ = options.backgroundFill ? options.backgroundFill : null;
 
   /**
    * @private
-   * @type {ol.style.Stroke}
+   * @type {module:ol/style/Stroke}
    */
   this.backgroundStroke_ = options.backgroundStroke ? options.backgroundStroke : null;
 
@@ -133,7 +164,7 @@ const Text = function(opt_options) {
 
 /**
  * Clones the style.
- * @return {ol.style.Text} The cloned style.
+ * @return {module:ol/style/Text} The cloned style.
  * @api
  */
 Text.prototype.clone = function() {
@@ -190,7 +221,7 @@ Text.prototype.getMaxAngle = function() {
 
 /**
  * Get the label placement.
- * @return {ol.style.TextPlacement|string} Text placement.
+ * @return {module:ol/style/TextPlacement|string} Text placement.
  * @api
  */
 Text.prototype.getPlacement = function() {
@@ -220,7 +251,7 @@ Text.prototype.getOffsetY = function() {
 
 /**
  * Get the fill style for the text.
- * @return {ol.style.Fill} Fill style.
+ * @return {module:ol/style/Fill} Fill style.
  * @api
  */
 Text.prototype.getFill = function() {
@@ -260,7 +291,7 @@ Text.prototype.getScale = function() {
 
 /**
  * Get the stroke style for the text.
- * @return {ol.style.Stroke} Stroke style.
+ * @return {module:ol/style/Stroke} Stroke style.
  * @api
  */
 Text.prototype.getStroke = function() {
@@ -300,7 +331,7 @@ Text.prototype.getTextBaseline = function() {
 
 /**
  * Get the background fill style for the text.
- * @return {ol.style.Fill} Fill style.
+ * @return {module:ol/style/Fill} Fill style.
  * @api
  */
 Text.prototype.getBackgroundFill = function() {
@@ -310,7 +341,7 @@ Text.prototype.getBackgroundFill = function() {
 
 /**
  * Get the background stroke style for the text.
- * @return {ol.style.Stroke} Stroke style.
+ * @return {module:ol/style/Stroke} Stroke style.
  * @api
  */
 Text.prototype.getBackgroundStroke = function() {
@@ -386,7 +417,7 @@ Text.prototype.setOffsetY = function(offsetY) {
 /**
  * Set the text placement.
  *
- * @param {ol.style.TextPlacement|string} placement Placement.
+ * @param {module:ol/style/TextPlacement|string} placement Placement.
  * @api
  */
 Text.prototype.setPlacement = function(placement) {
@@ -397,7 +428,7 @@ Text.prototype.setPlacement = function(placement) {
 /**
  * Set the fill.
  *
- * @param {ol.style.Fill} fill Fill style.
+ * @param {module:ol/style/Fill} fill Fill style.
  * @api
  */
 Text.prototype.setFill = function(fill) {
@@ -430,7 +461,7 @@ Text.prototype.setScale = function(scale) {
 /**
  * Set the stroke.
  *
- * @param {ol.style.Stroke} stroke Stroke style.
+ * @param {module:ol/style/Stroke} stroke Stroke style.
  * @api
  */
 Text.prototype.setStroke = function(stroke) {
@@ -474,7 +505,7 @@ Text.prototype.setTextBaseline = function(textBaseline) {
 /**
  * Set the background fill.
  *
- * @param {ol.style.Fill} fill Fill style.
+ * @param {module:ol/style/Fill} fill Fill style.
  * @api
  */
 Text.prototype.setBackgroundFill = function(fill) {
@@ -485,7 +516,7 @@ Text.prototype.setBackgroundFill = function(fill) {
 /**
  * Set the background stroke.
  *
- * @param {ol.style.Stroke} stroke Stroke style.
+ * @param {module:ol/style/Stroke} stroke Stroke style.
  * @api
  */
 Text.prototype.setBackgroundStroke = function(stroke) {

@@ -29,7 +29,7 @@ const RBush = function(opt_maxEntries) {
   /**
    * @private
    */
-  this.rbush_ = rbush(opt_maxEntries);
+  this.rbush_ = rbush(opt_maxEntries, undefined);
 
   /**
    * A mapping between the objects added to this rbush wrapper
@@ -227,7 +227,7 @@ RBush.prototype.getExtent = function(opt_extent) {
 
 
 /**
- * @param {ol.structs.RBush} rbush R-Tree.
+ * @param {module:ol/structs/RBush} rbush R-Tree.
  */
 RBush.prototype.concat = function(rbush) {
   this.rbush_.load(rbush.rbush_.all());

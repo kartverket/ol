@@ -11,6 +11,34 @@ import {assign} from '../obj.js';
 import ImageSource, {defaultImageLoadFunction} from '../source/Image.js';
 import {appendParams} from '../uri.js';
 
+
+/**
+ * @typedef {Object} Options
+ * @property {module:ol/source/Source~AttributionLike} [attributions] Attributions.
+ * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images.  Note that
+ * you must provide a `crossOrigin` value if you are using the WebGL renderer or if you want to
+ * access pixel data with the Canvas renderer.  See
+ * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image} for more detail.
+ * @property {boolean} [hidpi=true] Use the `ol/Map#pixelRatio` value when requesting the image from
+ * the remote server.
+ * @property {module:ol/Image~LoadFunction} [imageLoadFunction] Optional function to load an image given
+ * a URL.
+ * @property {Object.<string,*>} params ArcGIS Rest parameters. This field is optional. Service
+ * defaults will be used for any fields not specified. `FORMAT` is `PNG32` by default. `F` is
+ * `IMAGE` by default. `TRANSPARENT` is `true` by default.  `BBOX, `SIZE`, `BBOXSR`, and `IMAGESR`
+ * will be set dynamically. Set `LAYERS` to override the default service layer visibility. See
+ * {@link http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#/Export_Map/02r3000000v7000000/}
+ * for further reference.
+ * @property {module:ol/proj~ProjectionLike} projection Projection.
+ * @property {number} [ratio=1.5] Ratio. `1` means image requests are the size of the map viewport,
+ * `2` means twice the size of the map viewport, and so on.
+ * @property {Array.<number>} [resolutions] Resolutions. If specified, requests will be made for
+ * these resolutions only.
+ * @property {string} [url] ArcGIS Rest service URL for a Map Service or Image Service. The url
+ * should include /MapServer or /ImageServer.
+ */
+
+
 /**
  * @classdesc
  * Source for data from ArcGIS Rest services providing single, untiled images.
@@ -18,12 +46,12 @@ import {appendParams} from '../uri.js';
  *
  * If underlying map service is not using labels,
  * take advantage of ol image caching and use
- * {@link ol.source.TileArcGISRest} data source.
+ * {@link module:ol/source/TileArcGISRest} data source.
  *
  * @constructor
- * @fires ol.source.Image.Event
- * @extends {ol.source.Image}
- * @param {olx.source.ImageArcGISRestOptions=} opt_options Image ArcGIS Rest Options.
+ * @fires ol/source/Image~ImageSourceEvent
+ * @extends {module:ol/source/Image}
+ * @param {module:ol/source/ImageArcGISRest~Options=} opt_options Image ArcGIS Rest Options.
  * @api
  */
 const ImageArcGISRest = function(opt_options) {
@@ -71,7 +99,7 @@ const ImageArcGISRest = function(opt_options) {
 
   /**
    * @private
-   * @type {module:ol/Image~Image}
+   * @type {module:ol/Image}
    */
   this.image_ = null;
 
@@ -195,7 +223,7 @@ ImageArcGISRest.prototype.getImageLoadFunction = function() {
  * @param {module:ol/extent~Extent} extent Extent.
  * @param {module:ol/size~Size} size Size.
  * @param {number} pixelRatio Pixel ratio.
- * @param {module:ol/proj/Projection~Projection} projection Projection.
+ * @param {module:ol/proj/Projection} projection Projection.
  * @param {Object} params Params.
  * @return {string} Request URL.
  * @private

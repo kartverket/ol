@@ -11,6 +11,26 @@ import {assign} from '../obj.js';
 
 
 /**
+ * @enum {string}
+ * Render mode for vector tiles:
+ *  * `'image'`: Vector tiles are rendered as images. Great performance, but
+ *    point symbols and texts are always rotated with the view and pixels are
+ *    scaled during zoom animations.
+ *  * `'hybrid'`: Polygon and line elements are rendered as images, so pixels
+ *    are scaled during zoom animations. Point symbols and texts are accurately
+ *    rendered as vectors and can stay upright on rotated views.
+ *  * `'vector'`: Vector tiles are rendered as vectors. Most accurate rendering
+ *    even during animations, but slower performance than the other options.
+ * @api
+ */
+export const RenderType = {
+  IMAGE: 'image',
+  HYBRID: 'hybrid',
+  VECTOR: 'vector'
+};
+
+
+/**
  * @typedef {Object} Options
  * @property {number} [opacity=1] Opacity (0, 1).
  * @property {boolean} [visible=true] Visibility.
@@ -22,7 +42,7 @@ import {assign} from '../obj.js';
  * visible.
  * @property {number} [maxResolution] The maximum resolution (exclusive) below which this layer will
  * be visible.
- * @property {ol.RenderOrderFunction} [renderOrder] Render order. Function to be used when sorting
+ * @property {module:ol/render~OrderFunction} [renderOrder] Render order. Function to be used when sorting
  * features before rendering. By default features are drawn in the order that they are created. Use
  * `null` to avoid the sort, but get an undefined draw order.
  * @property {number} [renderBuffer=100] The buffer in pixels around the tile extent used by the
@@ -30,7 +50,7 @@ import {assign} from '../obj.js';
  * Recommended value: Vector tiles are usually generated with a buffer, so this value should match
  * the largest possible buffer of the used tiles. It should be at least the size of the largest
  * point symbol or line width.
- * @property {module:ol/layer/VectorRenderType~VectorRenderType|string} [renderMode='hybrid'] Render mode for vector tiles:
+ * @property {module:ol/layer/VectorTileRenderType|string} [renderMode='hybrid'] Render mode for vector tiles:
  *  * `'image'`: Vector tiles are rendered as images. Great performance, but point symbols and texts
  *    are always rotated with the view and pixels are scaled during zoom animations.
  *  * `'hybrid'`: Polygon and line elements are rendered as images, so pixels are scaled during zoom
@@ -40,17 +60,17 @@ import {assign} from '../obj.js';
  *    animations, but slower performance than the other options.
  *
  * When `declutter` is set to `true`, `'hybrid'` will be used instead of `'image'`.
- * @property {ol.source.VectorTile} [source] Source.
- * @property {module:ol/PluggableMap~PluggableMap} [map] Sets the layer as overlay on a map. The map will not manage
+ * @property {module:ol/source/VectorTile} [source] Source.
+ * @property {module:ol/PluggableMap} [map] Sets the layer as overlay on a map. The map will not manage
  * this layer in its layers collection, and the layer will be rendered on top. This is useful for
  * temporary layers. The standard way to add a layer to a map and have it managed by the map is to
- * use {@link ol.Map#addLayer}.
+ * use {@link module:ol/Map#addLayer}.
  * @property {boolean} [declutter=false] Declutter images and text. Decluttering is applied to all
  * image and text styles, and the priority is defined by the z-index of the style. Lower z-index
  * means higher priority. When set to `true`, a `renderMode` of `'image'` will be overridden with
  * `'hybrid'`.
- * @property {ol.style.Style|Array.<ol.style.Style>|ol.StyleFunction} [style] Layer style. See
- * {@link ol.style} for default style which will be used if this is not defined.
+ * @property {module:ol/style/Style|Array.<module:ol/style/Style>|module:ol/style/Style~StyleFunction} [style] Layer style. See
+ * {@link module:ol/style} for default style which will be used if this is not defined.
  * @property {number} [maxTilesLoading=16] Maximum number tiles to load simultaneously.
  * @property {boolean} [updateWhileAnimating=false] When set to `true`, feature batches will be
  * recreated during animations. This means that no vectors will be shown clipped, but the setting
@@ -60,10 +80,10 @@ import {assign} from '../obj.js';
  * recreated during interactions. See also `updateWhileAnimating`.
  * @property {number} [preload=0] Preload. Load low-resolution tiles up to `preload` levels. `0`
  * means no preloading.
- * @property {ol.RenderOrderFunction} [renderOrder] Render order. Function to be used when sorting
+ * @property {module:ol/render~OrderFunction} [renderOrder] Render order. Function to be used when sorting
  * features before rendering. By default features are drawn in the order that they are created.
- * @property {(ol.style.Style|Array.<ol.style.Style>|ol.StyleFunction)} [style] Layer style. See
- * {@link ol.style} for default style which will be used if this is not defined.
+ * @property {(module:ol/style/Style|Array.<module:ol/style/Style>|module:ol/style/Style~StyleFunction)} [style] Layer style. See
+ * {@link module:ol/style} for default style which will be used if this is not defined.
  * @property {boolean} [useInterimTilesOnError=true] Use interim tiles on error.
  */
 
@@ -76,7 +96,7 @@ import {assign} from '../obj.js';
  * options means that `title` is observable, and has get/set accessors.
  *
  * @constructor
- * @extends {module:ol/layer/Vector~VectorLayer}
+ * @extends {module:ol/layer/Vector}
  * @param {module:ol/layer/VectorTile~Options=} opt_options Options.
  * @api
  */
@@ -107,7 +127,7 @@ const VectorTileLayer = function(opt_options) {
   /**
    * The layer type.
    * @protected
-   * @type {module:ol/LayerType~LayerType}
+   * @type {module:ol/LayerType}
    */
   this.type = LayerType.VECTOR_TILE;
 
@@ -161,9 +181,9 @@ VectorTileLayer.prototype.setUseInterimTilesOnError = function(useInterimTilesOn
 
 
 /**
- * Return the associated {@link ol.source.VectorTile vectortilesource} of the layer.
+ * Return the associated {@link module:ol/source/VectorTile vectortilesource} of the layer.
  * @function
- * @return {ol.source.VectorTile} Source.
+ * @return {module:ol/source/VectorTile} Source.
  * @api
  */
 VectorTileLayer.prototype.getSource;

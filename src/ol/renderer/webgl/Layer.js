@@ -18,9 +18,9 @@ import {createEmptyTexture} from '../../webgl/Context.js';
 /**
  * @constructor
  * @abstract
- * @extends {ol.renderer.Layer}
- * @param {ol.renderer.webgl.Map} mapRenderer Map renderer.
- * @param {module:ol/layer/Layer~Layer} layer Layer.
+ * @extends {module:ol/renderer/Layer}
+ * @param {module:ol/renderer/webgl/Map} mapRenderer Map renderer.
+ * @param {module:ol/layer/Layer} layer Layer.
  */
 const WebGLLayerRenderer = function(mapRenderer, layer) {
 
@@ -28,13 +28,13 @@ const WebGLLayerRenderer = function(mapRenderer, layer) {
 
   /**
    * @protected
-   * @type {ol.renderer.webgl.Map}
+   * @type {module:ol/renderer/webgl/Map}
    */
   this.mapRenderer = mapRenderer;
 
   /**
    * @private
-   * @type {module:ol/webgl/Buffer~WebGLBuffer}
+   * @type {module:ol/webgl/Buffer}
    */
   this.arrayBuffer_ = new WebGLBuffer([
     -1, -1, 0, 0,
@@ -81,7 +81,7 @@ const WebGLLayerRenderer = function(mapRenderer, layer) {
 
   /**
    * @private
-   * @type {ol.renderer.webgl.defaultmapshader.Locations}
+   * @type {module:ol/renderer/webgl/defaultmapshader/Locations}
    */
   this.defaultLocations_ = null;
 
@@ -139,7 +139,7 @@ WebGLLayerRenderer.prototype.bindFramebuffer = function(frameState, framebufferD
 /**
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @param {module:ol/layer/Layer~State} layerState Layer state.
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  */
 WebGLLayerRenderer.prototype.composeFrame = function(frameState, layerState, context) {
 
@@ -182,8 +182,8 @@ WebGLLayerRenderer.prototype.composeFrame = function(frameState, layerState, con
 
 
 /**
- * @param {ol.render.EventType} type Event type.
- * @param {module:ol/webgl/Context~WebGLContext} context WebGL context.
+ * @param {module:ol/render/EventType} type Event type.
+ * @param {module:ol/webgl/Context} context WebGL context.
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @private
  */
@@ -245,7 +245,7 @@ WebGLLayerRenderer.prototype.handleWebGLContextLost = function() {
  * @abstract
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @param {module:ol/layer/Layer~State} layerState Layer state.
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @param {module:ol/webgl/Context} context Context.
  * @return {boolean} whether composeFrame should be called.
  */
 WebGLLayerRenderer.prototype.prepareFrame = function(frameState, layerState, context) {};
@@ -255,7 +255,7 @@ WebGLLayerRenderer.prototype.prepareFrame = function(frameState, layerState, con
  * @abstract
  * @param {module:ol~Pixel} pixel Pixel.
  * @param {module:ol/PluggableMap~FrameState} frameState FrameState.
- * @param {function(this: S, module:ol/layer/Layer~Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer
+ * @param {function(this: S, module:ol/layer/Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer
  *     callback.
  * @param {S} thisArg Value to use as `this` when executing `callback`.
  * @return {T|undefined} Callback result.

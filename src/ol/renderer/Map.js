@@ -8,31 +8,29 @@ import EventType from '../events/EventType.js';
 import {getWidth} from '../extent.js';
 import {TRUE, UNDEFINED} from '../functions.js';
 import {visibleAtResolution} from '../layer/Layer.js';
-import {getLayerRendererPlugins} from '../plugins.js';
-import {iconImageCache} from '../style.js';
+import {shared as iconImageCache} from '../style/IconImageCache.js';
 import {compose as composeTransform, invert as invertTransform, setFromArray as transformSetFromArray} from '../transform.js';
+
 
 /**
  * @constructor
  * @abstract
- * @extends {module:ol/Disposable~Disposable}
- * @param {Element} container Container.
- * @param {module:ol/PluggableMap~PluggableMap} map Map.
+ * @extends {module:ol/Disposable}
+ * @param {module:ol/PluggableMap} map Map.
  * @struct
  */
-const MapRenderer = function(container, map) {
-
+const MapRenderer = function(map) {
   Disposable.call(this);
 
   /**
    * @private
-   * @type {module:ol/PluggableMap~PluggableMap}
+   * @type {module:ol/PluggableMap}
    */
   this.map_ = map;
 
   /**
    * @private
-   * @type {!Object.<string, ol.renderer.Layer>}
+   * @type {!Object.<string, module:ol/renderer/Layer>}
    */
   this.layerRenderers_ = {};
 
@@ -42,9 +40,33 @@ const MapRenderer = function(container, map) {
    */
   this.layerRendererListeners_ = {};
 
+  /**
+   * @private
+   * @type {Array.<module:ol/renderer/Layer>}
+   */
+  this.layerRendererConstructors_ = [];
+
 };
 
 inherits(MapRenderer, Disposable);
+
+
+/**
+ * Register layer renderer constructors.
+ * @param {Array.<module:ol/renderer/Layer>} constructors Layer renderers.
+ */
+MapRenderer.prototype.registerLayerRenderers = function(constructors) {
+  this.layerRendererConstructors_.push.apply(this.layerRendererConstructors_, constructors);
+};
+
+
+/**
+ * Get the registered layer renderer constructors.
+ * @return {Array.<module:ol/renderer/Layer>} Registered layer renderers.
+ */
+MapRenderer.prototype.getLayerRendererConstructors = function() {
+  return this.layerRendererConstructors_;
+};
 
 
 /**
@@ -78,7 +100,7 @@ MapRenderer.prototype.removeLayerRenderers = function() {
 
 
 /**
- * @param {module:ol/PluggableMap~PluggableMap} map Map.
+ * @param {module:ol/PluggableMap} map Map.
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  */
 function expireIconCache(map, frameState) {
@@ -90,10 +112,10 @@ function expireIconCache(map, frameState) {
  * @param {module:ol/coordinate~Coordinate} coordinate Coordinate.
  * @param {module:ol/PluggableMap~FrameState} frameState FrameState.
  * @param {number} hitTolerance Hit tolerance in pixels.
- * @param {function(this: S, (module:ol/Feature~Feature|ol.render.Feature),
- *     module:ol/layer/Layer~Layer): T} callback Feature callback.
+ * @param {function(this: S, (module:ol/Feature|module:ol/render/Feature),
+ *     module:ol/layer/Layer): T} callback Feature callback.
  * @param {S} thisArg Value to use as `this` when executing `callback`.
- * @param {function(this: U, module:ol/layer/Layer~Layer): boolean} layerFilter Layer filter
+ * @param {function(this: U, module:ol/layer/Layer): boolean} layerFilter Layer filter
  *     function, only layers which are visible and for which this function
  *     returns `true` will be tested for features.  By default, all visible
  *     layers will be tested.
@@ -108,8 +130,8 @@ MapRenderer.prototype.forEachFeatureAtCoordinate = function(coordinate, frameSta
   const viewResolution = viewState.resolution;
 
   /**
-   * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
-   * @param {module:ol/layer/Layer~Layer} layer Layer.
+   * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
+   * @param {module:ol/layer/Layer} layer Layer.
    * @return {?} Callback result.
    */
   function forEachFeatureAtCoordinate(feature, layer) {
@@ -159,10 +181,10 @@ MapRenderer.prototype.forEachFeatureAtCoordinate = function(coordinate, frameSta
  * @abstract
  * @param {module:ol~Pixel} pixel Pixel.
  * @param {module:ol/PluggableMap~FrameState} frameState FrameState.
- * @param {function(this: S, module:ol/layer/Layer~Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer
+ * @param {function(this: S, module:ol/layer/Layer, (Uint8ClampedArray|Uint8Array)): T} callback Layer
  *     callback.
  * @param {S} thisArg Value to use as `this` when executing `callback`.
- * @param {function(this: U, module:ol/layer/Layer~Layer): boolean} layerFilter Layer filter
+ * @param {function(this: U, module:ol/layer/Layer): boolean} layerFilter Layer filter
  *     function, only layers which are visible and for which this function
  *     returns `true` will be tested for features.  By default, all visible
  *     layers will be tested.
@@ -178,7 +200,7 @@ MapRenderer.prototype.forEachLayerAtPixel = function(pixel, frameState, callback
  * @param {module:ol/coordinate~Coordinate} coordinate Coordinate.
  * @param {module:ol/PluggableMap~FrameState} frameState FrameState.
  * @param {number} hitTolerance Hit tolerance in pixels.
- * @param {function(this: U, module:ol/layer/Layer~Layer): boolean} layerFilter Layer filter
+ * @param {function(this: U, module:ol/layer/Layer): boolean} layerFilter Layer filter
  *     function, only layers which are visible and for which this function
  *     returns `true` will be tested for features.  By default, all visible
  *     layers will be tested.
@@ -195,22 +217,20 @@ MapRenderer.prototype.hasFeatureAtCoordinate = function(coordinate, frameState, 
 
 
 /**
- * @param {module:ol/layer/Layer~Layer} layer Layer.
+ * @param {module:ol/layer/Layer} layer Layer.
  * @protected
- * @return {ol.renderer.Layer} Layer renderer.
+ * @return {module:ol/renderer/Layer} Layer renderer.
  */
 MapRenderer.prototype.getLayerRenderer = function(layer) {
   const layerKey = getUid(layer).toString();
   if (layerKey in this.layerRenderers_) {
     return this.layerRenderers_[layerKey];
   } else {
-    const layerRendererPlugins = getLayerRendererPlugins();
     let renderer;
-    const type = this.getType();
-    for (let i = 0, ii = layerRendererPlugins.length; i < ii; ++i) {
-      const plugin = layerRendererPlugins[i];
-      if (plugin['handles'](type, layer)) {
-        renderer = plugin['create'](this, layer);
+    for (let i = 0, ii = this.layerRendererConstructors_.length; i < ii; ++i) {
+      const candidate = this.layerRendererConstructors_[i];
+      if (candidate['handles'](layer)) {
+        renderer = candidate['create'](this, layer);
         break;
       }
     }
@@ -229,7 +249,7 @@ MapRenderer.prototype.getLayerRenderer = function(layer) {
 /**
  * @param {string} layerKey Layer key.
  * @protected
- * @return {ol.renderer.Layer} Layer renderer.
+ * @return {module:ol/renderer/Layer} Layer renderer.
  */
 MapRenderer.prototype.getLayerRendererByKey = function(layerKey) {
   return this.layerRenderers_[layerKey];
@@ -238,7 +258,7 @@ MapRenderer.prototype.getLayerRendererByKey = function(layerKey) {
 
 /**
  * @protected
- * @return {Object.<string, ol.renderer.Layer>} Layer renderers.
+ * @return {Object.<string, module:ol/renderer/Layer>} Layer renderers.
  */
 MapRenderer.prototype.getLayerRenderers = function() {
   return this.layerRenderers_;
@@ -246,18 +266,11 @@ MapRenderer.prototype.getLayerRenderers = function() {
 
 
 /**
- * @return {module:ol/PluggableMap~PluggableMap} Map.
+ * @return {module:ol/PluggableMap} Map.
  */
 MapRenderer.prototype.getMap = function() {
   return this.map_;
 };
-
-
-/**
- * @abstract
- * @return {ol.renderer.Type} Type
- */
-MapRenderer.prototype.getType = function() {};
 
 
 /**
@@ -271,7 +284,7 @@ MapRenderer.prototype.handleLayerRendererChange_ = function() {
 
 /**
  * @param {string} layerKey Layer key.
- * @return {ol.renderer.Layer} Layer renderer.
+ * @return {module:ol/renderer/Layer} Layer renderer.
  * @private
  */
 MapRenderer.prototype.removeLayerRendererByKey_ = function(layerKey) {
@@ -293,7 +306,7 @@ MapRenderer.prototype.renderFrame = UNDEFINED;
 
 
 /**
- * @param {module:ol/PluggableMap~PluggableMap} map Map.
+ * @param {module:ol/PluggableMap} map Map.
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @private
  */

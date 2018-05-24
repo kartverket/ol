@@ -10,6 +10,7 @@ import {get as getProjection, getTransform} from '../proj.js';
 import Units from '../proj/Units.js';
 import {create as createTransform, compose as composeTransform} from '../transform.js';
 
+
 /**
  * @classdesc
  * Abstract base class; normally only used for creating subclasses and not
@@ -21,7 +22,7 @@ import {create as createTransform, compose as composeTransform} from '../transfo
  *
  * @constructor
  * @abstract
- * @extends {module:ol/Object~BaseObject}
+ * @extends {module:ol/Object}
  * @api
  */
 const Geometry = function() {
@@ -42,7 +43,7 @@ const Geometry = function() {
 
   /**
    * @protected
-   * @type {Object.<string, module:ol/geom/Geometry~Geometry>}
+   * @type {Object.<string, module:ol/geom/Geometry>}
    */
   this.simplifiedGeometryCache = {};
 
@@ -58,21 +59,21 @@ const Geometry = function() {
    */
   this.simplifiedGeometryRevision = 0;
 
-  /**
-   * @private
-   * @type {module:ol/transform~Transform}
-   */
-  this.tmpTransform_ = createTransform();
-
 };
 
 inherits(Geometry, BaseObject);
 
 
 /**
+ * @type {module:ol/transform~Transform}
+ */
+const tmpTransform = createTransform();
+
+
+/**
  * Make a complete copy of the geometry.
  * @abstract
- * @return {!module:ol/geom/Geometry~Geometry} Clone.
+ * @return {!module:ol/geom/Geometry} Clone.
  */
 Geometry.prototype.clone = function() {};
 
@@ -180,7 +181,7 @@ Geometry.prototype.scale = function(sx, opt_sy, opt_anchor) {};
  * simplification is used to preserve topology.
  * @function
  * @param {number} tolerance The tolerance distance for simplification.
- * @return {module:ol/geom/Geometry~Geometry} A new, simplified version of the original
+ * @return {module:ol/geom/Geometry} A new, simplified version of the original
  *     geometry.
  * @api
  */
@@ -195,7 +196,7 @@ Geometry.prototype.simplify = function(tolerance) {
  * @see https://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm
  * @abstract
  * @param {number} squaredTolerance Squared tolerance.
- * @return {module:ol/geom/Geometry~Geometry} Simplified geometry.
+ * @return {module:ol/geom/Geometry} Simplified geometry.
  */
 Geometry.prototype.getSimplifiedGeometry = function(squaredTolerance) {};
 
@@ -203,7 +204,7 @@ Geometry.prototype.getSimplifiedGeometry = function(squaredTolerance) {};
 /**
  * Get the type of this geometry.
  * @abstract
- * @return {module:ol/geom/GeometryType~GeometryType} Geometry type.
+ * @return {module:ol/geom/GeometryType} Geometry type.
  */
 Geometry.prototype.getType = function() {};
 
@@ -249,12 +250,11 @@ Geometry.prototype.translate = function(deltaX, deltaY) {};
  *     string identifier or a {@link module:ol/proj/Projection~Projection} object.
  * @param {module:ol/proj~ProjectionLike} destination The desired projection.  Can be a
  *     string identifier or a {@link module:ol/proj/Projection~Projection} object.
- * @return {module:ol/geom/Geometry~Geometry} This geometry.  Note that original geometry is
+ * @return {module:ol/geom/Geometry} This geometry.  Note that original geometry is
  *     modified in place.
  * @api
  */
 Geometry.prototype.transform = function(source, destination) {
-  const tmpTransform = this.tmpTransform_;
   source = getProjection(source);
   const transformFn = source.getUnits() == Units.TILE_PIXELS ?
     function(inCoordinates, outCoordinates, stride) {

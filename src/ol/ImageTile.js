@@ -9,10 +9,16 @@ import {listenOnce, unlistenByKey} from './events.js';
 import EventType from './events/EventType.js';
 
 /**
+ * @typedef {function(new: module:ol/ImageTile, module:ol/tilecoord~TileCoord,
+ * module:ol/TileState, string, ?string, module:ol/Tile~LoadFunction)} TileClass
+ * @api
+ */
+
+/**
  * @constructor
- * @extends {module:ol/Tile~Tile}
+ * @extends {module:ol/Tile}
  * @param {module:ol/tilecoord~TileCoord} tileCoord Tile coordinate.
- * @param {module:ol/TileState~TileState} state State.
+ * @param {module:ol/TileState} state State.
  * @param {string} src Image source URI.
  * @param {?string} crossOrigin Cross origin.
  * @param {module:ol/Tile~LoadFunction} tileLoadFunction Tile load function.

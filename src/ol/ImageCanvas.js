@@ -18,7 +18,7 @@ import ImageState from './ImageState.js';
 
 /**
  * @constructor
- * @extends {module:ol/ImageBase~ImageBase}
+ * @extends {module:ol/ImageBase}
  * @param {module:ol/extent~Extent} extent Extent.
  * @param {number} resolution Resolution.
  * @param {number} pixelRatio Pixel ratio.
@@ -94,7 +94,7 @@ ImageCanvas.prototype.load = function() {
 
 
 /**
- * @inheritDoc
+ * @return {HTMLCanvasElement} Canvas element.
  */
 ImageCanvas.prototype.getImage = function() {
   return this.canvas_;

@@ -1,12 +1,8 @@
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import EsriJSON from '../src/ol/format/EsriJSON.js';
-import {defaults as defaultInteractions} from '../src/ol/interaction.js';
-import Draw from '../src/ol/interaction/Draw.js';
-import Modify from '../src/ol/interaction/Modify.js';
-import Select from '../src/ol/interaction/Select.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
+import {defaults as defaultInteractions, Draw, Modify, Select} from '../src/ol/interaction.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
 import {tile as tileStrategy} from '../src/ol/loadingstrategy.js';
 import {fromLonLat} from '../src/ol/proj.js';
 import VectorSource from '../src/ol/source/Vector.js';

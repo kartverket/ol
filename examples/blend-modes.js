@@ -4,10 +4,7 @@ import View from '../src/ol/View.js';
 import Point from '../src/ol/geom/Point.js';
 import VectorLayer from '../src/ol/layer/Vector.js';
 import VectorSource from '../src/ol/source/Vector.js';
-import CircleStyle from '../src/ol/style/Circle.js';
-import Fill from '../src/ol/style/Fill.js';
-import Stroke from '../src/ol/style/Stroke.js';
-import Style from '../src/ol/style/Style.js';
+import {Circle as CircleStyle, Fill, Stroke, Style} from '../src/ol/style.js';
 
 
 // Create separate layers for red, green an blue circles.
@@ -96,7 +93,7 @@ const affectBlue = document.getElementById('affect-blue');
  * This method sets the globalCompositeOperation to the value of the select
  * field and it is bound to the precompose event of the layers.
  *
- * @param {ol.render.Event} evt The render event.
+ * @param {module:ol/render/Event~RenderEvent} evt The render event.
  */
 const setBlendModeFromSelect = function(evt) {
   evt.context.globalCompositeOperation = select.value;
@@ -107,7 +104,7 @@ const setBlendModeFromSelect = function(evt) {
  * This method resets the globalCompositeOperation to the default value of
  * 'source-over' and it is bound to the postcompose event of the layers.
  *
- * @param {ol.render.Event} evt The render event.
+ * @param {module:ol/render/Event~RenderEvent} evt The render event.
  */
 const resetBlendModeFromSelect = function(evt) {
   evt.context.globalCompositeOperation = 'source-over';
@@ -117,7 +114,7 @@ const resetBlendModeFromSelect = function(evt) {
 /**
  * Bind the pre- and postcompose handlers to the passed layer.
  *
- * @param {ol.layer.Vector} layer The layer to bind the handlers to.
+ * @param {module:ol/layer/Vector} layer The layer to bind the handlers to.
  */
 const bindLayerListeners = function(layer) {
   layer.on('precompose', setBlendModeFromSelect);
@@ -128,7 +125,7 @@ const bindLayerListeners = function(layer) {
 /**
  * Unind the pre- and postcompose handlers to the passed layers.
  *
- * @param {ol.layer.Vector} layer The layer to unbind the handlers from.
+ * @param {module:ol/layer/Vector} layer The layer to unbind the handlers from.
  */
 const unbindLayerListeners = function(layer) {
   layer.un('precompose', setBlendModeFromSelect);

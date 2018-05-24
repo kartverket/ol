@@ -19,21 +19,21 @@ const ImageSourceEventType = {
 
   /**
    * Triggered when an image starts loading.
-   * @event ol.source.Image.Event#imageloadstart
+   * @event ol/source/Image~ImageSourceEvent#imageloadstart
    * @api
    */
   IMAGELOADSTART: 'imageloadstart',
 
   /**
    * Triggered when an image finishes loading.
-   * @event ol.source.Image.Event#imageloadend
+   * @event ol/source/Image~ImageSourceEvent#imageloadend
    * @api
    */
   IMAGELOADEND: 'imageloadend',
 
   /**
    * Triggered if image loading results in an error.
-   * @event ol.source.Image.Event#imageloaderror
+   * @event ol/source/Image~ImageSourceEvent#imageloaderror
    * @api
    */
   IMAGELOADERROR: 'imageloaderror'
@@ -43,14 +43,13 @@ const ImageSourceEventType = {
 
 /**
  * @classdesc
- * Events emitted by {@link ol.source.Image} instances are instances of this
+ * Events emitted by {@link module:ol/source/Image~ImageSource} instances are instances of this
  * type.
  *
  * @constructor
- * @extends {module:ol/events/Event~Event}
- * @implements {oli.source.ImageEvent}
+ * @extends {module:ol/events/Event}
  * @param {string} type Type.
- * @param {module:ol/Image~Image} image The image.
+ * @param {module:ol/Image} image The image.
  */
 const ImageSourceEvent = function(type, image) {
 
@@ -58,13 +57,23 @@ const ImageSourceEvent = function(type, image) {
 
   /**
    * The image related to the event.
-   * @type {module:ol/Image~Image}
+   * @type {module:ol/Image}
    * @api
    */
   this.image = image;
 
 };
 inherits(ImageSourceEvent, Event);
+
+
+/**
+ * @typedef {Object} Options
+ * @property {module:ol/source/Source~AttributionLike} [attributions]
+ * @property {module:ol/extent~Extent} [extent]
+ * @property {module:ol/proj~ProjectionLike} projection
+ * @property {Array.<number>} [resolutions]
+ * @property {module:ol/source/State} [state]
+ */
 
 
 /**
@@ -75,8 +84,8 @@ inherits(ImageSourceEvent, Event);
  *
  * @constructor
  * @abstract
- * @extends {ol.source.Source}
- * @param {ol.SourceImageOptions} options Single image source options.
+ * @extends {module:ol/source/Source}
+ * @param {module:ol/source/Image~Options} options Single image source options.
  * @api
  */
 const ImageSource = function(options) {
@@ -97,7 +106,7 @@ const ImageSource = function(options) {
 
   /**
    * @private
-   * @type {ol.reproj.Image}
+   * @type {module:ol/reproj/Image}
    */
   this.reprojectedImage_ = null;
 
@@ -139,8 +148,8 @@ ImageSource.prototype.findNearestResolution = function(resolution) {
  * @param {module:ol/extent~Extent} extent Extent.
  * @param {number} resolution Resolution.
  * @param {number} pixelRatio Pixel ratio.
- * @param {module:ol/proj/Projection~Projection} projection Projection.
- * @return {module:ol/ImageBase~ImageBase} Single image.
+ * @param {module:ol/proj/Projection} projection Projection.
+ * @return {module:ol/ImageBase} Single image.
  */
 ImageSource.prototype.getImage = function(extent, resolution, pixelRatio, projection) {
   const sourceProjection = this.getProjection();
@@ -183,8 +192,8 @@ ImageSource.prototype.getImage = function(extent, resolution, pixelRatio, projec
  * @param {module:ol/extent~Extent} extent Extent.
  * @param {number} resolution Resolution.
  * @param {number} pixelRatio Pixel ratio.
- * @param {module:ol/proj/Projection~Projection} projection Projection.
- * @return {module:ol/ImageBase~ImageBase} Single image.
+ * @param {module:ol/proj/Projection} projection Projection.
+ * @return {module:ol/ImageBase} Single image.
  * @protected
  */
 ImageSource.prototype.getImageInternal = function(extent, resolution, pixelRatio, projection) {};
@@ -192,11 +201,11 @@ ImageSource.prototype.getImageInternal = function(extent, resolution, pixelRatio
 
 /**
  * Handle image change events.
- * @param {module:ol/events/Event~Event} event Event.
+ * @param {module:ol/events/Event} event Event.
  * @protected
  */
 ImageSource.prototype.handleImageChange = function(event) {
-  const image = /** @type {module:ol/Image~Image} */ (event.target);
+  const image = /** @type {module:ol/Image} */ (event.target);
   switch (image.getState()) {
     case ImageState.LOADING:
       this.dispatchEvent(
@@ -222,7 +231,7 @@ ImageSource.prototype.handleImageChange = function(event) {
 /**
  * Default image load function for image sources that use module:ol/Image~Image image
  * instances.
- * @param {module:ol/Image~Image} image Image.
+ * @param {module:ol/Image} image Image.
  * @param {string} src Source.
  */
 export function defaultImageLoadFunction(image, src) {

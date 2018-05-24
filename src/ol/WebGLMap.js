@@ -1,40 +1,28 @@
 /**
- * @module ol/CanvasMap
+ * @module ol/WebGLMap
  */
 import {inherits} from './index.js';
 import PluggableMap from './PluggableMap.js';
-import PluginType from './PluginType.js';
 import {defaults as defaultControls} from './control.js';
 import {defaults as defaultInteractions} from './interaction.js';
 import {assign} from './obj.js';
-import {register, registerMultiple} from './plugins.js';
-import CanvasImageLayerRenderer from './renderer/canvas/ImageLayer.js';
-import CanvasMapRenderer from './renderer/canvas/Map.js';
-import CanvasTileLayerRenderer from './renderer/canvas/TileLayer.js';
-import CanvasVectorLayerRenderer from './renderer/canvas/VectorLayer.js';
-import CanvasVectorTileLayerRenderer from './renderer/canvas/VectorTileLayer.js';
-
-
-register(PluginType.MAP_RENDERER, CanvasMapRenderer);
-registerMultiple(PluginType.LAYER_RENDERER, [
-  CanvasImageLayerRenderer,
-  CanvasTileLayerRenderer,
-  CanvasVectorLayerRenderer,
-  CanvasVectorTileLayerRenderer
-]);
+import WebGLImageLayerRenderer from './renderer/webgl/ImageLayer.js';
+import WebGLMapRenderer from './renderer/webgl/Map.js';
+import WebGLTileLayerRenderer from './renderer/webgl/TileLayer.js';
+import WebGLVectorLayerRenderer from './renderer/webgl/VectorLayer.js';
 
 
 /**
  * @classdesc
- * The map is the core component of OpenLayers. For a map to render, a view,
- * one or more layers, and a target container are needed:
+ * The WebGLMap uses WebGL for rendering map layers.  This renderer has limited
+ * support for vector data and no support for vector tiles.
  *
- *     import CanvasMap from 'ol/CanvasMap';
+ *     import WebGLMap from 'ol/WebGLMap';
  *     import TileLayer from 'ol/layer/Tile';
  *     import OSM from 'ol/source/OSM';
  *     import View from 'ol/View';
  *
- *     var map = new CanvasMap({
+ *     var map = new WebGLMap({
  *       view: new View({
  *         center: [0, 0],
  *         zoom: 1
@@ -66,21 +54,20 @@ registerMultiple(PluginType.LAYER_RENDERER, [
  * layer collection in the group. `getLayers` is a convenience function for
  * `getLayerGroup().getLayers()`.
  * Note that {@link module:ol/layer/Group~Group} is a subclass of
- * {@link module:ol/layer/Base~Base}, so layers entered in the options or added
+ * {@link module:ol/layer/Base}, so layers entered in the options or added
  * with `addLayer` can be groups, which can contain further groups, and so on.
  *
  * @constructor
- * @extends {module:ol/PluggableMap~PluggableMap}
+ * @extends {module:ol/PluggableMap}
  * @param {module:ol/PluggableMap~MapOptions} options Map options.
  * @fires module:ol/MapBrowserEvent~MapBrowserEvent
  * @fires module:ol/MapEvent~MapEvent
- * @fires module:ol/render/Event~Event#postcompose
- * @fires module:ol/render/Event~Event#precompose
+ * @fires module:ol/render/Event~RenderEvent#postcompose
+ * @fires module:ol/render/Event~RenderEvent#precompose
  * @api
  */
-const CanvasMap = function(options) {
+const WebGLMap = function(options) {
   options = assign({}, options);
-  delete options.renderer;
   if (!options.controls) {
     options.controls = defaultControls();
   }
@@ -91,6 +78,17 @@ const CanvasMap = function(options) {
   PluggableMap.call(this, options);
 };
 
-inherits(CanvasMap, PluggableMap);
+inherits(WebGLMap, PluggableMap);
 
-export default CanvasMap;
+
+WebGLMap.prototype.createRenderer = function() {
+  const renderer = new WebGLMapRenderer(this);
+  renderer.registerLayerRenderers([
+    WebGLImageLayerRenderer,
+    WebGLTileLayerRenderer,
+    WebGLVectorLayerRenderer
+  ]);
+  return renderer;
+};
+
+export default WebGLMap;

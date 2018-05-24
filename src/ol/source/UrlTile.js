@@ -9,14 +9,33 @@ import TileEventType from '../source/TileEventType.js';
 import {getKeyZXY} from '../tilecoord.js';
 
 /**
+ * @typedef {Object} Options
+ * @property {module:ol/source/Source~AttributionLike} [attributions]
+ * @property {number} [cacheSize]
+ * @property {module:ol/extent~Extent} [extent]
+ * @property {boolean} [opaque]
+ * @property {module:ol/proj~ProjectionLike} [projection]
+ * @property {module:ol/source/State} [state]
+ * @property {module:ol/tilegrid/TileGrid} [tileGrid]
+ * @property {module:ol/Tile~LoadFunction} tileLoadFunction
+ * @property {number} [tilePixelRatio]
+ * @property {module:ol/Tile~UrlFunction} [tileUrlFunction]
+ * @property {string} [url]
+ * @property {Array.<string>} [urls]
+ * @property {boolean} [wrapX=true]
+ * @property {number} [transition]
+ */
+
+
+/**
  * @classdesc
  * Base class for sources providing tiles divided into a tile grid over http.
  *
  * @constructor
  * @abstract
- * @fires ol.source.Tile.Event
- * @extends {ol.source.Tile}
- * @param {ol.SourceUrlTileOptions} options Image tile options.
+ * @fires module:ol/source/TileEvent
+ * @extends {module:ol/source/Tile}
+ * @param {module:ol/source/UrlTile~Options=} options Image tile options.
  */
 const UrlTile = function(options) {
 
@@ -112,11 +131,11 @@ UrlTile.prototype.getUrls = function() {
 
 /**
  * Handle tile change events.
- * @param {module:ol/events/Event~Event} event Event.
+ * @param {module:ol/events/Event} event Event.
  * @protected
  */
 UrlTile.prototype.handleTileChange = function(event) {
-  const tile = /** @type {module:ol/Tile~Tile} */ (event.target);
+  const tile = /** @type {module:ol/Tile} */ (event.target);
   const uid = getUid(tile);
   const tileState = tile.getState();
   let type;

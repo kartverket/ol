@@ -3,10 +3,8 @@ import View from '../src/ol/View.js';
 import {platformModifierKeyOnly} from '../src/ol/events/condition.js';
 import GeoJSON from '../src/ol/format/GeoJSON.js';
 import ExtentInteraction from '../src/ol/interaction/Extent.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
-import OSM from '../src/ol/source/OSM.js';
-import VectorSource from '../src/ol/source/Vector.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
+import {OSM, Vector as VectorSource} from '../src/ol/source.js';
 
 const vectorSource = new VectorSource({
   url: 'data/geojson/countries.geojson',
@@ -36,12 +34,12 @@ map.addInteraction(extent);
 extent.setActive(false);
 
 //Enable interaction by holding shift
-this.addEventListener('keydown', function(event) {
+window.addEventListener('keydown', function(event) {
   if (event.keyCode == 16) {
     extent.setActive(true);
   }
 });
-this.addEventListener('keyup', function(event) {
+window.addEventListener('keyup', function(event) {
   if (event.keyCode == 16) {
     extent.setActive(false);
   }

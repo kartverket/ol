@@ -11,17 +11,57 @@ import {hash as tileCoordHash} from '../tilecoord.js';
 import {appendParams} from '../uri.js';
 
 /**
+ * @typedef {Object} Options
+ * @property {module:ol/source/Source~AttributionLike} [attributions] Attributions.
+ * @property {number} [cacheSize=2048] Cache size.
+ * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images.
+ * Note that you must provide a `crossOrigin` value if you are using the WebGL renderer
+ * or if you want to access pixel data with the Canvas renderer.  See
+ * {@link https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image}
+ * for more detail.
+ * @property {Object.<string,*>} [params] ArcGIS Rest parameters. This field is optional. Service defaults will be
+ * used for any fields not specified. `FORMAT` is `PNG32` by default. `F` is `IMAGE` by
+ * default. `TRANSPARENT` is `true` by default.  `BBOX, `SIZE`, `BBOXSR`,
+ * and `IMAGESR` will be set dynamically. Set `LAYERS` to
+ * override the default service layer visibility. See
+ * {@link http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#/Export_Map/02r3000000v7000000/}
+ * for further reference.
+ * @property {module:ol/tilegrid/TileGrid} [tileGrid] Tile grid. Base this on the resolutions,
+ * tilesize and extent supported by the server.
+ * If this is not defined, a default grid will be used: if there is a projection
+ * extent, the grid will be based on that; if not, a grid based on a global
+ * extent with origin at 0,0 will be used.
+ * @property {module:ol/proj~ProjectionLike} projection Projection.
+ * @property {number} [reprojectionErrorThreshold=0.5] Maximum allowed reprojection error (in pixels).
+ * Higher values can increase reprojection performance, but decrease precision.
+ * @property {module:ol/Tile~LoadFunction} [tileLoadFunction] Optional function to load a tile given a URL.
+ * The default is
+ * ```js
+ * function(imageTile, src) {
+ *   imageTile.getImage().src = src;
+ * };
+ * ```
+ * @property {string} [url] ArcGIS Rest service URL for a Map Service or Image Service. The
+ * url should include /MapServer or /ImageServer.
+ * @property {boolean} [wrapX=true] Whether to wrap the world horizontally.
+ * @property {number} [transition] Duration of the opacity transition for rendering.  To disable the opacity
+ * transition, pass `transition: 0`.
+ * @property {Array.<string>} urls ArcGIS Rest service urls. Use this instead of `url` when the ArcGIS
+ * Service supports multiple urls for export requests.
+ */
+
+
+/**
  * @classdesc
  * Layer source for tile data from ArcGIS Rest services. Map and Image
  * Services are supported.
  *
  * For cached ArcGIS services, better performance is available using the
- * {@link ol.source.XYZ} data source.
+ * {@link module:ol/source/XYZ~XYZ} data source.
  *
  * @constructor
- * @extends {ol.source.TileImage}
- * @param {olx.source.TileArcGISRestOptions=} opt_options Tile ArcGIS Rest
- *     options.
+ * @extends {module:ol/source/TileImage}
+ * @param {module:ol/source/TileArcGISRest~Options=} opt_options Tile ArcGIS Rest options.
  * @api
  */
 const TileArcGISRest = function(opt_options) {
@@ -90,7 +130,7 @@ TileArcGISRest.prototype.getParams = function() {
  * @param {module:ol/size~Size} tileSize Tile size.
  * @param {module:ol/extent~Extent} tileExtent Tile extent.
  * @param {number} pixelRatio Pixel ratio.
- * @param {module:ol/proj/Projection~Projection} projection Projection.
+ * @param {module:ol/proj/Projection} projection Projection.
  * @param {Object} params Params.
  * @return {string|undefined} Request URL.
  * @private

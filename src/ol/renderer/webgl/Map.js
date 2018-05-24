@@ -7,13 +7,11 @@ import {stableSort} from '../../array.js';
 import {CLASS_UNSELECTABLE} from '../../css.js';
 import {createCanvasContext2D} from '../../dom.js';
 import {listen} from '../../events.js';
-import {WEBGL} from '../../has.js';
 import {visibleAtResolution} from '../../layer/Layer.js';
 import RenderEvent from '../../render/Event.js';
 import RenderEventType from '../../render/EventType.js';
 import WebGLImmediateRenderer from '../../render/webgl/Immediate.js';
 import MapRenderer, {sortByZIndex} from '../Map.js';
-import RendererType from '../Type.js';
 import SourceState from '../../source/State.js';
 import LRUCache from '../../structs/LRUCache.js';
 import PriorityQueue from '../../structs/PriorityQueue.js';
@@ -42,13 +40,14 @@ const WEBGL_TEXTURE_CACHE_HIGH_WATER_MARK = 1024;
 
 /**
  * @constructor
- * @extends {ol.renderer.Map}
- * @param {Element} container Container.
- * @param {module:ol/PluggableMap~PluggableMap} map Map.
+ * @extends {module:ol/renderer/Map}
+ * @param {module:ol/PluggableMap} map Map.
  * @api
  */
-const WebGLMapRenderer = function(container, map) {
-  MapRenderer.call(this, container, map);
+const WebGLMapRenderer = function(map) {
+  MapRenderer.call(this, map);
+
+  const container = map.getViewport();
 
   /**
    * @private
@@ -100,7 +99,7 @@ const WebGLMapRenderer = function(container, map) {
 
   /**
    * @private
-   * @type {module:ol/webgl/Context~WebGLContext}
+   * @type {module:ol/webgl/Context}
    */
   this.context_ = new WebGLContext(this.canvas_, this.gl_);
 
@@ -111,7 +110,7 @@ const WebGLMapRenderer = function(container, map) {
 
   /**
    * @private
-   * @type {ol.structs.LRUCache.<module:ol/renderer/webgl/Map~TextureCacheEntry|null>}
+   * @type {module:ol/structs/LRUCache.<module:ol/renderer/webgl/Map~TextureCacheEntry|null>}
    */
   this.textureCache_ = new LRUCache();
 
@@ -123,14 +122,14 @@ const WebGLMapRenderer = function(container, map) {
 
   /**
    * @private
-   * @type {ol.structs.PriorityQueue.<Array>}
+   * @type {module:ol/structs/PriorityQueue.<Array>}
    */
   this.tileTextureQueue_ = new PriorityQueue(
     /**
-       * @param {Array.<*>} element Element.
-       * @return {number} Priority.
-       * @this {ol.renderer.webgl.Map}
-       */
+     * @param {Array.<*>} element Element.
+     * @return {number} Priority.
+     * @this {module:ol/renderer/webgl/Map}
+     */
     (function(element) {
       const tileCenter = /** @type {module:ol/coordinate~Coordinate} */ (element[1]);
       const tileResolution = /** @type {number} */ (element[2]);
@@ -140,26 +139,28 @@ const WebGLMapRenderer = function(container, map) {
             Math.sqrt(deltaX * deltaX + deltaY * deltaY) / tileResolution;
     }).bind(this),
     /**
-       * @param {Array.<*>} element Element.
-       * @return {string} Key.
-       */
+     * @param {Array.<*>} element Element.
+     * @return {string} Key.
+     */
     function(element) {
-      return /** @type {module:ol/Tile~Tile} */ (element[0]).getKey();
+      return (
+        /** @type {module:ol/Tile} */ (element[0]).getKey()
+      );
     });
 
 
   /**
-   * @param {module:ol/PluggableMap~PluggableMap} map Map.
+   * @param {module:ol/PluggableMap} map Map.
    * @param {?module:ol/PluggableMap~FrameState} frameState Frame state.
    * @return {boolean} false.
-   * @this {ol.renderer.webgl.Map}
+   * @this {module:ol/renderer/webgl/Map}
    */
   this.loadNextTileTexture_ =
       function(map, frameState) {
         if (!this.tileTextureQueue_.isEmpty()) {
           this.tileTextureQueue_.reprioritize();
           const element = this.tileTextureQueue_.dequeue();
-          const tile = /** @type {module:ol/Tile~Tile} */ (element[0]);
+          const tile = /** @type {module:ol/Tile} */ (element[0]);
           const tileSize = /** @type {module:ol/size~Size} */ (element[3]);
           const tileGutter = /** @type {number} */ (element[4]);
           this.bindTileTexture(
@@ -182,28 +183,7 @@ inherits(WebGLMapRenderer, MapRenderer);
 
 
 /**
- * Determine if this renderer handles the provided layer.
- * @param {ol.renderer.Type} type The renderer type.
- * @return {boolean} The renderer can render the layer.
- */
-WebGLMapRenderer['handles'] = function(type) {
-  return WEBGL && type === RendererType.WEBGL;
-};
-
-
-/**
- * Create the map renderer.
- * @param {Element} container Container.
- * @param {module:ol/PluggableMap~PluggableMap} map Map.
- * @return {ol.renderer.webgl.Map} The map renderer.
- */
-WebGLMapRenderer['create'] = function(container, map) {
-  return new WebGLMapRenderer(container, map);
-};
-
-
-/**
- * @param {module:ol/Tile~Tile} tile Tile.
+ * @param {module:ol/Tile} tile Tile.
  * @param {module:ol/size~Size} tileSize Tile size.
  * @param {number} tileGutter Tile gutter.
  * @param {number} magFilter Mag filter.
@@ -268,7 +248,7 @@ WebGLMapRenderer.prototype.bindTileTexture = function(tile, tileSize, tileGutter
 
 
 /**
- * @param {ol.render.EventType} type Event type.
+ * @param {module:ol/render/EventType} type Event type.
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @private
  */
@@ -318,7 +298,7 @@ WebGLMapRenderer.prototype.disposeInternal = function() {
 
 
 /**
- * @param {module:ol/PluggableMap~PluggableMap} map Map.
+ * @param {module:ol/PluggableMap} map Map.
  * @param {module:ol/PluggableMap~FrameState} frameState Frame state.
  * @private
  */
@@ -343,7 +323,7 @@ WebGLMapRenderer.prototype.expireCache_ = function(map, frameState) {
 
 
 /**
- * @return {module:ol/webgl/Context~WebGLContext} The context.
+ * @return {module:ol/webgl/Context} The context.
  */
 WebGLMapRenderer.prototype.getContext = function() {
   return this.context_;
@@ -359,7 +339,7 @@ WebGLMapRenderer.prototype.getGL = function() {
 
 
 /**
- * @return {ol.structs.PriorityQueue.<Array>} Tile texture queue.
+ * @return {module:ol/structs/PriorityQueue.<Array>} Tile texture queue.
  */
 WebGLMapRenderer.prototype.getTileTextureQueue = function() {
   return this.tileTextureQueue_;
@@ -367,15 +347,7 @@ WebGLMapRenderer.prototype.getTileTextureQueue = function() {
 
 
 /**
- * @inheritDoc
- */
-WebGLMapRenderer.prototype.getType = function() {
-  return RendererType.WEBGL;
-};
-
-
-/**
- * @param {module:ol/events/Event~Event} event Event.
+ * @param {module:ol/events/Event} event Event.
  * @protected
  */
 WebGLMapRenderer.prototype.handleWebGLContextLost = function(event) {
@@ -385,7 +357,7 @@ WebGLMapRenderer.prototype.handleWebGLContextLost = function(event) {
 
   const renderers = this.getLayerRenderers();
   for (const id in renderers) {
-    const renderer = /** @type {ol.renderer.webgl.Layer} */ (renderers[id]);
+    const renderer = /** @type {module:ol/renderer/webgl/Layer} */ (renderers[id]);
     renderer.handleWebGLContextLost();
   }
 };
@@ -417,7 +389,7 @@ WebGLMapRenderer.prototype.initializeGL_ = function() {
 
 
 /**
- * @param {module:ol/Tile~Tile} tile Tile.
+ * @param {module:ol/Tile} tile Tile.
  * @return {boolean} Is tile texture loaded.
  */
 WebGLMapRenderer.prototype.isTileTextureLoaded = function(tile) {
@@ -463,7 +435,7 @@ WebGLMapRenderer.prototype.renderFrame = function(frameState) {
     layerState = layerStatesArray[i];
     if (visibleAtResolution(layerState, viewResolution) &&
         layerState.sourceState == SourceState.READY) {
-      layerRenderer = /** @type {ol.renderer.webgl.Layer} */ (this.getLayerRenderer(layerState.layer));
+      layerRenderer = /** @type {module:ol/renderer/webgl/Layer} */ (this.getLayerRenderer(layerState.layer));
       if (layerRenderer.prepareFrame(frameState, layerState, context)) {
         layerStatesToDraw.push(layerState);
       }
@@ -486,7 +458,7 @@ WebGLMapRenderer.prototype.renderFrame = function(frameState) {
 
   for (i = 0, ii = layerStatesToDraw.length; i < ii; ++i) {
     layerState = layerStatesToDraw[i];
-    layerRenderer = /** @type {ol.renderer.webgl.Layer} */ (this.getLayerRenderer(layerState.layer));
+    layerRenderer = /** @type {module:ol/renderer/webgl/Layer} */ (this.getLayerRenderer(layerState.layer));
     layerRenderer.composeFrame(frameState, layerState, context);
   }
 
@@ -602,7 +574,7 @@ WebGLMapRenderer.prototype.forEachLayerAtPixel = function(pixel, frameState, cal
     const layer = layerState.layer;
     if (visibleAtResolution(layerState, viewState.resolution) &&
         layerFilter.call(thisArg, layer)) {
-      const layerRenderer = /** @type {ol.renderer.webgl.Layer} */ (this.getLayerRenderer(layer));
+      const layerRenderer = /** @type {module:ol/renderer/webgl/Layer} */ (this.getLayerRenderer(layer));
       result = layerRenderer.forEachLayerAtPixel(
         pixel, frameState, callback, thisArg);
       if (result) {
@@ -612,4 +584,5 @@ WebGLMapRenderer.prototype.forEachLayerAtPixel = function(pixel, frameState, cal
   }
   return undefined;
 };
+
 export default WebGLMapRenderer;

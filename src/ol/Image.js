@@ -23,14 +23,14 @@ import {getHeight} from './extent.js';
  * post requests or - in general - through XHR requests, where the src of the
  * image element would be set to a data URI when the content is loaded.
  *
- * @typedef {function(module:ol/Image~Image, string)} LoadFunction
+ * @typedef {function(module:ol/Image, string)} LoadFunction
  * @api
  */
 
 
 /**
  * @constructor
- * @extends {module:ol/ImageBase~ImageBase}
+ * @extends {module:ol/ImageBase}
  * @param {module:ol/extent~Extent} extent Extent.
  * @param {number|undefined} resolution Resolution.
  * @param {number} pixelRatio Pixel ratio.
@@ -65,7 +65,7 @@ const ImageWrapper = function(extent, resolution, pixelRatio, src, crossOrigin, 
 
   /**
    * @protected
-   * @type {module:ol/ImageState~ImageState}
+   * @type {module:ol/ImageState}
    */
   this.state = ImageState.IDLE;
 

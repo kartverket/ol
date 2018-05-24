@@ -30,7 +30,7 @@ import {
 
 /**
  * @constructor
- * @extends {ol.render.VectorContext}
+ * @extends {module:ol/render/VectorContext}
  * @param {number} tolerance Tolerance.
  * @param {module:ol/extent~Extent} maxExtent Maximum extent.
  * @param {number} resolution Resolution.
@@ -46,12 +46,6 @@ const CanvasReplay = function(tolerance, maxExtent, resolution, pixelRatio, over
    * @type {?}
    */
   this.declutterTree = declutterTree;
-
-  /**
-   * @private
-   * @type {module:ol/extent~Extent}
-   */
-  this.tmpExtent_ = createEmpty();
 
   /**
    * @protected
@@ -93,9 +87,9 @@ const CanvasReplay = function(tolerance, maxExtent, resolution, pixelRatio, over
 
   /**
    * @private
-   * @type {module:ol/coordinate~Coordinate}
+   * @type {boolean}
    */
-  this.fillOrigin_;
+  this.alignFill_;
 
   /**
    * @private
@@ -153,9 +147,9 @@ const CanvasReplay = function(tolerance, maxExtent, resolution, pixelRatio, over
 
   /**
    * @protected
-   * @type {ol.CanvasFillStrokeState}
+   * @type {module:ol/render/canvas~FillStrokeState}
    */
-  this.state = /** @type {ol.CanvasFillStrokeState} */ ({});
+  this.state = /** @type {module:ol/render/canvas~FillStrokeState} */ ({});
 
   /**
    * @private
@@ -163,21 +157,21 @@ const CanvasReplay = function(tolerance, maxExtent, resolution, pixelRatio, over
    */
   this.viewRotation_ = 0;
 
-  /**
-   * @private
-   * @type {!module:ol/transform~Transform}
-   */
-  this.tmpLocalTransform_ = createTransform();
-
-  /**
-   * @private
-   * @type {!module:ol/transform~Transform}
-   */
-  this.resetTransform = createTransform();
 };
 
 inherits(CanvasReplay, VectorContext);
 
+
+/**
+ * @type {module:ol/extent~Extent}
+ */
+const tmpExtent = createEmpty();
+
+
+/**
+ * @type {!module:ol/transform~Transform}
+ */
+const tmpTransform = createTransform();
 
 /**
  * @param {CanvasRenderingContext2D} context Context.
@@ -197,7 +191,7 @@ CanvasReplay.prototype.replayTextBackground_ = function(context, p1, p2, p3, p4,
   context.lineTo.apply(context, p4);
   context.lineTo.apply(context, p1);
   if (fillInstruction) {
-    this.fillOrigin_ = /** @type {Array.<number>} */ (fillInstruction[2]);
+    this.alignFill_ = /** @type {boolean} */ (fillInstruction[2]);
     this.fill_(context);
   }
   if (strokeInstruction) {
@@ -214,7 +208,7 @@ CanvasReplay.prototype.replayTextBackground_ = function(context, p1, p2, p3, p4,
  * @param {HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} image Image.
  * @param {number} anchorX Anchor X.
  * @param {number} anchorY Anchor Y.
- * @param {ol.DeclutterGroup} declutterGroup Declutter group.
+ * @param {module:ol/render/canvas~DeclutterGroup} declutterGroup Declutter group.
  * @param {number} height Height.
  * @param {number} opacity Opacity.
  * @param {number} originX Origin X.
@@ -231,7 +225,6 @@ CanvasReplay.prototype.replayImage_ = function(context, x, y, image,
   anchorX, anchorY, declutterGroup, height, opacity, originX, originY,
   rotation, scale, snapToPixel, width, padding, fillInstruction, strokeInstruction) {
   const fillStroke = fillInstruction || strokeInstruction;
-  const localTransform = this.tmpLocalTransform_;
   anchorX *= scale;
   anchorY *= scale;
   x -= anchorX;
@@ -239,7 +232,6 @@ CanvasReplay.prototype.replayImage_ = function(context, x, y, image,
 
   const w = (width + originX > image.width) ? image.width - originX : width;
   const h = (height + originY > image.height) ? image.height - originY : height;
-  const box = this.tmpExtent_;
   const boxW = padding[3] + w * scale + padding[1];
   const boxH = padding[0] + h * scale + padding[2];
   const boxX = x - padding[3];
@@ -264,22 +256,21 @@ CanvasReplay.prototype.replayImage_ = function(context, x, y, image,
   if (rotation !== 0) {
     const centerX = x + anchorX;
     const centerY = y + anchorY;
-    transform = composeTransform(localTransform,
-      centerX, centerY, 1, 1, rotation, -centerX, -centerY);
+    transform = composeTransform(tmpTransform, centerX, centerY, 1, 1, rotation, -centerX, -centerY);
 
-    createOrUpdateEmpty(box);
-    extendCoordinate(box, applyTransform(localTransform, p1));
-    extendCoordinate(box, applyTransform(localTransform, p2));
-    extendCoordinate(box, applyTransform(localTransform, p3));
-    extendCoordinate(box, applyTransform(localTransform, p4));
+    createOrUpdateEmpty(tmpExtent);
+    extendCoordinate(tmpExtent, applyTransform(tmpTransform, p1));
+    extendCoordinate(tmpExtent, applyTransform(tmpTransform, p2));
+    extendCoordinate(tmpExtent, applyTransform(tmpTransform, p3));
+    extendCoordinate(tmpExtent, applyTransform(tmpTransform, p4));
   } else {
-    createOrUpdate(boxX, boxY, boxX + boxW, boxY + boxH, box);
+    createOrUpdate(boxX, boxY, boxX + boxW, boxY + boxH, tmpExtent);
   }
   const canvas = context.canvas;
   const strokePadding = strokeInstruction ? (strokeInstruction[2] * scale / 2) : 0;
   const intersects =
-      box[0] - strokePadding <= canvas.width && box[2] + strokePadding >= 0 &&
-      box[1] - strokePadding <= canvas.height && box[3] + strokePadding >= 0;
+      tmpExtent[0] - strokePadding <= canvas.width && tmpExtent[2] + strokePadding >= 0 &&
+      tmpExtent[1] - strokePadding <= canvas.height && tmpExtent[3] + strokePadding >= 0;
 
   if (snapToPixel) {
     x = Math.round(x);
@@ -290,7 +281,7 @@ CanvasReplay.prototype.replayImage_ = function(context, x, y, image,
     if (!intersects && declutterGroup[4] == 1) {
       return;
     }
-    extend(declutterGroup, box);
+    extend(declutterGroup, tmpExtent);
     const declutterArgs = intersects ?
       [context, transform ? transform.slice(0) : null, opacity, image, originX, originY, w, h, x, y, scale] :
       null;
@@ -407,7 +398,7 @@ CanvasReplay.prototype.drawCustom = function(geometry, feature, renderer) {
   let flatCoordinates, replayEnd, replayEnds, replayEndss;
   let offset;
   if (type == GeometryType.MULTI_POLYGON) {
-    geometry = /** @type {module:ol/geom/MultiPolygon~MultiPolygon} */ (geometry);
+    geometry = /** @type {module:ol/geom/MultiPolygon} */ (geometry);
     flatCoordinates = geometry.getOrientedFlatCoordinates();
     replayEndss = [];
     const endss = geometry.getEndss();
@@ -422,10 +413,10 @@ CanvasReplay.prototype.drawCustom = function(geometry, feature, renderer) {
   } else if (type == GeometryType.POLYGON || type == GeometryType.MULTI_LINE_STRING) {
     replayEnds = [];
     flatCoordinates = (type == GeometryType.POLYGON) ?
-      /** @type {module:ol/geom/Polygon~Polygon} */ (geometry).getOrientedFlatCoordinates() :
+      /** @type {module:ol/geom/Polygon} */ (geometry).getOrientedFlatCoordinates() :
       geometry.getFlatCoordinates();
     offset = this.drawCustomCoordinates_(flatCoordinates, 0,
-      /** @type {module:ol/geom/Polygon~Polygon|module:ol/geom/MultiLineString~MultiLineString} */ (geometry).getEnds(),
+      /** @type {module:ol/geom/Polygon|module:ol/geom/MultiLineString} */ (geometry).getEnds(),
       stride, replayEnds);
     this.instructions.push([CanvasInstruction.CUSTOM,
       replayBegin, replayEnds, geometry, renderer, inflateCoordinatesArray]);
@@ -448,8 +439,8 @@ CanvasReplay.prototype.drawCustom = function(geometry, feature, renderer) {
 
 /**
  * @protected
- * @param {module:ol/geom/Geometry~Geometry|ol.render.Feature} geometry Geometry.
- * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
+ * @param {module:ol/geom/Geometry|module:ol/render/Feature} geometry Geometry.
+ * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
  */
 CanvasReplay.prototype.beginGeometry = function(geometry, feature) {
   this.beginGeometryInstruction1_ = [CanvasInstruction.BEGIN_GEOMETRY, feature, 0];
@@ -464,13 +455,14 @@ CanvasReplay.prototype.beginGeometry = function(geometry, feature) {
  * @param {CanvasRenderingContext2D} context Context.
  */
 CanvasReplay.prototype.fill_ = function(context) {
-  if (this.fillOrigin_) {
-    const origin = applyTransform(this.renderedTransform_, this.fillOrigin_.slice());
-    context.translate(origin[0], origin[1]);
+  if (this.alignFill_) {
+    const origin = applyTransform(this.renderedTransform_, [0, 0]);
+    const repeatSize = 512 * this.pixelRatio;
+    context.translate(origin[0] % repeatSize, origin[1] % repeatSize);
     context.rotate(this.viewRotation_);
   }
   context.fill();
-  if (this.fillOrigin_) {
+  if (this.alignFill_) {
     context.setTransform.apply(context, resetTransform);
   }
 };
@@ -495,8 +487,8 @@ CanvasReplay.prototype.setStrokeStyle_ = function(context, instruction) {
 
 
 /**
- * @param {ol.DeclutterGroup} declutterGroup Declutter group.
- * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
+ * @param {module:ol/render/canvas~DeclutterGroup} declutterGroup Declutter group.
+ * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
  */
 CanvasReplay.prototype.renderDeclutter_ = function(declutterGroup, feature) {
   if (declutterGroup && declutterGroup.length > 5) {
@@ -538,7 +530,7 @@ CanvasReplay.prototype.renderDeclutter_ = function(declutterGroup, feature) {
  * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
  *     to skip.
  * @param {Array.<*>} instructions Instructions array.
- * @param {function((module:ol/Feature~Feature|ol.render.Feature)): T|undefined}
+ * @param {function((module:ol/Feature|module:ol/render/Feature)): T|undefined}
  *     featureCallback Feature callback.
  * @param {module:ol/extent~Extent=} opt_hitExtent Only check features that intersect this
  *     extent.
@@ -574,7 +566,7 @@ CanvasReplay.prototype.replay_ = function(
   const coordinateCache = this.coordinateCache_;
   const viewRotation = this.viewRotation_;
 
-  const state = /** @type {olx.render.State} */ ({
+  const state = /** @type {module:ol/render~State} */ ({
     context: context,
     pixelRatio: this.pixelRatio,
     resolution: this.resolution,
@@ -584,14 +576,14 @@ CanvasReplay.prototype.replay_ = function(
   // When the batch size gets too big, performance decreases. 200 is a good
   // balance between batch size and number of fill/stroke instructions.
   const batchSize = this.instructions != instructions || this.overlaps ? 0 : 200;
-  let /** @type {module:ol/Feature~Feature|ol.render.Feature} */ feature;
+  let /** @type {module:ol/Feature|module:ol/render/Feature} */ feature;
   let x, y;
   while (i < ii) {
     const instruction = instructions[i];
-    const type = /** @type {ol.render.canvas.Instruction} */ (instruction[0]);
+    const type = /** @type {module:ol/render/canvas/Instruction} */ (instruction[0]);
     switch (type) {
       case CanvasInstruction.BEGIN_GEOMETRY:
-        feature = /** @type {module:ol/Feature~Feature|ol.render.Feature} */ (instruction[1]);
+        feature = /** @type {module:ol/Feature|module:ol/render/Feature} */ (instruction[1]);
         if ((skipFeatures &&
             skippedFeaturesHash[getUid(feature).toString()]) ||
             !feature.getGeometry()) {
@@ -638,7 +630,7 @@ CanvasReplay.prototype.replay_ = function(
       case CanvasInstruction.CUSTOM:
         d = /** @type {number} */ (instruction[1]);
         dd = instruction[2];
-        const geometry = /** @type {module:ol/geom/SimpleGeometry~SimpleGeometry} */ (instruction[3]);
+        const geometry = /** @type {module:ol/geom/SimpleGeometry} */ (instruction[3]);
         const renderer = instruction[4];
         const fn = instruction.length == 6 ? instruction[5] : undefined;
         state.geometry = geometry;
@@ -665,7 +657,7 @@ CanvasReplay.prototype.replay_ = function(
         // Remaining arguments in DRAW_IMAGE are in alphabetical order
         anchorX = /** @type {number} */ (instruction[4]);
         anchorY = /** @type {number} */ (instruction[5]);
-        declutterGroup = featureCallback ? null : /** @type {ol.DeclutterGroup} */ (instruction[6]);
+        declutterGroup = featureCallback ? null : /** @type {module:ol/render/canvas~DeclutterGroup} */ (instruction[6]);
         const height = /** @type {number} */ (instruction[7]);
         const opacity = /** @type {number} */ (instruction[8]);
         const originX = /** @type {number} */ (instruction[9]);
@@ -704,7 +696,7 @@ CanvasReplay.prototype.replay_ = function(
         const begin = /** @type {number} */ (instruction[1]);
         const end = /** @type {number} */ (instruction[2]);
         const baseline = /** @type {number} */ (instruction[3]);
-        declutterGroup = featureCallback ? null : /** @type {ol.DeclutterGroup} */ (instruction[4]);
+        declutterGroup = featureCallback ? null : /** @type {module:ol/render/canvas~DeclutterGroup} */ (instruction[4]);
         const overflow = /** @type {number} */ (instruction[5]);
         const fillKey = /** @type {string} */ (instruction[6]);
         const maxAngle = /** @type {number} */ (instruction[7]);
@@ -719,7 +711,7 @@ CanvasReplay.prototype.replay_ = function(
         const pathLength = lineStringLength(pixelCoordinates, begin, end, 2);
         const textLength = measure(text);
         if (overflow || textLength <= pathLength) {
-          const textAlign = /** @type {ol.render.canvas.TextReplay} */ (this).textStates[textKey].textAlign;
+          const textAlign = /** @type {module:ol~render} */ (this).textStates[textKey].textAlign;
           const startM = (pathLength - textLength) * TEXT_ALIGN[textAlign];
           const parts = drawTextOnPath(
             pixelCoordinates, begin, end, 2, text, measure, startM, maxAngle);
@@ -729,7 +721,7 @@ CanvasReplay.prototype.replay_ = function(
               for (c = 0, cc = parts.length; c < cc; ++c) {
                 part = parts[c]; // x, y, anchorX, rotation, chunk
                 chars = /** @type {string} */ (part[4]);
-                label = /** @type {ol.render.canvas.TextReplay} */ (this).getImage(chars, textKey, '', strokeKey);
+                label = /** @type {module:ol~render} */ (this).getImage(chars, textKey, '', strokeKey);
                 anchorX = /** @type {number} */ (part[2]) + strokeWidth;
                 anchorY = baseline * label.height + (0.5 - baseline) * 2 * strokeWidth - offsetY;
                 this.replayImage_(context,
@@ -743,7 +735,7 @@ CanvasReplay.prototype.replay_ = function(
               for (c = 0, cc = parts.length; c < cc; ++c) {
                 part = parts[c]; // x, y, anchorX, rotation, chunk
                 chars = /** @type {string} */ (part[4]);
-                label = /** @type {ol.render.canvas.TextReplay} */ (this).getImage(chars, textKey, fillKey, '');
+                label = /** @type {module:ol~render} */ (this).getImage(chars, textKey, fillKey, '');
                 anchorX = /** @type {number} */ (part[2]);
                 anchorY = baseline * label.height - offsetY;
                 this.replayImage_(context,
@@ -760,7 +752,7 @@ CanvasReplay.prototype.replay_ = function(
         break;
       case CanvasInstruction.END_GEOMETRY:
         if (featureCallback !== undefined) {
-          feature = /** @type {module:ol/Feature~Feature|ol.render.Feature} */ (instruction[1]);
+          feature = /** @type {module:ol/Feature|module:ol/render/Feature} */ (instruction[1]);
           const result = featureCallback(feature);
           if (result) {
             return result;
@@ -803,7 +795,7 @@ CanvasReplay.prototype.replay_ = function(
         break;
       case CanvasInstruction.SET_FILL_STYLE:
         lastFillInstruction = instruction;
-        this.fillOrigin_ = instruction[2];
+        this.alignFill_ = instruction[2];
 
         if (pendingFill) {
           this.fill_(context);
@@ -870,7 +862,7 @@ CanvasReplay.prototype.replay = function(
  * @param {number} viewRotation View rotation.
  * @param {Object.<string, boolean>} skippedFeaturesHash Ids of features
  *     to skip.
- * @param {function((module:ol/Feature~Feature|ol.render.Feature)): T=} opt_featureCallback
+ * @param {function((module:ol/Feature|module:ol/render/Feature)): T=} opt_featureCallback
  *     Feature callback.
  * @param {module:ol/extent~Extent=} opt_hitExtent Only check features that intersect this
  *     extent.
@@ -901,7 +893,7 @@ CanvasReplay.prototype.reverseHitDetectionInstructions = function() {
   let begin = -1;
   for (i = 0; i < n; ++i) {
     instruction = hitDetectionInstructions[i];
-    type = /** @type {ol.render.canvas.Instruction} */ (instruction[0]);
+    type = /** @type {module:ol/render/canvas/Instruction} */ (instruction[0]);
     if (type == CanvasInstruction.END_GEOMETRY) {
       begin = i;
     } else if (type == CanvasInstruction.BEGIN_GEOMETRY) {
@@ -966,23 +958,23 @@ CanvasReplay.prototype.setFillStrokeStyle = function(fillStyle, strokeStyle) {
 
 
 /**
- * @param {ol.CanvasFillStrokeState} state State.
- * @param {module:ol/geom/Geometry~Geometry|ol.render.Feature} geometry Geometry.
+ * @param {module:ol/render/canvas~FillStrokeState} state State.
+ * @param {module:ol/geom/Geometry|module:ol/render/Feature} geometry Geometry.
  * @return {Array.<*>} Fill instruction.
  */
 CanvasReplay.prototype.createFill = function(state, geometry) {
   const fillStyle = state.fillStyle;
   const fillInstruction = [CanvasInstruction.SET_FILL_STYLE, fillStyle];
   if (typeof fillStyle !== 'string') {
-    const fillExtent = geometry.getExtent();
-    fillInstruction.push([fillExtent[0], fillExtent[3]]);
+    // Fill is a pattern or gradient - align it!
+    fillInstruction.push(true);
   }
   return fillInstruction;
 };
 
 
 /**
- * @param {ol.CanvasFillStrokeState} state State.
+ * @param {module:ol/render/canvas~FillStrokeState} state State.
  */
 CanvasReplay.prototype.applyStroke = function(state) {
   this.instructions.push(this.createStroke(state));
@@ -990,7 +982,7 @@ CanvasReplay.prototype.applyStroke = function(state) {
 
 
 /**
- * @param {ol.CanvasFillStrokeState} state State.
+ * @param {module:ol/render/canvas~FillStrokeState} state State.
  * @return {Array.<*>} Stroke instruction.
  */
 CanvasReplay.prototype.createStroke = function(state) {
@@ -1004,9 +996,9 @@ CanvasReplay.prototype.createStroke = function(state) {
 
 
 /**
- * @param {ol.CanvasFillStrokeState} state State.
- * @param {function(this:ol.render.canvas.Replay, ol.CanvasFillStrokeState, (module:ol/geom/Geometry~Geometry|ol.render.Feature)):Array.<*>} createFill Create fill.
- * @param {module:ol/geom/Geometry~Geometry|ol.render.Feature} geometry Geometry.
+ * @param {module:ol/render/canvas~FillStrokeState} state State.
+ * @param {function(this:module:ol/render/canvas/Replay, module:ol/render/canvas~FillStrokeState, (module:ol/geom/Geometry|module:ol/render/Feature)):Array.<*>} createFill Create fill.
+ * @param {module:ol/geom/Geometry|module:ol/render/Feature} geometry Geometry.
  */
 CanvasReplay.prototype.updateFillStyle = function(state, createFill, geometry) {
   const fillStyle = state.fillStyle;
@@ -1020,8 +1012,8 @@ CanvasReplay.prototype.updateFillStyle = function(state, createFill, geometry) {
 
 
 /**
- * @param {ol.CanvasFillStrokeState} state State.
- * @param {function(this:ol.render.canvas.Replay, ol.CanvasFillStrokeState)} applyStroke Apply stroke.
+ * @param {module:ol/render/canvas~FillStrokeState} state State.
+ * @param {function(this:module:ol/render/canvas/Replay, module:ol/render/canvas~FillStrokeState)} applyStroke Apply stroke.
  */
 CanvasReplay.prototype.updateStrokeStyle = function(state, applyStroke) {
   const strokeStyle = state.strokeStyle;
@@ -1053,8 +1045,8 @@ CanvasReplay.prototype.updateStrokeStyle = function(state, applyStroke) {
 
 
 /**
- * @param {module:ol/geom/Geometry~Geometry|ol.render.Feature} geometry Geometry.
- * @param {module:ol/Feature~Feature|ol.render.Feature} feature Feature.
+ * @param {module:ol/geom/Geometry|module:ol/render/Feature} geometry Geometry.
+ * @param {module:ol/Feature|module:ol/render/Feature} feature Feature.
  */
 CanvasReplay.prototype.endGeometry = function(geometry, feature) {
   this.beginGeometryInstruction1_[2] = this.instructions.length;

@@ -1,10 +1,8 @@
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import Draw from '../src/ol/interaction/Draw.js';
-import TileLayer from '../src/ol/layer/Tile.js';
-import VectorLayer from '../src/ol/layer/Vector.js';
-import OSM from '../src/ol/source/OSM.js';
-import VectorSource from '../src/ol/source/Vector.js';
+import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
+import {OSM, Vector as VectorSource} from '../src/ol/source.js';
 
 const raster = new TileLayer({
   source: new OSM()

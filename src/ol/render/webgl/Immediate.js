@@ -10,8 +10,8 @@ import WebGLReplayGroup from '../webgl/ReplayGroup.js';
 
 /**
  * @constructor
- * @extends {ol.render.VectorContext}
- * @param {module:ol/webgl/Context~WebGLContext} context Context.
+ * @extends {module:ol/render/VectorContext}
+ * @param {module:ol/webgl/Context} context Context.
  * @param {module:ol/coordinate~Coordinate} center Center.
  * @param {number} resolution Resolution.
  * @param {number} rotation Rotation.
@@ -60,25 +60,25 @@ const WebGLImmediateRenderer = function(context, center, resolution, rotation, s
 
   /**
    * @private
-   * @type {ol.style.Image}
+   * @type {module:ol/style/Image}
    */
   this.imageStyle_ = null;
 
   /**
    * @private
-   * @type {ol.style.Fill}
+   * @type {module:ol/style/Fill}
    */
   this.fillStyle_ = null;
 
   /**
    * @private
-   * @type {ol.style.Stroke}
+   * @type {module:ol/style/Stroke}
    */
   this.strokeStyle_ = null;
 
   /**
    * @private
-   * @type {ol.style.Text}
+   * @type {module:ol/style/Text}
    */
   this.textStyle_ = null;
 
@@ -88,13 +88,13 @@ inherits(WebGLImmediateRenderer, VectorContext);
 
 
 /**
- * @param {ol.render.webgl.ReplayGroup} replayGroup Replay group.
- * @param {module:ol/geom/Geometry~Geometry|ol.render.Feature} geometry Geometry.
+ * @param {module:ol/render/webgl/ReplayGroup} replayGroup Replay group.
+ * @param {module:ol/geom/Geometry|module:ol/render/Feature} geometry Geometry.
  * @private
  */
 WebGLImmediateRenderer.prototype.drawText_ = function(replayGroup, geometry) {
   const context = this.context_;
-  const replay = /** @type {ol.render.webgl.TextReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/TextReplay} */ (
     replayGroup.getReplay(0, ReplayType.TEXT));
   replay.setTextStyle(this.textStyle_);
   replay.drawText(geometry, null);
@@ -115,7 +115,7 @@ WebGLImmediateRenderer.prototype.drawText_ = function(replayGroup, geometry) {
  * Set the rendering style.  Note that since this is an immediate rendering API,
  * any `zIndex` on the provided style will be ignored.
  *
- * @param {ol.style.Style} style The rendering style.
+ * @param {module:ol/style/Style} style The rendering style.
  * @override
  * @api
  */
@@ -128,9 +128,9 @@ WebGLImmediateRenderer.prototype.setStyle = function(style) {
 
 /**
  * Render a geometry into the canvas.  Call
- * {@link ol.render.webgl.Immediate#setStyle} first to set the rendering style.
+ * {@link ol/render/webgl/Immediate#setStyle} first to set the rendering style.
  *
- * @param {module:ol/geom/Geometry~Geometry|ol.render.Feature} geometry The geometry to render.
+ * @param {module:ol/geom/Geometry|module:ol/render/Feature} geometry The geometry to render.
  * @override
  * @api
  */
@@ -138,28 +138,28 @@ WebGLImmediateRenderer.prototype.drawGeometry = function(geometry) {
   const type = geometry.getType();
   switch (type) {
     case GeometryType.POINT:
-      this.drawPoint(/** @type {module:ol/geom/Point~Point} */ (geometry), null);
+      this.drawPoint(/** @type {module:ol/geom/Point} */ (geometry), null);
       break;
     case GeometryType.LINE_STRING:
-      this.drawLineString(/** @type {module:ol/geom/LineString~LineString} */ (geometry), null);
+      this.drawLineString(/** @type {module:ol/geom/LineString} */ (geometry), null);
       break;
     case GeometryType.POLYGON:
-      this.drawPolygon(/** @type {module:ol/geom/Polygon~Polygon} */ (geometry), null);
+      this.drawPolygon(/** @type {module:ol/geom/Polygon} */ (geometry), null);
       break;
     case GeometryType.MULTI_POINT:
-      this.drawMultiPoint(/** @type {module:ol/geom/MultiPoint~MultiPoint} */ (geometry), null);
+      this.drawMultiPoint(/** @type {module:ol/geom/MultiPoint} */ (geometry), null);
       break;
     case GeometryType.MULTI_LINE_STRING:
-      this.drawMultiLineString(/** @type {module:ol/geom/MultiLineString~MultiLineString} */ (geometry), null);
+      this.drawMultiLineString(/** @type {module:ol/geom/MultiLineString} */ (geometry), null);
       break;
     case GeometryType.MULTI_POLYGON:
-      this.drawMultiPolygon(/** @type {module:ol/geom/MultiPolygon~MultiPolygon} */ (geometry), null);
+      this.drawMultiPolygon(/** @type {module:ol/geom/MultiPolygon} */ (geometry), null);
       break;
     case GeometryType.GEOMETRY_COLLECTION:
-      this.drawGeometryCollection(/** @type {module:ol/geom/GeometryCollection~GeometryCollection} */ (geometry), null);
+      this.drawGeometryCollection(/** @type {module:ol/geom/GeometryCollection} */ (geometry), null);
       break;
     case GeometryType.CIRCLE:
-      this.drawCircle(/** @type {module:ol/geom/Circle~Circle} */ (geometry), null);
+      this.drawCircle(/** @type {module:ol/geom/Circle} */ (geometry), null);
       break;
     default:
       // pass
@@ -199,7 +199,7 @@ WebGLImmediateRenderer.prototype.drawGeometryCollection = function(geometry, dat
 WebGLImmediateRenderer.prototype.drawPoint = function(geometry, data) {
   const context = this.context_;
   const replayGroup = new WebGLReplayGroup(1, this.extent_);
-  const replay = /** @type {ol.render.webgl.ImageReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/ImageReplay} */ (
     replayGroup.getReplay(0, ReplayType.IMAGE));
   replay.setImageStyle(this.imageStyle_);
   replay.drawPoint(geometry, data);
@@ -226,7 +226,7 @@ WebGLImmediateRenderer.prototype.drawPoint = function(geometry, data) {
 WebGLImmediateRenderer.prototype.drawMultiPoint = function(geometry, data) {
   const context = this.context_;
   const replayGroup = new WebGLReplayGroup(1, this.extent_);
-  const replay = /** @type {ol.render.webgl.ImageReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/ImageReplay} */ (
     replayGroup.getReplay(0, ReplayType.IMAGE));
   replay.setImageStyle(this.imageStyle_);
   replay.drawMultiPoint(geometry, data);
@@ -252,7 +252,7 @@ WebGLImmediateRenderer.prototype.drawMultiPoint = function(geometry, data) {
 WebGLImmediateRenderer.prototype.drawLineString = function(geometry, data) {
   const context = this.context_;
   const replayGroup = new WebGLReplayGroup(1, this.extent_);
-  const replay = /** @type {ol.render.webgl.LineStringReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/LineStringReplay} */ (
     replayGroup.getReplay(0, ReplayType.LINE_STRING));
   replay.setFillStrokeStyle(null, this.strokeStyle_);
   replay.drawLineString(geometry, data);
@@ -278,7 +278,7 @@ WebGLImmediateRenderer.prototype.drawLineString = function(geometry, data) {
 WebGLImmediateRenderer.prototype.drawMultiLineString = function(geometry, data) {
   const context = this.context_;
   const replayGroup = new WebGLReplayGroup(1, this.extent_);
-  const replay = /** @type {ol.render.webgl.LineStringReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/LineStringReplay} */ (
     replayGroup.getReplay(0, ReplayType.LINE_STRING));
   replay.setFillStrokeStyle(null, this.strokeStyle_);
   replay.drawMultiLineString(geometry, data);
@@ -304,7 +304,7 @@ WebGLImmediateRenderer.prototype.drawMultiLineString = function(geometry, data) 
 WebGLImmediateRenderer.prototype.drawPolygon = function(geometry, data) {
   const context = this.context_;
   const replayGroup = new WebGLReplayGroup(1, this.extent_);
-  const replay = /** @type {ol.render.webgl.PolygonReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/PolygonReplay} */ (
     replayGroup.getReplay(0, ReplayType.POLYGON));
   replay.setFillStrokeStyle(this.fillStyle_, this.strokeStyle_);
   replay.drawPolygon(geometry, data);
@@ -330,7 +330,7 @@ WebGLImmediateRenderer.prototype.drawPolygon = function(geometry, data) {
 WebGLImmediateRenderer.prototype.drawMultiPolygon = function(geometry, data) {
   const context = this.context_;
   const replayGroup = new WebGLReplayGroup(1, this.extent_);
-  const replay = /** @type {ol.render.webgl.PolygonReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/PolygonReplay} */ (
     replayGroup.getReplay(0, ReplayType.POLYGON));
   replay.setFillStrokeStyle(this.fillStyle_, this.strokeStyle_);
   replay.drawMultiPolygon(geometry, data);
@@ -356,7 +356,7 @@ WebGLImmediateRenderer.prototype.drawMultiPolygon = function(geometry, data) {
 WebGLImmediateRenderer.prototype.drawCircle = function(geometry, data) {
   const context = this.context_;
   const replayGroup = new WebGLReplayGroup(1, this.extent_);
-  const replay = /** @type {ol.render.webgl.CircleReplay} */ (
+  const replay = /** @type {module:ol/render/webgl/CircleReplay} */ (
     replayGroup.getReplay(0, ReplayType.CIRCLE));
   replay.setFillStrokeStyle(this.fillStyle_, this.strokeStyle_);
   replay.drawCircle(geometry, data);
