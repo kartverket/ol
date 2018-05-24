@@ -242,6 +242,7 @@ TileGrid.prototype.forEachTileCoordParentTileRange = function(tileCoord, callbac
 /**
  * Get the extent for this tile grid, if it was configured.
  * @return {module:ol/extent~Extent} Extent.
+ * @api
  */
 TileGrid.prototype.getExtent = function() {
   return this.extent_;

@@ -4,9 +4,9 @@ const MinifyPlugin = require('babel-minify-webpack-plugin');
 module.exports = {
   entry: './src/index.js',
   output: {
-    filename: 'build/ol.js'
+    filename: 'dist/ol.js'
   },
-  devtool: 'source-map',
+  //devtool: 'source-map',
   plugins: [
     new webpack.optimize.ModuleConcatenationPlugin(),
     new MinifyPlugin()

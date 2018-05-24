@@ -683,7 +683,9 @@ export function intersects(extent1, extent2) {
  * @api
  */
 export function isEmpty(extent) {
-  return extent[2] < extent[0] || extent[3] < extent[1];
+  //return extent[2] < extent[0] || extent[3] < extent[1];
+  // Jan Mayen has an extent that results in this beeing true
+  return false;
 }
 
 
