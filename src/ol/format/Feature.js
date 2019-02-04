@@ -1,21 +1,21 @@
 /**
  * @module ol/format/Feature
  */
-import Geometry from '../geom/Geometry.js';
 import {assign} from '../obj.js';
+import {abstract} from '../util.js';
 import {get as getProjection, equivalent as equivalentProjection, transformExtent} from '../proj.js';
 
 
 /**
  * @typedef {Object} ReadOptions
- * @property {module:ol/proj~ProjectionLike} dataProjection Projection of the data we are reading.
+ * @property {import("../proj.js").ProjectionLike} [dataProjection] Projection of the data we are reading.
  * If not provided, the projection will be derived from the data (where possible) or
- * the `defaultDataProjection` of the format is assigned (where set). If the projection
- * can not be derived from the data and if no `defaultDataProjection` is set for a format,
+ * the `dataProjection` of the format is assigned (where set). If the projection
+ * can not be derived from the data and if no `dataProjection` is set for a format,
  * the features will not be reprojected.
- * @property {module:ol/extent~Extent} extent Tile extent of the tile being read. This is only used and
+ * @property {import("../extent.js").Extent} [extent] Tile extent of the tile being read. This is only used and
  * required for {@link module:ol/format/MVT}.
- * @property {module:ol/proj~ProjectionLike} featureProjection Projection of the feature geometries
+ * @property {import("../proj.js").ProjectionLike} [featureProjection] Projection of the feature geometries
  * created by the format reader. If not provided, features will be returned in the
  * `dataProjection`.
  */
@@ -23,11 +23,11 @@ import {get as getProjection, equivalent as equivalentProjection, transformExten
 
 /**
  * @typedef {Object} WriteOptions
- * @property {module:ol/proj~ProjectionLike} dataProjection Projection of the data we are writing.
- * If not provided, the `defaultDataProjection` of the format is assigned (where set).
- * If no `defaultDataProjection` is set for a format, the features will be returned
+ * @property {import("../proj.js").ProjectionLike} [dataProjection] Projection of the data we are writing.
+ * If not provided, the `dataProjection` of the format is assigned (where set).
+ * If no `dataProjection` is set for a format, the features will be returned
  * in the `featureProjection`.
- * @property {module:ol/proj~ProjectionLike} featureProjection Projection of the feature geometries
+ * @property {import("../proj.js").ProjectionLike} [featureProjection] Projection of the feature geometries
  * that will be serialized by the format writer. If not provided, geometries are assumed
  * to be in the `dataProjection` if that is set; in other words, they are not transformed.
  * @property {boolean} [rightHanded] When writing geometries, follow the right-hand
@@ -52,200 +52,191 @@ import {get as getProjection, equivalent as equivalentProjection, transformExten
  * Abstract base class; normally only used for creating subclasses and not
  * instantiated in apps.
  * Base class for feature formats.
- * {module:ol/format/Feature~FeatureFormat} subclasses provide the ability to decode and encode
+ * {FeatureFormat} subclasses provide the ability to decode and encode
  * {@link module:ol/Feature~Feature} objects from a variety of commonly used geospatial
  * file formats.  See the documentation for each format for more details.
  *
- * @constructor
  * @abstract
  * @api
  */
-const FeatureFormat = function() {
+class FeatureFormat {
+  constructor() {
 
-  /**
-   * @protected
-   * @type {module:ol/proj/Projection}
-   */
-  this.defaultDataProjection = null;
+    /**
+     * @protected
+     * @type {import("../proj/Projection.js").default}
+     */
+    this.dataProjection = null;
 
-  /**
-   * @protected
-   * @type {module:ol/proj/Projection}
-   */
-  this.defaultFeatureProjection = null;
+    /**
+     * @protected
+     * @type {import("../proj/Projection.js").default}
+     */
+    this.defaultFeatureProjection = null;
 
-};
-
-
-/**
- * Adds the data projection to the read options.
- * @param {Document|Node|Object|string} source Source.
- * @param {module:ol/format/Feature~ReadOptions=} opt_options Options.
- * @return {module:ol/format/Feature~ReadOptions|undefined} Options.
- * @protected
- */
-FeatureFormat.prototype.getReadOptions = function(source, opt_options) {
-  let options;
-  if (opt_options) {
-    options = {
-      dataProjection: opt_options.dataProjection ?
-        opt_options.dataProjection : this.readProjection(source),
-      featureProjection: opt_options.featureProjection
-    };
   }
-  return this.adaptOptions(options);
-};
 
+  /**
+   * Adds the data projection to the read options.
+   * @param {Document|Node|Object|string} source Source.
+   * @param {ReadOptions=} opt_options Options.
+   * @return {ReadOptions|undefined} Options.
+   * @protected
+   */
+  getReadOptions(source, opt_options) {
+    let options;
+    if (opt_options) {
+      options = {
+        dataProjection: opt_options.dataProjection ?
+          opt_options.dataProjection : this.readProjection(source),
+        featureProjection: opt_options.featureProjection
+      };
+    }
+    return this.adaptOptions(options);
+  }
 
-/**
- * Sets the `defaultDataProjection` on the options, if no `dataProjection`
- * is set.
- * @param {module:ol/format/Feature~WriteOptions|module:ol/format/Feature~ReadOptions|undefined} options
- *     Options.
- * @protected
- * @return {module:ol/format/Feature~WriteOptions|module:ol/format/Feature~ReadOptions|undefined}
- *     Updated options.
- */
-FeatureFormat.prototype.adaptOptions = function(options) {
-  return assign({
-    dataProjection: this.defaultDataProjection,
-    featureProjection: this.defaultFeatureProjection
-  }, options);
-};
+  /**
+   * Sets the `dataProjection` on the options, if no `dataProjection`
+   * is set.
+   * @param {WriteOptions|ReadOptions|undefined} options
+   *     Options.
+   * @protected
+   * @return {WriteOptions|ReadOptions|undefined}
+   *     Updated options.
+   */
+  adaptOptions(options) {
+    return assign({
+      dataProjection: this.dataProjection,
+      featureProjection: this.defaultFeatureProjection
+    }, options);
+  }
 
+  /**
+   * Get the extent from the source of the last {@link readFeatures} call.
+   * @return {import("../extent.js").Extent} Tile extent.
+   */
+  getLastExtent() {
+    return null;
+  }
 
-/**
- * Get the extent from the source of the last {@link readFeatures} call.
- * @return {module:ol/extent~Extent} Tile extent.
- */
-FeatureFormat.prototype.getLastExtent = function() {
-  return null;
-};
+  /**
+   * @abstract
+   * @return {import("./FormatType.js").default} Format.
+   */
+  getType() {
+    return abstract();
+  }
 
+  /**
+   * Read a single feature from a source.
+   *
+   * @abstract
+   * @param {Document|Node|Object|string} source Source.
+   * @param {ReadOptions=} opt_options Read options.
+   * @return {import("../Feature.js").FeatureLike} Feature.
+   */
+  readFeature(source, opt_options) {
+    return abstract();
+  }
 
-/**
- * @abstract
- * @return {module:ol/format/FormatType} Format.
- */
-FeatureFormat.prototype.getType = function() {};
+  /**
+   * Read all features from a source.
+   *
+   * @abstract
+   * @param {Document|Node|ArrayBuffer|Object|string} source Source.
+   * @param {ReadOptions=} opt_options Read options.
+   * @return {Array<import("../Feature.js").FeatureLike>} Features.
+   */
+  readFeatures(source, opt_options) {
+    return abstract();
+  }
 
+  /**
+   * Read a single geometry from a source.
+   *
+   * @abstract
+   * @param {Document|Node|Object|string} source Source.
+   * @param {ReadOptions=} opt_options Read options.
+   * @return {import("../geom/Geometry.js").default} Geometry.
+   */
+  readGeometry(source, opt_options) {
+    return abstract();
+  }
 
-/**
- * Read a single feature from a source.
- *
- * @abstract
- * @param {Document|Node|Object|string} source Source.
- * @param {module:ol/format/Feature~ReadOptions=} opt_options Read options.
- * @return {module:ol/Feature} Feature.
- */
-FeatureFormat.prototype.readFeature = function(source, opt_options) {};
+  /**
+   * Read the projection from a source.
+   *
+   * @abstract
+   * @param {Document|Node|Object|string} source Source.
+   * @return {import("../proj/Projection.js").default} Projection.
+   */
+  readProjection(source) {
+    return abstract();
+  }
 
+  /**
+   * Encode a feature in this format.
+   *
+   * @abstract
+   * @param {import("../Feature.js").default} feature Feature.
+   * @param {WriteOptions=} opt_options Write options.
+   * @return {string} Result.
+   */
+  writeFeature(feature, opt_options) {
+    return abstract();
+  }
 
-/**
- * Read all features from a source.
- *
- * @abstract
- * @param {Document|Node|ArrayBuffer|Object|string} source Source.
- * @param {module:ol/format/Feature~ReadOptions=} opt_options Read options.
- * @return {Array.<module:ol/Feature>} Features.
- */
-FeatureFormat.prototype.readFeatures = function(source, opt_options) {};
+  /**
+   * Encode an array of features in this format.
+   *
+   * @abstract
+   * @param {Array<import("../Feature.js").default>} features Features.
+   * @param {WriteOptions=} opt_options Write options.
+   * @return {string} Result.
+   */
+  writeFeatures(features, opt_options) {
+    return abstract();
+  }
 
-
-/**
- * Read a single geometry from a source.
- *
- * @abstract
- * @param {Document|Node|Object|string} source Source.
- * @param {module:ol/format/Feature~ReadOptions=} opt_options Read options.
- * @return {module:ol/geom/Geometry} Geometry.
- */
-FeatureFormat.prototype.readGeometry = function(source, opt_options) {};
-
-
-/**
- * Read the projection from a source.
- *
- * @abstract
- * @param {Document|Node|Object|string} source Source.
- * @return {module:ol/proj/Projection} Projection.
- */
-FeatureFormat.prototype.readProjection = function(source) {};
-
-
-/**
- * Encode a feature in this format.
- *
- * @abstract
- * @param {module:ol/Feature} feature Feature.
- * @param {module:ol/format/Feature~WriteOptions=} opt_options Write options.
- * @return {string} Result.
- */
-FeatureFormat.prototype.writeFeature = function(feature, opt_options) {};
-
-
-/**
- * Encode an array of features in this format.
- *
- * @abstract
- * @param {Array.<module:ol/Feature>} features Features.
- * @param {module:ol/format/Feature~WriteOptions=} opt_options Write options.
- * @return {string} Result.
- */
-FeatureFormat.prototype.writeFeatures = function(features, opt_options) {};
-
-
-/**
- * Write a single geometry in this format.
- *
- * @abstract
- * @param {module:ol/geom/Geometry} geometry Geometry.
- * @param {module:ol/format/Feature~WriteOptions=} opt_options Write options.
- * @return {string} Result.
- */
-FeatureFormat.prototype.writeGeometry = function(geometry, opt_options) {};
+  /**
+   * Write a single geometry in this format.
+   *
+   * @abstract
+   * @param {import("../geom/Geometry.js").default} geometry Geometry.
+   * @param {WriteOptions=} opt_options Write options.
+   * @return {string} Result.
+   */
+  writeGeometry(geometry, opt_options) {
+    return abstract();
+  }
+}
 
 export default FeatureFormat;
 
 /**
- * @param {module:ol/geom/Geometry|module:ol/extent~Extent} geometry Geometry.
+ * @param {import("../geom/Geometry.js").default} geometry Geometry.
  * @param {boolean} write Set to true for writing, false for reading.
- * @param {(module:ol/format/Feature~WriteOptions|module:ol/format/Feature~ReadOptions)=} opt_options
- *     Options.
- * @return {module:ol/geom/Geometry|module:ol/extent~Extent} Transformed geometry.
+ * @param {(WriteOptions|ReadOptions)=} opt_options Options.
+ * @return {import("../geom/Geometry.js").default} Transformed geometry.
  */
-export function transformWithOptions(geometry, write, opt_options) {
-  const featureProjection = opt_options ?
-    getProjection(opt_options.featureProjection) : null;
-  const dataProjection = opt_options ?
-    getProjection(opt_options.dataProjection) : null;
-  /**
-   * @type {module:ol/geom/Geometry|module:ol/extent~Extent}
-   */
+export function transformGeometryWithOptions(geometry, write, opt_options) {
+  const featureProjection = opt_options ? getProjection(opt_options.featureProjection) : null;
+  const dataProjection = opt_options ? getProjection(opt_options.dataProjection) : null;
+
   let transformed;
-  if (featureProjection && dataProjection &&
-      !equivalentProjection(featureProjection, dataProjection)) {
-    if (geometry instanceof Geometry) {
-      transformed = (write ? geometry.clone() : geometry).transform(
-        write ? featureProjection : dataProjection,
-        write ? dataProjection : featureProjection);
-    } else {
-      // FIXME this is necessary because GML treats extents
-      // as geometries
-      transformed = transformExtent(
-        geometry,
-        dataProjection,
-        featureProjection);
-    }
+  if (featureProjection && dataProjection && !equivalentProjection(featureProjection, dataProjection)) {
+    transformed = (write ? geometry.clone() : geometry).transform(
+      write ? featureProjection : dataProjection,
+      write ? dataProjection : featureProjection);
   } else {
     transformed = geometry;
   }
-  if (write && opt_options && opt_options.decimals !== undefined) {
-    const power = Math.pow(10, opt_options.decimals);
+  if (write && opt_options && /** @type {WriteOptions} */ (opt_options).decimals !== undefined) {
+    const power = Math.pow(10, /** @type {WriteOptions} */ (opt_options).decimals);
     // if decimals option on write, round each coordinate appropriately
     /**
-     * @param {Array.<number>} coordinates Coordinates.
-     * @return {Array.<number>} Transformed coordinates.
+     * @param {Array<number>} coordinates Coordinates.
+     * @return {Array<number>} Transformed coordinates.
      */
     const transform = function(coordinates) {
       for (let i = 0, ii = coordinates.length; i < ii; ++i) {
@@ -254,9 +245,26 @@ export function transformWithOptions(geometry, write, opt_options) {
       return coordinates;
     };
     if (transformed === geometry) {
-      transformed = transformed.clone();
+      transformed = geometry.clone();
     }
     transformed.applyTransform(transform);
   }
   return transformed;
+}
+
+
+/**
+ * @param {import("../extent.js").Extent} extent Extent.
+ * @param {ReadOptions=} opt_options Read options.
+ * @return {import("../extent.js").Extent} Transformed extent.
+ */
+export function transformExtentWithOptions(extent, opt_options) {
+  const featureProjection = opt_options ? getProjection(opt_options.featureProjection) : null;
+  const dataProjection = opt_options ? getProjection(opt_options.dataProjection) : null;
+
+  if (featureProjection && dataProjection && !equivalentProjection(featureProjection, dataProjection)) {
+    return transformExtent(extent, dataProjection, featureProjection);
+  } else {
+    return extent;
+  }
 }

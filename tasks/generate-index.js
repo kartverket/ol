@@ -12,51 +12,42 @@ async function getSymbols() {
   return info.symbols.filter(symbol => symbol.kind != 'member');
 }
 
-const srcPath = path.posix.resolve(__dirname, '../src').replace(/\\/g, '/');
-function getPath(name) {
-  const fullPath = require.resolve(path.resolve('src', name));
-  return './' + path.posix.relative(srcPath, fullPath.replace(/\\/g, '/'));
-}
-
 /**
- * Generate a list of imports.
- * @param {Array.<Object>} symbols List of symbols.
- * @return {Promise<Array>} A list of imports sorted by export name.
+ * Generate an import statement.
+ * @param {Object} symbol Symbol.
+ * @param {string} member Member.
+ * @return {string} An import statement.
  */
-function getImports(symbols) {
-  const imports = {};
-  symbols.forEach(symbol => {
-    const defaultExport = symbol.name.split('~');
-    const namedExport = symbol.name.split('.');
-    if (defaultExport.length > 1) {
-      const from = defaultExport[0].replace(/^module\:/, './');
-      const importName = from.replace(/[.\/]+/g, '$');
-      const defaultImport = `import ${importName} from '${getPath(from)}';`;
-      imports[defaultImport] = true;
-    } else if (namedExport.length > 1) {
-      const from = namedExport[0].replace(/^module\:/, './');
-      const importName = from.replace(/[.\/]+/g, '_');
-      const namedImport = `import * as ${importName} from '${getPath(from)}';`;
-      imports[namedImport] = true;
-    }
-  });
-  return Object.keys(imports).sort();
+function getImport(symbol, member) {
+  const defaultExport = symbol.name.split('~');
+  const namedExport = symbol.name.split('.');
+  if (defaultExport.length > 1) {
+    const from = defaultExport[0].replace(/^module\:/, './');
+    const importName = from.replace(/[.\/]+/g, '$');
+    return `import ${importName} from '${from}';`;
+  } else if (namedExport.length > 1 && member) {
+    const from = namedExport[0].replace(/^module\:/, './');
+    const importName = from.replace(/[.\/]+/g, '_');
+    return `import {${member} as ${importName}$${member}} from '${from}';`;
+  }
 }
 
 
 /**
  * Generate code to export a named symbol.
- * @param {string} name Symbol name.
- * @param {Object.<string, string>} namespaces Already defined namespaces.
+ * @param {Object} symbol Symbol.
+ * @param {Object<string, string>} namespaces Already defined namespaces.
+ * @param {Object} imports Imports.
  * @return {string} Export code.
  */
-function formatSymbolExport(name, namespaces) {
+function formatSymbolExport(symbol, namespaces, imports) {
+  const name = symbol.name;
   const parts = name.split('~');
   const isNamed = parts[0].indexOf('.') !== -1;
   const nsParts = parts[0].replace(/^module\:/, '').split(/[\/\.]/);
   const last = nsParts.length - 1;
   const importName = isNamed ?
-    '_' + nsParts.slice(0, last).join('_') + '.' + nsParts[last] :
+    '_' + nsParts.slice(0, last).join('_') + '$' + nsParts[last] :
     '$' + nsParts.join('$');
   let line = nsParts[0];
   for (let i = 1, ii = nsParts.length; i < ii; ++i) {
@@ -64,37 +55,44 @@ function formatSymbolExport(name, namespaces) {
     namespaces[line] = (line in namespaces ? namespaces[line] : true) && i < ii - 1;
   }
   line += ` = ${importName};`;
+  imports[getImport(symbol, nsParts.pop())] = true;
   return line;
 }
 
 
 /**
  * Generate export code given a list symbol names.
- * @param {Array.<Object>} symbols List of symbols.
- * @param {Object.<string, string>} namespaces Already defined namespaces.
- * @param {Array.<string>} imports List of all imports.
+ * @param {Array<Object>} symbols List of symbols.
+ * @param {Object<string, string>} namespaces Already defined namespaces.
+ * @param {Array<string>} imports List of all imports.
  * @return {string} Export code.
  */
-function generateExports(symbols, namespaces, imports) {
+function generateExports(symbols) {
+  const namespaces = {};
+  const imports = [];
   let blocks = [];
   symbols.forEach(function(symbol) {
     const name = symbol.name;
     if (name.indexOf('#') == -1) {
-      const block = formatSymbolExport(name, namespaces);
+      const imp = getImport(symbol);
+      if (imp) {
+        imports[getImport(symbol)] = true;
+      }
+      const block = formatSymbolExport(symbol, namespaces, imports);
       if (block !== blocks[blocks.length - 1]) {
         blocks.push(block);
       }
     }
   });
-  const nsdefs = ['const ol = window[\'ol\'] = {};'];
+  const nsdefs = [];
   const ns = Object.keys(namespaces).sort();
   for (let i = 0, ii = ns.length; i < ii; ++i) {
     if (namespaces[ns[i]]) {
       nsdefs.push(`${ns[i]} = {};`);
     }
   }
-  blocks = imports.concat(nsdefs.sort()).concat(blocks.sort());
-  blocks.push('');
+  blocks = Object.keys(imports).concat('\nvar ol = {};\n', nsdefs.sort()).concat(blocks.sort());
+  blocks.push('', 'export default ol;');
   return blocks.join('\n');
 }
 
@@ -105,8 +103,7 @@ function generateExports(symbols, namespaces, imports) {
  */
 async function main() {
   const symbols = await getSymbols();
-  const imports = await getImports(symbols);
-  return generateExports(symbols, {}, imports);
+  return generateExports(symbols);
 }
 
 
@@ -116,7 +113,7 @@ async function main() {
  */
 if (require.main === module) {
   main().then(async code => {
-    const filepath = path.join(__dirname, '..', 'src', 'index.js');
+    const filepath = path.join(__dirname, '..', 'build', 'index.js');
     await fse.outputFile(filepath, code);
   }).catch(err => {
     process.stderr.write(`${err.message}\n`, () => process.exit(1));

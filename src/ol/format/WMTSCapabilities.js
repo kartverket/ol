@@ -1,39 +1,18 @@
 /**
  * @module ol/format/WMTSCapabilities
  */
-import {inherits} from '../index.js';
 import {boundingExtent} from '../extent.js';
-import OWS from '../format/OWS.js';
-import {readHref} from '../format/XLink.js';
-import XML from '../format/XML.js';
-import {readString, readNonNegativeInteger, readDecimal} from '../format/xsd.js';
+import OWS from './OWS.js';
+import {readHref} from './XLink.js';
+import XML from './XML.js';
+import {readString, readNonNegativeInteger, readDecimal} from './xsd.js';
 import {pushParseAndPop, makeStructureNS,
   makeObjectPropertySetter, makeObjectPropertyPusher, makeArrayPusher} from '../xml.js';
-
-/**
- * @classdesc
- * Format for reading WMTS capabilities data.
- *
- * @constructor
- * @extends {module:ol/format/XML}
- * @api
- */
-const WMTSCapabilities = function() {
-  XML.call(this);
-
-  /**
-   * @type {module:ol/format/OWS}
-   * @private
-   */
-  this.owsParser_ = new OWS();
-};
-
-inherits(WMTSCapabilities, XML);
 
 
 /**
  * @const
- * @type {Array.<string>}
+ * @type {Array<null|string>}
  */
 const NAMESPACE_URIS = [
   null,
@@ -43,7 +22,7 @@ const NAMESPACE_URIS = [
 
 /**
  * @const
- * @type {Array.<string>}
+ * @type {Array<null|string>}
  */
 const OWS_NAMESPACE_URIS = [
   null,
@@ -53,7 +32,7 @@ const OWS_NAMESPACE_URIS = [
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -62,8 +41,53 @@ const PARSERS = makeStructureNS(
 
 
 /**
+ * @classdesc
+ * Format for reading WMTS capabilities data.
+ *
+ * @api
+ */
+class WMTSCapabilities extends XML {
+  constructor() {
+    super();
+
+    /**
+     * @type {OWS}
+     * @private
+     */
+    this.owsParser_ = new OWS();
+  }
+
+  /**
+   * @inheritDoc
+   */
+  readFromDocument(doc) {
+    for (let n = doc.firstChild; n; n = n.nextSibling) {
+      if (n.nodeType == Node.ELEMENT_NODE) {
+        return this.readFromNode(n);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  readFromNode(node) {
+    const version = node.getAttribute('version').trim();
+    let WMTSCapabilityObject = this.owsParser_.readFromNode(node);
+    if (!WMTSCapabilityObject) {
+      return null;
+    }
+    WMTSCapabilityObject['version'] = version;
+    WMTSCapabilityObject = pushParseAndPop(WMTSCapabilityObject, PARSERS, node, []);
+    return WMTSCapabilityObject ? WMTSCapabilityObject : null;
+  }
+}
+
+
+/**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const CONTENTS_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -74,7 +98,7 @@ const CONTENTS_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const LAYER_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -93,7 +117,7 @@ const LAYER_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const STYLE_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -106,7 +130,7 @@ const STYLE_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const TMS_LINKS_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -116,7 +140,7 @@ const TMS_LINKS_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const TMS_LIMITS_LIST_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -126,7 +150,7 @@ const TMS_LIMITS_LIST_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const TMS_LIMITS_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -140,7 +164,7 @@ const TMS_LIMITS_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const DIMENSION_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -153,7 +177,7 @@ const DIMENSION_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const WGS84_BBOX_READERS = makeStructureNS(
   OWS_NAMESPACE_URIS, {
@@ -164,7 +188,7 @@ const WGS84_BBOX_READERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const TMS_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -178,7 +202,7 @@ const TMS_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const TM_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -194,47 +218,8 @@ const TM_PARSERS = makeStructureNS(
 
 
 /**
- * Read a WMTS capabilities document.
- *
- * @function
- * @param {Document|Node|string} source The XML source.
- * @return {Object} An object representing the WMTS capabilities.
- * @api
- */
-WMTSCapabilities.prototype.read;
-
-
-/**
- * @inheritDoc
- */
-WMTSCapabilities.prototype.readFromDocument = function(doc) {
-  for (let n = doc.firstChild; n; n = n.nextSibling) {
-    if (n.nodeType == Node.ELEMENT_NODE) {
-      return this.readFromNode(n);
-    }
-  }
-  return null;
-};
-
-
-/**
- * @inheritDoc
- */
-WMTSCapabilities.prototype.readFromNode = function(node) {
-  const version = node.getAttribute('version').trim();
-  let WMTSCapabilityObject = this.owsParser_.readFromNode(node);
-  if (!WMTSCapabilityObject) {
-    return null;
-  }
-  WMTSCapabilityObject['version'] = version;
-  WMTSCapabilityObject = pushParseAndPop(WMTSCapabilityObject, PARSERS, node, []);
-  return WMTSCapabilityObject ? WMTSCapabilityObject : null;
-};
-
-
-/**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Attribution object.
  */
 function readContents(node, objectStack) {
@@ -243,8 +228,8 @@ function readContents(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Layers object.
  */
 function readLayer(node, objectStack) {
@@ -253,8 +238,8 @@ function readLayer(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Tile Matrix Set object.
  */
 function readTileMatrixSet(node, objectStack) {
@@ -263,8 +248,8 @@ function readTileMatrixSet(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Style object.
  */
 function readStyle(node, objectStack) {
@@ -280,8 +265,8 @@ function readStyle(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Tile Matrix Set Link object.
  */
 function readTileMatrixSetLink(node, objectStack) {
@@ -290,8 +275,8 @@ function readTileMatrixSetLink(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Dimension object.
  */
 function readDimensions(node, objectStack) {
@@ -300,8 +285,8 @@ function readDimensions(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Resource URL object.
  */
 function readResourceUrl(node, objectStack) {
@@ -323,8 +308,8 @@ function readResourceUrl(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} WGS84 BBox object.
  */
 function readWgs84BoundingBox(node, objectStack) {
@@ -337,8 +322,8 @@ function readWgs84BoundingBox(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Legend object.
  */
 function readLegendUrl(node, objectStack) {
@@ -351,11 +336,11 @@ function readLegendUrl(node, objectStack) {
 
 /**
  * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} Coordinates object.
  */
 function readCoordinates(node, objectStack) {
-  const coordinates = readString(node).split(' ');
+  const coordinates = readString(node).split(/\s+/);
   if (!coordinates || coordinates.length != 2) {
     return undefined;
   }
@@ -369,8 +354,8 @@ function readCoordinates(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} TileMatrix object.
  */
 function readTileMatrix(node, objectStack) {
@@ -379,8 +364,8 @@ function readTileMatrix(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} TileMatrixSetLimits Object.
  */
 function readTileMatrixLimitsList(node, objectStack) {
@@ -389,8 +374,8 @@ function readTileMatrixLimitsList(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  * @return {Object|undefined} TileMatrixLimits Array.
  */
 function readTileMatrixLimits(node, objectStack) {

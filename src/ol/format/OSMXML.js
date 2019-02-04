@@ -2,11 +2,10 @@
  * @module ol/format/OSMXML
  */
 // FIXME add typedef for stack state objects
-import {inherits} from '../index.js';
 import {extend} from '../array.js';
 import Feature from '../Feature.js';
-import {transformWithOptions} from '../format/Feature.js';
-import XMLFeature from '../format/XMLFeature.js';
+import {transformGeometryWithOptions} from './Feature.js';
+import XMLFeature from './XMLFeature.js';
 import GeometryLayout from '../geom/GeometryLayout.js';
 import LineString from '../geom/LineString.js';
 import Point from '../geom/Point.js';
@@ -15,37 +14,17 @@ import {isEmpty} from '../obj.js';
 import {get as getProjection} from '../proj.js';
 import {pushParseAndPop, makeStructureNS} from '../xml.js';
 
-/**
- * @classdesc
- * Feature format for reading data in the
- * [OSMXML format](http://wiki.openstreetmap.org/wiki/OSM_XML).
- *
- * @constructor
- * @extends {module:ol/format/XMLFeature}
- * @api
- */
-const OSMXML = function() {
-  XMLFeature.call(this);
-
-  /**
-   * @inheritDoc
-   */
-  this.defaultDataProjection = getProjection('EPSG:4326');
-};
-
-inherits(OSMXML, XMLFeature);
-
 
 /**
  * @const
- * @type {Array.<string>}
+ * @type {Array<null>}
  */
 const NAMESPACE_URIS = [null];
 
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const WAY_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -56,7 +35,7 @@ const WAY_PARSERS = makeStructureNS(
 
 /**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -66,8 +45,68 @@ const PARSERS = makeStructureNS(
 
 
 /**
+ * @classdesc
+ * Feature format for reading data in the
+ * [OSMXML format](http://wiki.openstreetmap.org/wiki/OSM_XML).
+ *
+ * @api
+ */
+class OSMXML extends XMLFeature {
+  constructor() {
+    super();
+
+    /**
+     * @inheritDoc
+     */
+    this.dataProjection = getProjection('EPSG:4326');
+  }
+
+  /**
+   * @inheritDoc
+   */
+  readFeaturesFromNode(node, opt_options) {
+    const options = this.getReadOptions(node, opt_options);
+    if (node.localName == 'osm') {
+      const state = pushParseAndPop({
+        nodes: {},
+        ways: [],
+        features: []
+      }, PARSERS, node, [options]);
+      // parse nodes in ways
+      for (let j = 0; j < state.ways.length; j++) {
+        const values = /** @type {Object} */ (state.ways[j]);
+        /** @type {Array<number>} */
+        const flatCoordinates = [];
+        for (let i = 0, ii = values.ndrefs.length; i < ii; i++) {
+          const point = state.nodes[values.ndrefs[i]];
+          extend(flatCoordinates, point);
+        }
+        let geometry;
+        if (values.ndrefs[0] == values.ndrefs[values.ndrefs.length - 1]) {
+          // closed way
+          geometry = new Polygon(flatCoordinates, GeometryLayout.XY, [flatCoordinates.length]);
+        } else {
+          geometry = new LineString(flatCoordinates, GeometryLayout.XY);
+        }
+        transformGeometryWithOptions(geometry, false, options);
+        const feature = new Feature(geometry);
+        feature.setId(values.id);
+        feature.setProperties(values.tags, true);
+        state.features.push(feature);
+      }
+      if (state.features) {
+        return state.features;
+      }
+    }
+    return [];
+  }
+
+}
+
+
+/**
  * @const
- * @type {Object.<string, Object.<string, module:ol/xml~Parser>>}
+ * @type {Object<string, Object<string, import("../xml.js").Parser>>}
  */
 const NODE_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
@@ -76,14 +115,14 @@ const NODE_PARSERS = makeStructureNS(
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  */
 function readNode(node, objectStack) {
-  const options = /** @type {module:ol/format/Feature~ReadOptions} */ (objectStack[0]);
+  const options = /** @type {import("./Feature.js").ReadOptions} */ (objectStack[0]);
   const state = /** @type {Object} */ (objectStack[objectStack.length - 1]);
   const id = node.getAttribute('id');
-  /** @type {module:ol/coordinate~Coordinate} */
+  /** @type {import("../coordinate.js").Coordinate} */
   const coordinates = [
     parseFloat(node.getAttribute('lon')),
     parseFloat(node.getAttribute('lat'))
@@ -95,18 +134,18 @@ function readNode(node, objectStack) {
   }, NODE_PARSERS, node, objectStack);
   if (!isEmpty(values.tags)) {
     const geometry = new Point(coordinates);
-    transformWithOptions(geometry, false, options);
+    transformGeometryWithOptions(geometry, false, options);
     const feature = new Feature(geometry);
     feature.setId(id);
-    feature.setProperties(values.tags);
+    feature.setProperties(values.tags, true);
     state.features.push(feature);
   }
 }
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  */
 function readWay(node, objectStack) {
   const id = node.getAttribute('id');
@@ -121,8 +160,8 @@ function readWay(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  */
 function readNd(node, objectStack) {
   const values = /** @type {Object} */ (objectStack[objectStack.length - 1]);
@@ -131,8 +170,8 @@ function readNd(node, objectStack) {
 
 
 /**
- * @param {Node} node Node.
- * @param {Array.<*>} objectStack Object stack.
+ * @param {Element} node Node.
+ * @param {Array<*>} objectStack Object stack.
  */
 function readTag(node, objectStack) {
   const values = /** @type {Object} */ (objectStack[objectStack.length - 1]);
@@ -140,90 +179,4 @@ function readTag(node, objectStack) {
 }
 
 
-/**
- * Read all features from an OSM source.
- *
- * @function
- * @param {Document|Node|Object|string} source Source.
- * @param {module:ol/format/Feature~ReadOptions=} opt_options Read options.
- * @return {Array.<module:ol/Feature>} Features.
- * @api
- */
-OSMXML.prototype.readFeatures;
-
-
-/**
- * @inheritDoc
- */
-OSMXML.prototype.readFeaturesFromNode = function(node, opt_options) {
-  const options = this.getReadOptions(node, opt_options);
-  if (node.localName == 'osm') {
-    const state = pushParseAndPop({
-      nodes: {},
-      ways: [],
-      features: []
-    }, PARSERS, node, [options]);
-    // parse nodes in ways
-    for (let j = 0; j < state.ways.length; j++) {
-      const values = /** @type {Object} */ (state.ways[j]);
-      /** @type {Array.<number>} */
-      const flatCoordinates = [];
-      for (let i = 0, ii = values.ndrefs.length; i < ii; i++) {
-        const point = state.nodes[values.ndrefs[i]];
-        extend(flatCoordinates, point);
-      }
-      let geometry;
-      if (values.ndrefs[0] == values.ndrefs[values.ndrefs.length - 1]) {
-        // closed way
-        geometry = new Polygon(null);
-        geometry.setFlatCoordinates(GeometryLayout.XY, flatCoordinates,
-          [flatCoordinates.length]);
-      } else {
-        geometry = new LineString(null);
-        geometry.setFlatCoordinates(GeometryLayout.XY, flatCoordinates);
-      }
-      transformWithOptions(geometry, false, options);
-      const feature = new Feature(geometry);
-      feature.setId(values.id);
-      feature.setProperties(values.tags);
-      state.features.push(feature);
-    }
-    if (state.features) {
-      return state.features;
-    }
-  }
-  return [];
-};
-
-
-/**
- * Read the projection from an OSM source.
- *
- * @function
- * @param {Document|Node|Object|string} source Source.
- * @return {module:ol/proj/Projection} Projection.
- * @api
- */
-OSMXML.prototype.readProjection;
-
-
-/**
- * Not implemented.
- * @inheritDoc
- */
-OSMXML.prototype.writeFeatureNode = function(feature, opt_options) {};
-
-
-/**
- * Not implemented.
- * @inheritDoc
- */
-OSMXML.prototype.writeFeaturesNode = function(features, opt_options) {};
-
-
-/**
- * Not implemented.
- * @inheritDoc
- */
-OSMXML.prototype.writeGeometryNode = function(geometry, opt_options) {};
 export default OSMXML;

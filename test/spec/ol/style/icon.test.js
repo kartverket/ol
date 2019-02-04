@@ -1,4 +1,4 @@
-import {getUid} from '../../../../src/ol/index.js';
+import {getUid} from '../../../../src/ol/util.js';
 import {shared as iconImageCache} from '../../../../src/ol/style/IconImageCache.js';
 import Icon from '../../../../src/ol/style/Icon.js';
 import IconImage, {get as getIconImage} from '../../../../src/ol/style/IconImage.js';
@@ -61,7 +61,6 @@ describe('ol.style.Icon', function() {
         offsetOrigin: 'bottom-left',
         opacity: 0.5,
         scale: 2,
-        snapToPixel: false,
         rotation: 4,
         size: [10, 12]
       });
@@ -82,7 +81,6 @@ describe('ol.style.Icon', function() {
       expect(original.getOpacity()).to.eql(clone.getOpacity());
       expect(original.getRotation()).to.eql(clone.getRotation());
       expect(original.getRotateWithView()).to.eql(clone.getRotateWithView());
-      expect(original.getSnapToPixel()).to.eql(clone.getSnapToPixel());
 
       const original2 = new Icon({
         src: src
@@ -169,6 +167,20 @@ describe('ol.style.Icon', function() {
         anchorOrigin: 'top-right'
       });
       expect(iconStyle.getAnchor()).to.eql([27, 12]);
+    });
+  });
+
+  describe('#setAnchor', function() {
+    it('resets the cached anchor', function() {
+      const iconStyle = new Icon({
+        src: 'test.png',
+        size: size,
+        anchor: [0.25, 0.25]
+      });
+      expect(iconStyle.getAnchor()).to.eql([9, 12]);
+
+      iconStyle.setAnchor([0.5, 0.5]);
+      expect(iconStyle.getAnchor()).to.eql([18, 24]);
     });
   });
 

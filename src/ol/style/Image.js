@@ -1,6 +1,7 @@
 /**
  * @module ol/style/Image
  */
+import {abstract} from '../util.js';
 
 
 /**
@@ -9,7 +10,6 @@
  * @property {boolean} rotateWithView
  * @property {number} rotation
  * @property {number} scale
- * @property {boolean} snapToPixel
  */
 
 
@@ -18,237 +18,247 @@
  * A base class used for creating subclasses and not instantiated in
  * apps. Base class for {@link module:ol/style/Icon~Icon}, {@link module:ol/style/Circle~CircleStyle} and
  * {@link module:ol/style/RegularShape~RegularShape}.
- *
- * @constructor
  * @abstract
- * @param {module:ol/style/Image~Options} options Options.
  * @api
  */
-const ImageStyle = function(options) {
+class ImageStyle {
+  /**
+   * @param {Options} options Options.
+   */
+  constructor(options) {
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.opacity_ = options.opacity;
+
+    /**
+     * @private
+     * @type {boolean}
+     */
+    this.rotateWithView_ = options.rotateWithView;
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.rotation_ = options.rotation;
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.scale_ = options.scale;
+
+  }
 
   /**
-   * @private
-   * @type {number}
+   * Clones the style.
+   * @return {ImageStyle} The cloned style.
+   * @api
    */
-  this.opacity_ = options.opacity;
+  clone() {
+    return new ImageStyle({
+      opacity: this.getOpacity(),
+      scale: this.getScale(),
+      rotation: this.getRotation(),
+      rotateWithView: this.getRotateWithView()
+    });
+  }
 
   /**
-   * @private
-   * @type {boolean}
+   * Get the symbolizer opacity.
+   * @return {number} Opacity.
+   * @api
    */
-  this.rotateWithView_ = options.rotateWithView;
+  getOpacity() {
+    return this.opacity_;
+  }
 
   /**
-   * @private
-   * @type {number}
+   * Determine whether the symbolizer rotates with the map.
+   * @return {boolean} Rotate with map.
+   * @api
    */
-  this.rotation_ = options.rotation;
+  getRotateWithView() {
+    return this.rotateWithView_;
+  }
 
   /**
-   * @private
-   * @type {number}
+   * Get the symoblizer rotation.
+   * @return {number} Rotation.
+   * @api
    */
-  this.scale_ = options.scale;
+  getRotation() {
+    return this.rotation_;
+  }
 
   /**
-   * @private
-   * @type {boolean}
+   * Get the symbolizer scale.
+   * @return {number} Scale.
+   * @api
    */
-  this.snapToPixel_ = options.snapToPixel;
+  getScale() {
+    return this.scale_;
+  }
 
-};
+  /**
+   * This method is deprecated and always returns false.
+   * @return {boolean} false.
+   * @deprecated
+   * @api
+   */
+  getSnapToPixel() {
+    return false;
+  }
 
+  /**
+   * Get the anchor point in pixels. The anchor determines the center point for the
+   * symbolizer.
+   * @abstract
+   * @return {Array<number>} Anchor.
+   */
+  getAnchor() {
+    return abstract();
+  }
 
-/**
- * Get the symbolizer opacity.
- * @return {number} Opacity.
- * @api
- */
-ImageStyle.prototype.getOpacity = function() {
-  return this.opacity_;
-};
+  /**
+   * Get the image element for the symbolizer.
+   * @abstract
+   * @param {number} pixelRatio Pixel ratio.
+   * @return {HTMLCanvasElement|HTMLVideoElement|HTMLImageElement} Image element.
+   */
+  getImage(pixelRatio) {
+    return abstract();
+  }
 
+  /**
+   * @abstract
+   * @param {number} pixelRatio Pixel ratio.
+   * @return {HTMLCanvasElement|HTMLVideoElement|HTMLImageElement} Image element.
+   */
+  getHitDetectionImage(pixelRatio) {
+    return abstract();
+  }
 
-/**
- * Determine whether the symbolizer rotates with the map.
- * @return {boolean} Rotate with map.
- * @api
- */
-ImageStyle.prototype.getRotateWithView = function() {
-  return this.rotateWithView_;
-};
+  /**
+   * @abstract
+   * @return {import("../ImageState.js").default} Image state.
+   */
+  getImageState() {
+    return abstract();
+  }
 
+  /**
+   * @abstract
+   * @return {import("../size.js").Size} Image size.
+   */
+  getImageSize() {
+    return abstract();
+  }
 
-/**
- * Get the symoblizer rotation.
- * @return {number} Rotation.
- * @api
- */
-ImageStyle.prototype.getRotation = function() {
-  return this.rotation_;
-};
+  /**
+   * @abstract
+   * @return {import("../size.js").Size} Size of the hit-detection image.
+   */
+  getHitDetectionImageSize() {
+    return abstract();
+  }
 
+  /**
+   * Get the origin of the symbolizer.
+   * @abstract
+   * @return {Array<number>} Origin.
+   */
+  getOrigin() {
+    return abstract();
+  }
 
-/**
- * Get the symbolizer scale.
- * @return {number} Scale.
- * @api
- */
-ImageStyle.prototype.getScale = function() {
-  return this.scale_;
-};
+  /**
+   * Get the size of the symbolizer (in pixels).
+   * @abstract
+   * @return {import("../size.js").Size} Size.
+   */
+  getSize() {
+    return abstract();
+  }
 
+  /**
+   * Set the opacity.
+   *
+   * @param {number} opacity Opacity.
+   * @api
+   */
+  setOpacity(opacity) {
+    this.opacity_ = opacity;
+  }
 
-/**
- * Determine whether the symbolizer should be snapped to a pixel.
- * @return {boolean} The symbolizer should snap to a pixel.
- * @api
- */
-ImageStyle.prototype.getSnapToPixel = function() {
-  return this.snapToPixel_;
-};
+  /**
+   * Set whether to rotate the style with the view.
+   *
+   * @param {boolean} rotateWithView Rotate with map.
+   * @api
+   */
+  setRotateWithView(rotateWithView) {
+    this.rotateWithView_ = rotateWithView;
+  }
 
+  /**
+   * Set the rotation.
+   *
+   * @param {number} rotation Rotation.
+   * @api
+   */
+  setRotation(rotation) {
+    this.rotation_ = rotation;
+  }
+  /**
+   * Set the scale.
+   *
+   * @param {number} scale Scale.
+   * @api
+   */
+  setScale(scale) {
+    this.scale_ = scale;
+  }
 
-/**
- * Get the anchor point in pixels. The anchor determines the center point for the
- * symbolizer.
- * @abstract
- * @return {Array.<number>} Anchor.
- */
-ImageStyle.prototype.getAnchor = function() {};
+  /**
+   * This method is deprecated and does nothing.
+   * @param {boolean} snapToPixel Snap to pixel?
+   * @deprecated
+   * @api
+   */
+  setSnapToPixel(snapToPixel) {}
 
+  /**
+   * @abstract
+   * @param {function(this: T, import("../events/Event.js").default): void} listener Listener function.
+   * @param {T} thisArg Value to use as `this` when executing `listener`.
+   * @return {import("../events.js").EventsKey|undefined} Listener key.
+   * @template T
+   */
+  listenImageChange(listener, thisArg) {
+    return abstract();
+  }
 
-/**
- * Get the image element for the symbolizer.
- * @abstract
- * @param {number} pixelRatio Pixel ratio.
- * @return {HTMLCanvasElement|HTMLVideoElement|Image} Image element.
- */
-ImageStyle.prototype.getImage = function(pixelRatio) {};
+  /**
+   * Load not yet loaded URI.
+   * @abstract
+   */
+  load() {
+    abstract();
+  }
 
+  /**
+   * @abstract
+   * @param {function(this: T, import("../events/Event.js").default): void} listener Listener function.
+   * @param {T} thisArg Value to use as `this` when executing `listener`.
+   * @template T
+   */
+  unlistenImageChange(listener, thisArg) {
+    abstract();
+  }
+}
 
-/**
- * @abstract
- * @param {number} pixelRatio Pixel ratio.
- * @return {HTMLCanvasElement|HTMLVideoElement|Image} Image element.
- */
-ImageStyle.prototype.getHitDetectionImage = function(pixelRatio) {};
-
-
-/**
- * @abstract
- * @return {module:ol/ImageState} Image state.
- */
-ImageStyle.prototype.getImageState = function() {};
-
-
-/**
- * @abstract
- * @return {module:ol/size~Size} Image size.
- */
-ImageStyle.prototype.getImageSize = function() {};
-
-
-/**
- * @abstract
- * @return {module:ol/size~Size} Size of the hit-detection image.
- */
-ImageStyle.prototype.getHitDetectionImageSize = function() {};
-
-
-/**
- * Get the origin of the symbolizer.
- * @abstract
- * @return {Array.<number>} Origin.
- */
-ImageStyle.prototype.getOrigin = function() {};
-
-
-/**
- * Get the size of the symbolizer (in pixels).
- * @abstract
- * @return {module:ol/size~Size} Size.
- */
-ImageStyle.prototype.getSize = function() {};
-
-
-/**
- * Set the opacity.
- *
- * @param {number} opacity Opacity.
- * @api
- */
-ImageStyle.prototype.setOpacity = function(opacity) {
-  this.opacity_ = opacity;
-};
-
-
-/**
- * Set whether to rotate the style with the view.
- *
- * @param {boolean} rotateWithView Rotate with map.
- * @api
- */
-ImageStyle.prototype.setRotateWithView = function(rotateWithView) {
-  this.rotateWithView_ = rotateWithView;
-};
-
-
-/**
- * Set the rotation.
- *
- * @param {number} rotation Rotation.
- * @api
- */
-ImageStyle.prototype.setRotation = function(rotation) {
-  this.rotation_ = rotation;
-};
-
-
-/**
- * Set the scale.
- *
- * @param {number} scale Scale.
- * @api
- */
-ImageStyle.prototype.setScale = function(scale) {
-  this.scale_ = scale;
-};
-
-
-/**
- * Set whether to snap the image to the closest pixel.
- *
- * @param {boolean} snapToPixel Snap to pixel?
- * @api
- */
-ImageStyle.prototype.setSnapToPixel = function(snapToPixel) {
-  this.snapToPixel_ = snapToPixel;
-};
-
-
-/**
- * @abstract
- * @param {function(this: T, module:ol/events/Event)} listener Listener function.
- * @param {T} thisArg Value to use as `this` when executing `listener`.
- * @return {module:ol/events~EventsKey|undefined} Listener key.
- * @template T
- */
-ImageStyle.prototype.listenImageChange = function(listener, thisArg) {};
-
-
-/**
- * Load not yet loaded URI.
- * @abstract
- */
-ImageStyle.prototype.load = function() {};
-
-
-/**
- * @abstract
- * @param {function(this: T, module:ol/events/Event)} listener Listener function.
- * @param {T} thisArg Value to use as `this` when executing `listener`.
- * @template T
- */
-ImageStyle.prototype.unlistenImageChange = function(listener, thisArg) {};
 export default ImageStyle;

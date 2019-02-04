@@ -1,4 +1,4 @@
-import {VERSION} from '../../../src/ol/index.js';
+import {VERSION} from '../../../src/ol/util.js';
 import AssertionError from '../../../src/ol/AssertionError.js';
 
 describe('ol.AssertionError', function() {
@@ -22,4 +22,11 @@ describe('ol.AssertionError', function() {
     const error = new AssertionError(42);
     expect(error.name).to.be('AssertionError');
   });
+
+  it('is instanceof Error and AssertionError', function() {
+    const error = new AssertionError(42);
+    expect(error instanceof Error).to.be(true);
+    expect(error instanceof AssertionError).to.be(true);
+  });
+
 });

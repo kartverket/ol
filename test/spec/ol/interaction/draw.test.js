@@ -4,7 +4,7 @@ import MapBrowserPointerEvent from '../../../../src/ol/MapBrowserPointerEvent.js
 import View from '../../../../src/ol/View.js';
 import {equals} from '../../../../src/ol/array.js';
 import {listen} from '../../../../src/ol/events.js';
-import {always} from '../../../../src/ol/events/condition.js';
+import {always, shiftKeyOnly, altKeyOnly} from '../../../../src/ol/events/condition.js';
 import Circle from '../../../../src/ol/geom/Circle.js';
 import LineString from '../../../../src/ol/geom/LineString.js';
 import MultiLineString from '../../../../src/ol/geom/MultiLineString.js';
@@ -62,6 +62,7 @@ describe('ol.interaction.Draw', function() {
    * @param {number} x Horizontal offset from map center.
    * @param {number} y Vertical offset from map center.
    * @param {boolean=} opt_shiftKey Shift key is pressed.
+   * @return {module:ol/MapBrowserPointerEvent} The simulated event.
    */
   function simulateEvent(type, x, y, opt_shiftKey) {
     const viewport = map.getViewport();
@@ -71,9 +72,14 @@ describe('ol.interaction.Draw', function() {
     const event = new PointerEvent(type, {
       clientX: position.left + x + width / 2,
       clientY: position.top + y + height / 2,
-      shiftKey: shiftKey
+      shiftKey: shiftKey,
+      preventDefault: function() {}
+    }, {
+      pointerType: 'mouse'
     });
-    map.handleMapBrowserEvent(new MapBrowserPointerEvent(type, map, event));
+    const simulatedEvent = new MapBrowserPointerEvent(type, map, event);
+    map.handleMapBrowserEvent(simulatedEvent);
+    return simulatedEvent;
   }
 
   describe('constructor', function() {
@@ -484,6 +490,47 @@ describe('ol.interaction.Draw', function() {
       }).to.not.throwException();
     });
 
+  });
+
+  describe('drawing with a condition', function() {
+    let draw;
+    beforeEach(function() {
+      draw = new Draw({
+        source: source,
+        type: 'LineString',
+        condition: shiftKeyOnly,
+        freehandCondition: altKeyOnly
+      });
+      map.addInteraction(draw);
+    });
+
+    it('finishes draw sequence correctly', function() {
+      // first point
+      simulateEvent('pointermove', 10, 20, true);
+      simulateEvent('pointerdown', 10, 20, true);
+      simulateEvent('pointerup', 10, 20, true);
+
+      // second point
+      simulateEvent('pointermove', 30, 20, true);
+      simulateEvent('pointerdown', 30, 20, true);
+      simulateEvent('pointerup', 30, 20, true);
+
+      // finish on second point
+      simulateEvent('pointerdown', 30, 20, true);
+      simulateEvent('pointerup', 30, 20, true);
+
+      const features = source.getFeatures();
+      expect(features).to.have.length(1);
+      const geometry = features[0].getGeometry();
+      expect(geometry).to.be.a(LineString);
+      expect(geometry.getCoordinates()).to.eql([[10, -20], [30, -20]]);
+
+      // without modifier, to be handled by the map's DragPan interaction
+      simulateEvent('pointermove', 20, 20);
+      simulateEvent('pointerdown', 20, 20);
+      simulateEvent('pointermove', 10, 30);
+      expect(draw.lastDragTime_).to.be(undefined);
+    });
   });
 
   describe('drawing with a finishCondition', function() {
@@ -1054,13 +1101,19 @@ describe('ol.interaction.Draw', function() {
     });
   });
 
+  describe('#getOverlay', function() {
+    it('returns the feature overlay layer', function() {
+      const draw = new Draw({});
+      expect (draw.getOverlay()).to.eql(draw.overlay_);
+    });
+  });
+
   describe('createRegularPolygon', function() {
     it('creates a regular polygon in Circle mode', function() {
       const draw = new Draw({
         source: source,
         type: 'Circle',
-        geometryFunction:
-            createRegularPolygon(4, Math.PI / 4)
+        geometryFunction: createRegularPolygon(4, Math.PI / 4)
       });
       map.addInteraction(draw);
 
@@ -1081,6 +1134,52 @@ describe('ol.interaction.Draw', function() {
       expect(coordinates[0].length).to.eql(5);
       expect(coordinates[0][0][0]).to.roughlyEqual(20, 1e-9);
       expect(coordinates[0][0][1]).to.roughlyEqual(20, 1e-9);
+    });
+
+    it('sketch start point always matches the mouse point', function() {
+      const draw = new Draw({
+        source: source,
+        type: 'Circle',
+        geometryFunction: createRegularPolygon(3)
+      });
+      map.addInteraction(draw);
+
+      // regular polygon center point
+      simulateEvent('pointermove', 60, 60);
+      simulateEvent('pointerdown', 60, 60);
+      simulateEvent('pointerup', 60, 60);
+
+      // move to first quadrant
+      simulateEvent('pointermove', 79, 80);
+      let event = simulateEvent('pointermove', 80, 80);
+      let coordinate = event.coordinate;
+      const firstQuadrantCoordinate = draw.sketchFeature_.getGeometry().getFirstCoordinate();
+      expect(firstQuadrantCoordinate[0]).to.roughlyEqual(coordinate[0], 1e-9);
+      expect(firstQuadrantCoordinate[1]).to.roughlyEqual(coordinate[1], 1e-9);
+
+      // move to second quadrant
+      simulateEvent('pointermove', 41, 80);
+      event = simulateEvent('pointermove', 40, 80);
+      coordinate = event.coordinate;
+      const secondQuadrantCoordinate = draw.sketchFeature_.getGeometry().getFirstCoordinate();
+      expect(secondQuadrantCoordinate[0]).to.roughlyEqual(coordinate[0], 1e-9);
+      expect(secondQuadrantCoordinate[1]).to.roughlyEqual(coordinate[1], 1e-9);
+
+      // move to third quadrant
+      simulateEvent('pointermove', 40, 41);
+      event = simulateEvent('pointermove', 40, 40);
+      coordinate = event.coordinate;
+      const thirdQuadrantCoordinate = draw.sketchFeature_.getGeometry().getFirstCoordinate();
+      expect(thirdQuadrantCoordinate[0]).to.roughlyEqual(coordinate[0], 1e-9);
+      expect(thirdQuadrantCoordinate[1]).to.roughlyEqual(coordinate[1], 1e-9);
+
+      // move to fourth quadrant
+      simulateEvent('pointermove', 79, 40);
+      event = simulateEvent('pointermove', 80, 40);
+      coordinate = event.coordinate;
+      const fourthQuadrantCoordinate = draw.sketchFeature_.getGeometry().getFirstCoordinate();
+      expect(fourthQuadrantCoordinate[0]).to.roughlyEqual(coordinate[0], 1e-9);
+      expect(fourthQuadrantCoordinate[1]).to.roughlyEqual(coordinate[1], 1e-9);
     });
   });
 

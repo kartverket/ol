@@ -5,10 +5,10 @@ import Point from '../../../../src/ol/geom/Point.js';
 
 describe('ol.geom.MultiPoint', function() {
 
-  it('can be constructed with a null geometry', function() {
+  it('cannot be constructed with a null geometry', function() {
     expect(function() {
       return new MultiPoint(null);
-    }).not.to.throwException();
+    }).to.throwException();
   });
 
   describe('construct empty', function() {
@@ -283,6 +283,29 @@ describe('ol.geom.MultiPoint', function() {
 
       expect(coords[1][0]).to.roughlyEqual(12356463.47, 1e-2);
       expect(coords[1][1]).to.roughlyEqual(-5621521.48, 1e-2);
+    });
+
+  });
+
+  describe('#containsXY()', function() {
+
+    it('does contain XY', function() {
+      const multi = new MultiPoint([[1, 2], [10, 20]]);
+
+      expect(multi.containsXY(1, 2)).to.be(true);
+      expect(multi.containsXY(10, 20)).to.be(true);
+    });
+
+    it('does not contain XY', function() {
+      const multi = new MultiPoint([[1, 2], [10, 20]]);
+
+      expect(multi.containsXY(1, 3)).to.be(false);
+      expect(multi.containsXY(2, 2)).to.be(false);
+      expect(multi.containsXY(2, 3)).to.be(false);
+
+      expect(multi.containsXY(10, 30)).to.be(false);
+      expect(multi.containsXY(20, 20)).to.be(false);
+      expect(multi.containsXY(20, 30)).to.be(false);
     });
 
   });

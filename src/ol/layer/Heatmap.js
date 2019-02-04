@@ -2,38 +2,36 @@
  * @module ol/layer/Heatmap
  */
 import {listen} from '../events.js';
-import {inherits} from '../index.js';
 import {getChangeEventType} from '../Object.js';
 import {createCanvasContext2D} from '../dom.js';
-import VectorLayer from '../layer/Vector.js';
-import {clamp} from '../math.js';
+import VectorLayer from './Vector.js';
 import {assign} from '../obj.js';
-import RenderEventType from '../render/EventType.js';
-import Icon from '../style/Icon.js';
-import Style from '../style/Style.js';
+import WebGLPointsLayerRenderer from '../renderer/webgl/PointsLayer';
 
 
 /**
  * @typedef {Object} Options
  * @property {number} [opacity=1] Opacity (0, 1).
  * @property {boolean} [visible=true] Visibility.
- * @property {module:ol/extent~Extent} [extent] The bounding extent for layer rendering.  The layer will not be
+ * @property {import("../extent.js").Extent} [extent] The bounding extent for layer rendering.  The layer will not be
  * rendered outside of this extent.
- * @property {number} [zIndex=0] The z-index for layer rendering.  At rendering time, the layers
- * will be ordered, first by Z-index and then by position.
+ * @property {number} [zIndex] The z-index for layer rendering.  At rendering time, the layers
+ * will be ordered, first by Z-index and then by position. When `undefined`, a `zIndex` of 0 is assumed
+ * for layers that are added to the map's `layers` collection, or `Infinity` when the layer's `setMap()`
+ * method was used.
  * @property {number} [minResolution] The minimum resolution (inclusive) at which this layer will be
  * visible.
  * @property {number} [maxResolution] The maximum resolution (exclusive) below which this layer will
  * be visible.
- * @property {Array.<string>} [gradient=['#00f', '#0ff', '#0f0', '#ff0', '#f00']] The color gradient
+ * @property {Array<string>} [gradient=['#00f', '#0ff', '#0f0', '#ff0', '#f00']] The color gradient
  * of the heatmap, specified as an array of CSS color strings.
  * @property {number} [radius=8] Radius size in pixels.
  * @property {number} [blur=15] Blur size in pixels.
  * @property {number} [shadow=250] Shadow size in pixels.
- * @property {string|function(module:ol/Feature):number} [weight='weight'] The feature
+ * @property {string|function(import("../Feature.js").default):number} [weight='weight'] The feature
  * attribute to use for the weight or a function that returns a weight from a feature. Weight values
  * should range from 0 to 1 (and values outside will be clamped to that range).
- * @property {module:ol/source/Vector} [source] Source.
+ * @property {import("../source/Vector.js").default} [source] Source.
  */
 
 
@@ -50,7 +48,7 @@ const Property = {
 
 /**
  * @const
- * @type {Array.<string>}
+ * @type {Array<string>}
  */
 const DEFAULT_GRADIENT = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
 
@@ -62,113 +60,232 @@ const DEFAULT_GRADIENT = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'];
  * property on the layer object; for example, setting `title: 'My Title'` in the
  * options means that `title` is observable, and has get/set accessors.
  *
- * @constructor
- * @extends {module:ol/layer/Vector}
- * @fires module:ol/render/Event~RenderEvent
- * @param {module:ol/layer/Heatmap~Options=} opt_options Options.
+ * @fires import("../render/Event.js").RenderEvent
  * @api
  */
-const Heatmap = function(opt_options) {
-  const options = opt_options ? opt_options : {};
-
-  const baseOptions = assign({}, options);
-
-  delete baseOptions.gradient;
-  delete baseOptions.radius;
-  delete baseOptions.blur;
-  delete baseOptions.shadow;
-  delete baseOptions.weight;
-  VectorLayer.call(this, /** @type {module:ol/layer/Vector~Options} */ (baseOptions));
-
+class Heatmap extends VectorLayer {
   /**
-   * @private
-   * @type {Uint8ClampedArray}
+   * @param {Options=} opt_options Options.
    */
-  this.gradient_ = null;
+  constructor(opt_options) {
+    const options = opt_options ? opt_options : {};
 
-  /**
-   * @private
-   * @type {number}
-   */
-  this.shadow_ = options.shadow !== undefined ? options.shadow : 250;
+    const baseOptions = assign({}, options);
 
-  /**
-   * @private
-   * @type {string|undefined}
-   */
-  this.circleImage_ = undefined;
+    delete baseOptions.gradient;
+    delete baseOptions.radius;
+    delete baseOptions.blur;
+    delete baseOptions.shadow;
+    delete baseOptions.weight;
+    super(baseOptions);
 
-  /**
-   * @private
-   * @type {Array.<Array.<module:ol/style/Style>>}
-   */
-  this.styleCache_ = null;
+    /**
+     * @private
+     * @type {HTMLCanvasElement}
+     */
+    this.gradient_ = null;
 
-  listen(this,
-    getChangeEventType(Property.GRADIENT),
-    this.handleGradientChanged_, this);
+    /**
+     * @private
+     * @type {number}
+     */
+    this.shadow_ = options.shadow !== undefined ? options.shadow : 250;
 
-  this.setGradient(options.gradient ? options.gradient : DEFAULT_GRADIENT);
+    /**
+     * @private
+     * @type {string|undefined}
+     */
+    this.circleImage_ = undefined;
 
-  this.setBlur(options.blur !== undefined ? options.blur : 15);
+    /**
+     * @private
+     * @type {Array<Array<import("../style/Style.js").default>>}
+     */
+    this.styleCache_ = null;
 
-  this.setRadius(options.radius !== undefined ? options.radius : 8);
+    listen(this,
+      getChangeEventType(Property.GRADIENT),
+      this.handleGradientChanged_, this);
 
-  listen(this,
-    getChangeEventType(Property.BLUR),
-    this.handleStyleChanged_, this);
-  listen(this,
-    getChangeEventType(Property.RADIUS),
-    this.handleStyleChanged_, this);
+    this.setGradient(options.gradient ? options.gradient : DEFAULT_GRADIENT);
 
-  this.handleStyleChanged_();
+    this.setBlur(options.blur !== undefined ? options.blur : 15);
 
-  const weight = options.weight ? options.weight : 'weight';
-  let weightFunction;
-  if (typeof weight === 'string') {
-    weightFunction = function(feature) {
-      return feature.get(weight);
-    };
-  } else {
-    weightFunction = weight;
+    this.setRadius(options.radius !== undefined ? options.radius : 8);
+
+    const weight = options.weight ? options.weight : 'weight';
+    if (typeof weight === 'string') {
+      this.weightFunction_ = function(feature) {
+        return feature.get(weight);
+      };
+    } else {
+      this.weightFunction_ = weight;
+    }
+
+    // For performance reasons, don't sort the features before rendering.
+    // The render order is not relevant for a heatmap representation.
+    this.setRenderOrder(null);
   }
 
-  this.setStyle(function(feature, resolution) {
-    const weight = weightFunction(feature);
-    const opacity = weight !== undefined ? clamp(weight, 0, 1) : 1;
-    // cast to 8 bits
-    const index = (255 * opacity) | 0;
-    let style = this.styleCache_[index];
-    if (!style) {
-      style = [
-        new Style({
-          image: new Icon({
-            opacity: opacity,
-            src: this.circleImage_
-          })
-        })
-      ];
-      this.styleCache_[index] = style;
-    }
-    return style;
-  }.bind(this));
+  /**
+   * Return the blur size in pixels.
+   * @return {number} Blur size in pixels.
+   * @api
+   * @observable
+   */
+  getBlur() {
+    return /** @type {number} */ (this.get(Property.BLUR));
+  }
 
-  // For performance reasons, don't sort the features before rendering.
-  // The render order is not relevant for a heatmap representation.
-  this.setRenderOrder(null);
+  /**
+   * Return the gradient colors as array of strings.
+   * @return {Array<string>} Colors.
+   * @api
+   * @observable
+   */
+  getGradient() {
+    return /** @type {Array<string>} */ (this.get(Property.GRADIENT));
+  }
 
-  listen(this, RenderEventType.RENDER, this.handleRender_, this);
-};
+  /**
+   * Return the size of the radius in pixels.
+   * @return {number} Radius size in pixel.
+   * @api
+   * @observable
+   */
+  getRadius() {
+    return /** @type {number} */ (this.get(Property.RADIUS));
+  }
 
-inherits(Heatmap, VectorLayer);
+  /**
+   * @private
+   */
+  handleGradientChanged_() {
+    this.gradient_ = createGradient(this.getGradient());
+  }
+
+  /**
+   * Set the blur size in pixels.
+   * @param {number} blur Blur size in pixels.
+   * @api
+   * @observable
+   */
+  setBlur(blur) {
+    this.set(Property.BLUR, blur);
+  }
+
+  /**
+   * Set the gradient colors as array of strings.
+   * @param {Array<string>} colors Gradient.
+   * @api
+   * @observable
+   */
+  setGradient(colors) {
+    this.set(Property.GRADIENT, colors);
+  }
+
+  /**
+   * Set the size of the radius in pixels.
+   * @param {number} radius Radius size in pixel.
+   * @api
+   * @observable
+   */
+  setRadius(radius) {
+    this.set(Property.RADIUS, radius);
+  }
+
+  /**
+   * @inheritDoc
+   */
+  createRenderer() {
+    return new WebGLPointsLayerRenderer(this, {
+      vertexShader: `
+        precision mediump float;
+        attribute vec2 a_position;
+        attribute vec2 a_texCoord;
+        attribute float a_rotateWithView;
+        attribute vec2 a_offsets;
+        attribute float a_opacity;
+        
+        uniform mat4 u_projectionMatrix;
+        uniform mat4 u_offsetScaleMatrix;
+        uniform mat4 u_offsetRotateMatrix;
+        uniform float u_size;
+        
+        varying vec2 v_texCoord;
+        varying float v_opacity;
+        
+        void main(void) {
+          mat4 offsetMatrix = u_offsetScaleMatrix;
+          if (a_rotateWithView == 1.0) {
+            offsetMatrix = u_offsetScaleMatrix * u_offsetRotateMatrix;
+          }
+          vec4 offsets = offsetMatrix * vec4(a_offsets, 0.0, 0.0);
+          gl_Position = u_projectionMatrix * vec4(a_position, 0.0, 1.0) + offsets * u_size;
+          v_texCoord = a_texCoord;
+          v_opacity = a_opacity;
+        }`,
+      fragmentShader: `
+        precision mediump float;
+        uniform float u_resolution;
+        uniform float u_blurSlope;
+        
+        varying vec2 v_texCoord;
+        varying float v_opacity;
+        
+        void main(void) {
+          vec2 texCoord = v_texCoord * 2.0 - vec2(1.0, 1.0);
+          float sqRadius = texCoord.x * texCoord.x + texCoord.y * texCoord.y;
+          float value = (1.0 - sqrt(sqRadius)) * u_blurSlope;
+          float alpha = smoothstep(0.0, 1.0, value) * v_opacity;
+          gl_FragColor = vec4(1.0, 1.0, 1.0, alpha);
+        }`,
+      uniforms: {
+        u_size: function() {
+          return (this.get(Property.RADIUS) + this.get(Property.BLUR)) * 2;
+        }.bind(this),
+        u_blurSlope: function() {
+          return this.get(Property.RADIUS) / Math.max(1, this.get(Property.BLUR));
+        }.bind(this),
+        u_resolution: function(frameState) {
+          return frameState.viewState.resolution;
+        }
+      },
+      postProcesses: [
+        {
+          fragmentShader: `
+            precision mediump float;
+
+            uniform sampler2D u_image;
+            uniform sampler2D u_gradientTexture;
+
+            varying vec2 v_texCoord;
+            varying vec2 v_screenCoord;
+
+            void main() {
+              vec4 color = texture2D(u_image, v_texCoord);
+              gl_FragColor.a = color.a;
+              gl_FragColor.rgb = texture2D(u_gradientTexture, vec2(0.5, color.a)).rgb;
+              gl_FragColor.rgb *= gl_FragColor.a;
+            }`,
+          uniforms: {
+            u_gradientTexture: this.gradient_
+          }
+        }
+      ],
+      opacityCallback: function(feature) {
+        return this.weightFunction_(feature);
+      }.bind(this)
+    });
+  }
+}
 
 
 /**
- * @param {Array.<string>} colors A list of colored.
- * @return {Uint8ClampedArray} An array.
- * @private
+ * @param {Array<string>} colors A list of colored.
+ * @return {HTMLCanvasElement} canvas with gradient texture.
  */
-const createGradient = function(colors) {
+function createGradient(colors) {
   const width = 1;
   const height = 256;
   const context = createCanvasContext2D(width, height);
@@ -182,133 +299,8 @@ const createGradient = function(colors) {
   context.fillStyle = gradient;
   context.fillRect(0, 0, width, height);
 
-  return context.getImageData(0, 0, width, height).data;
-};
+  return context.canvas;
+}
 
-
-/**
- * @return {string} Data URL for a circle.
- * @private
- */
-Heatmap.prototype.createCircle_ = function() {
-  const radius = this.getRadius();
-  const blur = this.getBlur();
-  const halfSize = radius + blur + 1;
-  const size = 2 * halfSize;
-  const context = createCanvasContext2D(size, size);
-  context.shadowOffsetX = context.shadowOffsetY = this.shadow_;
-  context.shadowBlur = blur;
-  context.shadowColor = '#000';
-  context.beginPath();
-  const center = halfSize - this.shadow_;
-  context.arc(center, center, radius, 0, Math.PI * 2, true);
-  context.fill();
-  return context.canvas.toDataURL();
-};
-
-
-/**
- * Return the blur size in pixels.
- * @return {number} Blur size in pixels.
- * @api
- * @observable
- */
-Heatmap.prototype.getBlur = function() {
-  return /** @type {number} */ (this.get(Property.BLUR));
-};
-
-
-/**
- * Return the gradient colors as array of strings.
- * @return {Array.<string>} Colors.
- * @api
- * @observable
- */
-Heatmap.prototype.getGradient = function() {
-  return /** @type {Array.<string>} */ (this.get(Property.GRADIENT));
-};
-
-
-/**
- * Return the size of the radius in pixels.
- * @return {number} Radius size in pixel.
- * @api
- * @observable
- */
-Heatmap.prototype.getRadius = function() {
-  return /** @type {number} */ (this.get(Property.RADIUS));
-};
-
-
-/**
- * @private
- */
-Heatmap.prototype.handleGradientChanged_ = function() {
-  this.gradient_ = createGradient(this.getGradient());
-};
-
-
-/**
- * @private
- */
-Heatmap.prototype.handleStyleChanged_ = function() {
-  this.circleImage_ = this.createCircle_();
-  this.styleCache_ = new Array(256);
-  this.changed();
-};
-
-
-/**
- * @param {module:ol/render/Event} event Post compose event
- * @private
- */
-Heatmap.prototype.handleRender_ = function(event) {
-  const context = event.context;
-  const canvas = context.canvas;
-  const image = context.getImageData(0, 0, canvas.width, canvas.height);
-  const view8 = image.data;
-  for (let i = 0, ii = view8.length; i < ii; i += 4) {
-    const alpha = view8[i + 3] * 4;
-    if (alpha) {
-      view8[i] = this.gradient_[alpha];
-      view8[i + 1] = this.gradient_[alpha + 1];
-      view8[i + 2] = this.gradient_[alpha + 2];
-    }
-  }
-  context.putImageData(image, 0, 0);
-};
-
-
-/**
- * Set the blur size in pixels.
- * @param {number} blur Blur size in pixels.
- * @api
- * @observable
- */
-Heatmap.prototype.setBlur = function(blur) {
-  this.set(Property.BLUR, blur);
-};
-
-
-/**
- * Set the gradient colors as array of strings.
- * @param {Array.<string>} colors Gradient.
- * @api
- * @observable
- */
-Heatmap.prototype.setGradient = function(colors) {
-  this.set(Property.GRADIENT, colors);
-};
-
-
-/**
- * Set the size of the radius in pixels.
- * @param {number} radius Radius size in pixel.
- * @api
- * @observable
- */
-Heatmap.prototype.setRadius = function(radius) {
-  this.set(Property.RADIUS, radius);
-};
 
 export default Heatmap;

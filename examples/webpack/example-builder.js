@@ -5,10 +5,12 @@ const marked = require('marked');
 const path = require('path');
 const pkg = require('../../package.json');
 const promisify = require('util').promisify;
+const RawSource = require('webpack-sources').RawSource;
 
 const readFile = promisify(fs.readFile);
 const isCssRegEx = /\.css$/;
 const isJsRegEx = /\.js(\?.*)?$/;
+const importRegEx = /^import .* from '(.*)';$/;
 
 handlebars.registerHelper('md', str => new handlebars.SafeString(marked(str)));
 
@@ -25,7 +27,7 @@ handlebars.registerHelper('indent', (text, options) => {
  * Create an inverted index of keywords from examples.  Property names are
  * lowercased words.  Property values are objects mapping example index to word
  * count.
- * @param {Array.<Object>} exampleData Array of example data objects.
+ * @param {Array<Object>} exampleData Array of example data objects.
  * @return {Object} Word index.
  */
 function createWordIndex(exampleData) {
@@ -61,6 +63,60 @@ function createWordIndex(exampleData) {
 }
 
 /**
+ * Gets the source for the chunk that matches the jsPath
+ * @param {Object} chunk Chunk.
+ * @param {string} jsName Name of the file.
+ * @return {string} The source.
+ */
+function getJsSource(chunk, jsName) {
+  let jsSource;
+  for (let i = 0, ii = chunk.modules.length; i < ii; ++i) {
+    const module = chunk.modules[i];
+    if (module.modules) {
+      jsSource = getJsSource(module, jsName);
+      if (jsSource) {
+        return jsSource;
+      }
+    }
+    if (module.identifier.endsWith(jsName) && module.source) {
+      return module.source;
+    }
+  }
+}
+
+/**
+ * Gets dependencies from the js source.
+ * @param {string} jsSource Source.
+ * @return {Object<string, string>} dependencies
+ */
+function getDependencies(jsSource) {
+  const lines = jsSource.split('\n');
+  const dependencies = {
+    ol: pkg.version
+  };
+  for (let i = 0, ii = lines.length; i < ii; ++i) {
+    const line = lines[i];
+    const importMatch = line.match(importRegEx);
+    if (importMatch) {
+      const imp = importMatch[1];
+      if (!imp.startsWith('ol/') && imp != 'ol') {
+        const parts = imp.split('/');
+        let dep;
+        if (imp.startsWith('@')) {
+          dep = parts.slice(0, 2).join('/');
+        } else {
+          dep = parts[0];
+        }
+        if (dep in pkg.devDependencies) {
+          dependencies[dep] = pkg.devDependencies[dep];
+        }
+      }
+    }
+  }
+  return dependencies;
+}
+
+/**
  * A webpack plugin that builds the html files for our examples.
  * @param {Object} config Plugin configuration.  Requires a `templates` property
  * with the path to templates and a `common` property with the name of the
@@ -77,7 +133,7 @@ function ExampleBuilder(config) {
  * @param {Object} compiler The webpack compiler.
  */
 ExampleBuilder.prototype.apply = function(compiler) {
-  compiler.plugin('emit', async (compilation, callback) => {
+  compiler.hooks.emit.tapPromise('ExampleBuilder', async (compilation) => {
     const chunks = compilation.getStats().toJson().chunks
       .filter(chunk => chunk.names[0] !== this.common);
 
@@ -94,19 +150,11 @@ ExampleBuilder.prototype.apply = function(compiler) {
       });
 
       for (const file in assets) {
-        compilation.assets[file] = {
-          source: () => assets[file],
-          size: () => assets[file].length
-        };
+        compilation.assets[file] = new RawSource(assets[file]);
       }
     });
 
-    try {
-      await Promise.all(promises);
-    } catch (err) {
-      callback(err);
-      return;
-    }
+    await Promise.all(promises);
 
     const info = {
       examples: exampleData,
@@ -114,12 +162,7 @@ ExampleBuilder.prototype.apply = function(compiler) {
     };
 
     const indexSource = `var info = ${JSON.stringify(info)}`;
-    compilation.assets['index.js'] = {
-      source: () => indexSource,
-      size: () => indexSource.length
-    };
-
-    callback();
+    compilation.assets['index.js'] = new RawSource(indexSource);
   });
 };
 
@@ -141,16 +184,13 @@ ExampleBuilder.prototype.render = async function(dir, chunk) {
 
   // add in script tag
   const jsName = `${name}.js`;
-  const jsPath = path.join(dir, jsName);
-  let jsSource;
-  for (let i = 0, ii = chunk.modules.length; i < ii; ++i) {
-    const module = chunk.modules[i];
-    if (module.identifier == jsPath) {
-      jsSource = module.source;
-      break;
-    }
+  let jsSource = getJsSource(chunk, path.join('.', jsName));
+  if (!jsSource) {
+    throw new Error(`No .js source for ${jsName}`);
   }
+  // remove "../src/" prefix and ".js" to have the same import syntax as the documentation
   jsSource = jsSource.replace(/'\.\.\/src\//g, '\'');
+  jsSource = jsSource.replace(/\.js';/g, '\';');
   if (data.cloak) {
     for (const entry of data.cloak) {
       jsSource = jsSource.replace(new RegExp(entry.key, 'g'), entry.value);
@@ -160,6 +200,17 @@ ExampleBuilder.prototype.render = async function(dir, chunk) {
     tag: `<script src="${this.common}.js"></script><script src="${jsName}"></script>`,
     source: jsSource
   };
+  data.pkgJson = JSON.stringify({
+    name: name,
+    dependencies: getDependencies(jsSource),
+    devDependencies: {
+      parcel: '1.11.0'
+    },
+    scripts: {
+      start: 'parcel index.html',
+      build: 'parcel build --experimental-scope-hoisting --public-url . index.html'
+    }
+  }, null, 2);
 
   // check for example css
   const cssName = `${name}.css`;

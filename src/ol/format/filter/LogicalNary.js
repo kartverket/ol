@@ -1,31 +1,33 @@
 /**
  * @module ol/format/filter/LogicalNary
  */
-import {inherits} from '../../index.js';
 import {assert} from '../../asserts.js';
-import Filter from '../filter/Filter.js';
+import Filter from './Filter.js';
 
 /**
  * @classdesc
  * Abstract class; normally only used for creating subclasses and not instantiated in apps.
  * Base class for WFS GetFeature n-ary logical filters.
  *
- * @constructor
  * @abstract
- * @param {!string} tagName The XML tag name for this filter.
- * @param {...module:ol/format/filter/Filter} conditions Conditions.
- * @extends {module:ol/format/filter/Filter}
  */
-const LogicalNary = function(tagName, conditions) {
-
-  Filter.call(this, tagName);
+class LogicalNary extends Filter {
 
   /**
-   * @type {Array.<module:ol/format/filter/Filter>}
+   * @param {!string} tagName The XML tag name for this filter.
+   * @param {Array<import("./Filter.js").default>} conditions Conditions.
    */
-  this.conditions = Array.prototype.slice.call(arguments, 1);
-  assert(this.conditions.length >= 2, 57); // At least 2 conditions are required.
-};
+  constructor(tagName, conditions) {
 
-inherits(LogicalNary, Filter);
+    super(tagName);
+
+    /**
+     * @type {Array<import("./Filter.js").default>}
+     */
+    this.conditions = conditions;
+    assert(this.conditions.length >= 2, 57); // At least 2 conditions are required.
+  }
+
+}
+
 export default LogicalNary;

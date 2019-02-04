@@ -13,6 +13,8 @@ describe('ol.render.Box', function() {
     box = new RenderBox('test-box');
 
     target = document.createElement('div');
+    target.style.height = '256px';
+
     document.body.appendChild(target);
 
     map = new Map({
@@ -50,7 +52,7 @@ describe('ol.render.Box', function() {
   });
 
   describe('#setPixels()', function() {
-    it('applies correct styles for a box', function()  {
+    it('applies correct styles for a box', function() {
       box.setPixels([1, 2], [4, 8]);
       expect(box.element_.style.left).to.be('1px');
       expect(box.element_.style.top).to.be('2px');

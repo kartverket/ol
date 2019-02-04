@@ -1,42 +1,48 @@
 /**
  * @module ol/webgl/Shader
  */
-import {FALSE} from '../functions.js';
+import {abstract} from '../util.js';
 
 /**
- * @constructor
  * @abstract
- * @param {string} source Source.
- * @struct
  */
-const WebGLShader = function(source) {
+class WebGLShader {
 
   /**
-   * @private
-   * @type {string}
+   * @param {string} source Source.
    */
-  this.source_ = source;
+  constructor(source) {
 
-};
+    /**
+     * @private
+     * @type {string}
+     */
+    this.source_ = source;
+
+  }
+
+  /**
+   * @return {boolean} Is animated?
+   */
+  isAnimated() {
+    return false;
+  }
+
+  /**
+   * @abstract
+   * @return {number} Type.
+   */
+  getType() {
+    return abstract();
+  }
+
+  /**
+   * @return {string} Source.
+   */
+  getSource() {
+    return this.source_;
+  }
+}
 
 
-/**
- * @abstract
- * @return {number} Type.
- */
-WebGLShader.prototype.getType = function() {};
-
-
-/**
- * @return {string} Source.
- */
-WebGLShader.prototype.getSource = function() {
-  return this.source_;
-};
-
-
-/**
- * @return {boolean} Is animated?
- */
-WebGLShader.prototype.isAnimated = FALSE;
 export default WebGLShader;

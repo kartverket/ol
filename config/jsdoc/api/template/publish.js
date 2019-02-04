@@ -168,9 +168,9 @@ function generateSourceFiles(sourceFiles) {
  * for display purposes. This function mutates the original arrays.
  *
  * @private
- * @param {Array.<module:jsdoc/doclet.Doclet>} doclets - The array of classes and functions to
+ * @param {Array<module:jsdoc/doclet.Doclet>} doclets - The array of classes and functions to
  * check.
- * @param {Array.<module:jsdoc/doclet.Doclet>} modules - The array of module doclets to search.
+ * @param {Array<module:jsdoc/doclet.Doclet>} modules - The array of module doclets to search.
  */
 function attachModuleSymbols(doclets, modules) {
   const symbols = {};
@@ -313,7 +313,7 @@ exports.publish = function(taffyData, opts, tutorials) {
 
         if (example.match(/^\s*<caption>([\s\S]+?)<\/caption>(\s*[\n\r])([\s\S]+)$/i)) {
           caption = RegExp.$1;
-          code    = RegExp.$3;
+          code = RegExp.$3;
         }
 
         return {

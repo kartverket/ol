@@ -1,18 +1,17 @@
 /**
  * @module ol/interaction/DragZoom
  */
-import {inherits} from '../index.js';
 import {easeOut} from '../easing.js';
 import {shiftKeyOnly} from '../events/condition.js';
 import {createOrUpdateFromCoordinates, getBottomLeft, getCenter, getTopRight, scaleFromCenter} from '../extent.js';
-import DragBox from '../interaction/DragBox.js';
+import DragBox from './DragBox.js';
 
 
 /**
  * @typedef {Object} Options
  * @property {string} [className='ol-dragzoom'] CSS class name for styling the
  * box.
- * @property {module:ol/events/condition~Condition} [condition] A function that
+ * @property {import("../events/condition.js").Condition} [condition] A function that
  * takes an {@link module:ol/MapBrowserEvent~MapBrowserEvent} and returns a
  * boolean to indicate whether that event should be handled.
  * Default is {@link module:ol/events/condition~shiftKeyOnly}.
@@ -29,49 +28,45 @@ import DragBox from '../interaction/DragBox.js';
  *
  * To change the style of the box, use CSS and the `.ol-dragzoom` selector, or
  * your custom one configured with `className`.
- *
- * @constructor
- * @extends {module:ol/interaction/DragBox}
- * @param {module:ol/interaction/DragZoom~Options=} opt_options Options.
  * @api
  */
-const DragZoom = function(opt_options) {
-  const options = opt_options ? opt_options : {};
-
-  const condition = options.condition ? options.condition : shiftKeyOnly;
-
+class DragZoom extends DragBox {
   /**
-   * @private
-   * @type {number}
+   * @param {Options=} opt_options Options.
    */
-  this.duration_ = options.duration !== undefined ? options.duration : 200;
+  constructor(opt_options) {
+    const options = opt_options ? opt_options : {};
 
-  /**
-   * @private
-   * @type {boolean}
-   */
-  this.out_ = options.out !== undefined ? options.out : false;
+    const condition = options.condition ? options.condition : shiftKeyOnly;
 
-  DragBox.call(this, {
-    condition: condition,
-    className: options.className || 'ol-dragzoom'
-  });
+    super({
+      condition: condition,
+      className: options.className || 'ol-dragzoom',
+      onBoxEnd: onBoxEnd
+    });
 
-};
+    /**
+     * @private
+     * @type {number}
+     */
+    this.duration_ = options.duration !== undefined ? options.duration : 200;
 
-inherits(DragZoom, DragBox);
+    /**
+     * @private
+     * @type {boolean}
+     */
+    this.out_ = options.out !== undefined ? options.out : false;
+  }
+}
 
 
 /**
- * @inheritDoc
+ * @this {DragZoom}
  */
-DragZoom.prototype.onBoxEnd = function() {
+function onBoxEnd() {
   const map = this.getMap();
-
-  const view = /** @type {!module:ol/View} */ (map.getView());
-
-  const size = /** @type {!module:ol/size~Size} */ (map.getSize());
-
+  const view = /** @type {!import("../View.js").default} */ (map.getView());
+  const size = /** @type {!import("../size.js").Size} */ (map.getSize());
   let extent = this.getGeometry().getExtent();
 
   if (this.out_) {
@@ -97,6 +92,7 @@ DragZoom.prototype.onBoxEnd = function() {
     duration: this.duration_,
     easing: easeOut
   });
+}
 
-};
+
 export default DragZoom;

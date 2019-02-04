@@ -1,22 +1,23 @@
 /**
  * @module ol/format/filter/LessThan
  */
-import {inherits} from '../../index.js';
-import ComparisonBinary from '../filter/ComparisonBinary.js';
+import ComparisonBinary from './ComparisonBinary.js';
 
 /**
  * @classdesc
  * Represents a `<PropertyIsLessThan>` comparison operator.
- *
- * @constructor
- * @param {!string} propertyName Name of the context property to compare.
- * @param {!number} expression The value to compare.
- * @extends {module:ol/format/filter/ComparisonBinary}
  * @api
  */
-const LessThan = function(propertyName, expression) {
-  ComparisonBinary.call(this, 'PropertyIsLessThan', propertyName, expression);
-};
+class LessThan extends ComparisonBinary {
 
-inherits(LessThan, ComparisonBinary);
+  /**
+   * @param {!string} propertyName Name of the context property to compare.
+   * @param {!number} expression The value to compare.
+   */
+  constructor(propertyName, expression) {
+    super('PropertyIsLessThan', propertyName, expression);
+  }
+
+}
+
 export default LessThan;

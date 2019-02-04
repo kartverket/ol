@@ -1,7 +1,6 @@
 /**
  * @module ol/has
  */
-import {HAS_WEBGL} from './index.js';
 
 const ua = typeof navigator !== 'undefined' ?
   navigator.userAgent.toLowerCase() : '';
@@ -42,21 +41,6 @@ export const DEVICE_PIXEL_RATIO = window.devicePixelRatio || 1;
 
 
 /**
- * True if the browser's Canvas implementation implements {get,set}LineDash.
- * @type {boolean}
- */
-export const CANVAS_LINE_DASH = function() {
-  let has = false;
-  try {
-    has = !!document.createElement('CANVAS').getContext('2d').setLineDash;
-  } catch (e) {
-    // pass
-  }
-  return has;
-}();
-
-
-/**
  * Is HTML5 geolocation supported in the current browser?
  * @const
  * @type {boolean}
@@ -90,10 +74,4 @@ export const POINTER = 'PointerEvent' in window;
 export const MSPOINTER = !!(navigator.msPointerEnabled);
 
 
-/**
- * True if both OpenLayers and browser support WebGL.
- * @const
- * @type {boolean}
- * @api
- */
-export const WEBGL = HAS_WEBGL;
+export {HAS as WEBGL} from './webgl.js';

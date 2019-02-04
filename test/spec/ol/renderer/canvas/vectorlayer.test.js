@@ -1,4 +1,3 @@
-import {getUid} from '../../../../../src/ol/index.js';
 import Feature from '../../../../../src/ol/Feature.js';
 import Map from '../../../../../src/ol/Map.js';
 import View from '../../../../../src/ol/View.js';
@@ -203,14 +202,13 @@ describe('ol.renderer.canvas.VectorLayer', function() {
       const spy = sinon.spy();
       const coordinate = [0, 0];
       const frameState = {
-        layerStates: {},
+        layerStatesArray: [{}],
         skippedFeatureUids: {},
         viewState: {
           resolution: 1,
           rotation: 0
         }
       };
-      frameState.layerStates[getUid(layer)] = {};
       renderer.forEachFeatureAtCoordinate(
         coordinate, frameState, 0, spy, undefined);
       expect(spy.callCount).to.be(1);
@@ -218,7 +216,7 @@ describe('ol.renderer.canvas.VectorLayer', function() {
     });
   });
 
-  describe('#prepareFrame', function() {
+  describe('#prepareFrame and #compose', function() {
     let frameState, projExtent, renderer, worldWidth, buffer;
 
     beforeEach(function() {
@@ -294,6 +292,24 @@ describe('ol.renderer.canvas.VectorLayer', function() {
       expect(renderer.replayGroupChanged).to.be(true);
       renderer.prepareFrame(frameState, {});
       expect(renderer.replayGroupChanged).to.be(false);
+    });
+
+    it('dispatches a postrender event when rendering', function(done) {
+      const layer = renderer.getLayer();
+      layer.getSource().addFeature(new Feature(new Point([0, 0])));
+      layer.once('postrender', function() {
+        expect(true);
+        done();
+      });
+      frameState.extent = [-10000, -10000, 10000, 10000];
+      frameState.size = [100, 100];
+      frameState.viewState.center = [0, 0];
+      let rendered = false;
+      if (renderer.prepareFrame(frameState, {})) {
+        rendered = true;
+        renderer.renderFrame(frameState, layer.getLayerState());
+      }
+      expect(rendered).to.be(true);
     });
 
   });

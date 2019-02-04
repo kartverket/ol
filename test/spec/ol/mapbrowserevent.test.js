@@ -15,7 +15,7 @@ describe('ol.MapBrowserEventHandler', function() {
 
     beforeEach(function() {
       clock = sinon.useFakeTimers();
-      target = document.createElement('DIV');
+      target = document.createElement('div');
       handler = new MapBrowserEventHandler(new Map({
         target: target
       }));
@@ -167,6 +167,21 @@ describe('ol.MapBrowserEventHandler', function() {
         clientY: (DEVICE_PIXEL_RATIO * 8) + 1
       });
       expect(moveToleranceHandler.isMoving_(pointerdownAt9)).to.be(true);
+    });
+
+    it('is moving when moving back close to the down pixel', function() {
+      const pointermoveAt9 = new PointerEvent('pointermove', {}, {
+        clientX: (DEVICE_PIXEL_RATIO * 8) + 1,
+        clientY: (DEVICE_PIXEL_RATIO * 8) + 1
+      });
+      moveToleranceHandler.handlePointerMove_(pointermoveAt9);
+      expect(moveToleranceHandler.isMoving_(pointermoveAt9)).to.be(true);
+      const pointermoveAt2 = new PointerEvent('pointermove', {}, {
+        clientX: DEVICE_PIXEL_RATIO + 1,
+        clientY: DEVICE_PIXEL_RATIO + 1
+      });
+      moveToleranceHandler.handlePointerMove_(pointermoveAt2);
+      expect(moveToleranceHandler.isMoving_(pointermoveAt2)).to.be(true);
     });
   });
 });

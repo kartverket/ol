@@ -1,16 +1,15 @@
 /**
  * @module ol/interaction/KeyboardZoom
  */
-import {inherits} from '../index.js';
 import EventType from '../events/EventType.js';
 import {targetNotEditable} from '../events/condition.js';
-import Interaction, {zoomByDelta} from '../interaction/Interaction.js';
+import Interaction, {zoomByDelta} from './Interaction.js';
 
 
 /**
  * @typedef {Object} Options
  * @property {number} [duration=100] Animation duration in milliseconds.
- * @property {module:ol/events/condition~Condition} [condition] A function that
+ * @property {import("../events/condition.js").Condition} [condition] A function that
  * takes an {@link module:ol/MapBrowserEvent~MapBrowserEvent} and returns a
  * boolean to indicate whether that event should be handled. Default is
  * {@link module:ol/events/condition~targetNotEditable}.
@@ -28,57 +27,57 @@ import Interaction, {zoomByDelta} from '../interaction/Interaction.js';
  * {@link module:ol/Map~Map}. `document` never loses focus but, for any other
  * element, focus will have to be on, and returned to, this element if the keys
  * are to function.
- * See also {@link moudle:ol/interaction/KeyboardPan~KeyboardPan}.
- *
- * @constructor
- * @param {module:ol/interaction/KeyboardZoom~Options=} opt_options Options.
- * @extends {module:ol/interaction/Interaction}
+ * See also {@link module:ol/interaction/KeyboardPan~KeyboardPan}.
  * @api
  */
-const KeyboardZoom = function(opt_options) {
-
-  Interaction.call(this, {
-    handleEvent: handleEvent
-  });
-
-  const options = opt_options ? opt_options : {};
-
+class KeyboardZoom extends Interaction {
   /**
-   * @private
-   * @type {module:ol/events/condition~Condition}
+   * @param {Options=} opt_options Options.
    */
-  this.condition_ = options.condition ? options.condition : targetNotEditable;
+  constructor(opt_options) {
 
-  /**
-   * @private
-   * @type {number}
-   */
-  this.delta_ = options.delta ? options.delta : 1;
+    super({
+      handleEvent: handleEvent
+    });
 
-  /**
-   * @private
-   * @type {number}
-   */
-  this.duration_ = options.duration !== undefined ? options.duration : 100;
+    const options = opt_options ? opt_options : {};
 
-};
+    /**
+     * @private
+     * @type {import("../events/condition.js").Condition}
+     */
+    this.condition_ = options.condition ? options.condition : targetNotEditable;
 
-inherits(KeyboardZoom, Interaction);
+    /**
+     * @private
+     * @type {number}
+     */
+    this.delta_ = options.delta ? options.delta : 1;
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.duration_ = options.duration !== undefined ? options.duration : 100;
+
+  }
+
+}
 
 
 /**
  * Handles the {@link module:ol/MapBrowserEvent map browser event} if it was a
  * `KeyEvent`, and decides whether to zoom in or out (depending on whether the
  * key pressed was '+' or '-').
- * @param {module:ol/MapBrowserEvent} mapBrowserEvent Map browser event.
+ * @param {import("../MapBrowserEvent.js").default} mapBrowserEvent Map browser event.
  * @return {boolean} `false` to stop event propagation.
- * @this {module:ol/interaction/KeyboardZoom}
+ * @this {KeyboardZoom}
  */
 function handleEvent(mapBrowserEvent) {
   let stopEvent = false;
   if (mapBrowserEvent.type == EventType.KEYDOWN ||
       mapBrowserEvent.type == EventType.KEYPRESS) {
-    const keyEvent = mapBrowserEvent.originalEvent;
+    const keyEvent = /** @type {KeyboardEvent} */ (mapBrowserEvent.originalEvent);
     const charCode = keyEvent.charCode;
     if (this.condition_(mapBrowserEvent) &&
         (charCode == '+'.charCodeAt(0) || charCode == '-'.charCodeAt(0))) {

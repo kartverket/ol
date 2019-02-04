@@ -1,21 +1,21 @@
 /**
  * @module ol/interaction/Interaction
  */
-import {inherits} from '../index.js';
 import BaseObject from '../Object.js';
 import {easeOut, linear} from '../easing.js';
-import InteractionProperty from '../interaction/Property.js';
+import InteractionProperty from './Property.js';
 import {clamp} from '../math.js';
 
 
 /**
  * Object literal with config options for interactions.
  * @typedef {Object} InteractionOptions
- * @property {function(module:ol/MapBrowserEvent):boolean} handleEvent
+ * @property {function(import("../MapBrowserEvent.js").default):boolean} handleEvent
  * Method called by the map to notify the interaction that a browser event was
  * dispatched to the map. If the function returns a falsy value, propagation of
  * the event to other interactions in the map's interactions chain will be
- * prevented (this includes functions with no explicit return).
+ * prevented (this includes functions with no explicit return). The interactions
+ * are traversed in reverse order of the interactions collection of the map.
  */
 
 
@@ -30,80 +30,82 @@ import {clamp} from '../math.js';
  * by a keyboard event not a button element event.
  * Although interactions do not have a DOM element, some of them do render
  * vectors and so are visible on the screen.
- *
- * @constructor
- * @param {module:ol/interaction/Interaction~InteractionOptions} options Options.
- * @extends {module:ol/Object}
  * @api
  */
-const Interaction = function(options) {
+class Interaction extends BaseObject {
+  /**
+   * @param {InteractionOptions} options Options.
+   */
+  constructor(options) {
+    super();
 
-  BaseObject.call(this);
+    if (options.handleEvent) {
+      this.handleEvent = options.handleEvent;
+    }
+
+    /**
+     * @private
+     * @type {import("../PluggableMap.js").default}
+     */
+    this.map_ = null;
+
+    this.setActive(true);
+  }
 
   /**
-   * @private
-   * @type {module:ol/PluggableMap}
+   * Return whether the interaction is currently active.
+   * @return {boolean} `true` if the interaction is active, `false` otherwise.
+   * @observable
+   * @api
    */
-  this.map_ = null;
-
-  this.setActive(true);
+  getActive() {
+    return /** @type {boolean} */ (this.get(InteractionProperty.ACTIVE));
+  }
 
   /**
-   * @type {function(module:ol/MapBrowserEvent):boolean}
+   * Get the map associated with this interaction.
+   * @return {import("../PluggableMap.js").default} Map.
+   * @api
    */
-  this.handleEvent = options.handleEvent;
+  getMap() {
+    return this.map_;
+  }
 
-};
+  /**
+   * Handles the {@link module:ol/MapBrowserEvent map browser event}.
+   * @param {import("../MapBrowserEvent.js").default} mapBrowserEvent Map browser event.
+   * @return {boolean} `false` to stop event propagation.
+   * @api
+   */
+  handleEvent(mapBrowserEvent) {
+    return true;
+  }
 
-inherits(Interaction, BaseObject);
+  /**
+   * Activate or deactivate the interaction.
+   * @param {boolean} active Active.
+   * @observable
+   * @api
+   */
+  setActive(active) {
+    this.set(InteractionProperty.ACTIVE, active);
+  }
 
-
-/**
- * Return whether the interaction is currently active.
- * @return {boolean} `true` if the interaction is active, `false` otherwise.
- * @observable
- * @api
- */
-Interaction.prototype.getActive = function() {
-  return /** @type {boolean} */ (this.get(InteractionProperty.ACTIVE));
-};
-
-
-/**
- * Get the map associated with this interaction.
- * @return {module:ol/PluggableMap} Map.
- * @api
- */
-Interaction.prototype.getMap = function() {
-  return this.map_;
-};
-
-
-/**
- * Activate or deactivate the interaction.
- * @param {boolean} active Active.
- * @observable
- * @api
- */
-Interaction.prototype.setActive = function(active) {
-  this.set(InteractionProperty.ACTIVE, active);
-};
+  /**
+   * Remove the interaction from its current map and attach it to the new map.
+   * Subclasses may set up event handlers to get notified about changes to
+   * the map here.
+   * @param {import("../PluggableMap.js").default} map Map.
+   */
+  setMap(map) {
+    this.map_ = map;
+  }
+}
 
 
 /**
- * Remove the interaction from its current map and attach it to the new map.
- * Subclasses may set up event handlers to get notified about changes to
- * the map here.
- * @param {module:ol/PluggableMap} map Map.
- */
-Interaction.prototype.setMap = function(map) {
-  this.map_ = map;
-};
-
-
-/**
- * @param {module:ol/View} view View.
- * @param {module:ol/coordinate~Coordinate} delta Delta.
+ * @param {import("../View.js").default} view View.
+ * @param {import("../coordinate.js").Coordinate} delta Delta.
  * @param {number=} opt_duration Duration.
  */
 export function pan(view, delta, opt_duration) {
@@ -125,9 +127,9 @@ export function pan(view, delta, opt_duration) {
 
 
 /**
- * @param {module:ol/View} view View.
+ * @param {import("../View.js").default} view View.
  * @param {number|undefined} rotation Rotation.
- * @param {module:ol/coordinate~Coordinate=} opt_anchor Anchor coordinate.
+ * @param {import("../coordinate.js").Coordinate=} opt_anchor Anchor coordinate.
  * @param {number=} opt_duration Duration.
  */
 export function rotate(view, rotation, opt_anchor, opt_duration) {
@@ -137,9 +139,9 @@ export function rotate(view, rotation, opt_anchor, opt_duration) {
 
 
 /**
- * @param {module:ol/View} view View.
+ * @param {import("../View.js").default} view View.
  * @param {number|undefined} rotation Rotation.
- * @param {module:ol/coordinate~Coordinate=} opt_anchor Anchor coordinate.
+ * @param {import("../coordinate.js").Coordinate=} opt_anchor Anchor coordinate.
  * @param {number=} opt_duration Duration.
  */
 export function rotateWithoutConstraints(view, rotation, opt_anchor, opt_duration) {
@@ -161,9 +163,9 @@ export function rotateWithoutConstraints(view, rotation, opt_anchor, opt_duratio
 
 
 /**
- * @param {module:ol/View} view View.
+ * @param {import("../View.js").default} view View.
  * @param {number|undefined} resolution Resolution to go to.
- * @param {module:ol/coordinate~Coordinate=} opt_anchor Anchor coordinate.
+ * @param {import("../coordinate.js").Coordinate=} opt_anchor Anchor coordinate.
  * @param {number=} opt_duration Duration.
  * @param {number=} opt_direction Zooming direction; > 0 indicates
  *     zooming out, in which case the constraints system will select
@@ -181,9 +183,9 @@ export function zoom(view, resolution, opt_anchor, opt_duration, opt_direction) 
 
 
 /**
- * @param {module:ol/View} view View.
+ * @param {import("../View.js").default} view View.
  * @param {number} delta Delta from previous zoom level.
- * @param {module:ol/coordinate~Coordinate=} opt_anchor Anchor coordinate.
+ * @param {import("../coordinate.js").Coordinate=} opt_anchor Anchor coordinate.
  * @param {number=} opt_duration Duration.
  */
 export function zoomByDelta(view, delta, opt_anchor, opt_duration) {
@@ -219,9 +221,9 @@ export function zoomByDelta(view, delta, opt_anchor, opt_duration) {
 
 
 /**
- * @param {module:ol/View} view View.
+ * @param {import("../View.js").default} view View.
  * @param {number|undefined} resolution Resolution to go to.
- * @param {module:ol/coordinate~Coordinate=} opt_anchor Anchor coordinate.
+ * @param {import("../coordinate.js").Coordinate=} opt_anchor Anchor coordinate.
  * @param {number=} opt_duration Duration.
  */
 export function zoomWithoutConstraints(view, resolution, opt_anchor, opt_duration) {

@@ -1,103 +1,102 @@
 /**
  * @module ol/ImageBase
  */
-import {inherits} from './index.js';
-import EventTarget from './events/EventTarget.js';
+import {abstract} from './util.js';
+import EventTarget from './events/Target.js';
 import EventType from './events/EventType.js';
 
 /**
- * @constructor
  * @abstract
- * @extends {module:ol/events/EventTarget}
- * @param {module:ol/extent~Extent} extent Extent.
- * @param {number|undefined} resolution Resolution.
- * @param {number} pixelRatio Pixel ratio.
- * @param {module:ol/ImageState} state State.
  */
-const ImageBase = function(extent, resolution, pixelRatio, state) {
+class ImageBase extends EventTarget {
 
-  EventTarget.call(this);
+  /**
+   * @param {import("./extent.js").Extent} extent Extent.
+   * @param {number|undefined} resolution Resolution.
+   * @param {number} pixelRatio Pixel ratio.
+   * @param {import("./ImageState.js").default} state State.
+   */
+  constructor(extent, resolution, pixelRatio, state) {
+
+    super();
+
+    /**
+     * @protected
+     * @type {import("./extent.js").Extent}
+     */
+    this.extent = extent;
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.pixelRatio_ = pixelRatio;
+
+    /**
+     * @protected
+     * @type {number|undefined}
+     */
+    this.resolution = resolution;
+
+    /**
+     * @protected
+     * @type {import("./ImageState.js").default}
+     */
+    this.state = state;
+
+  }
 
   /**
    * @protected
-   * @type {module:ol/extent~Extent}
    */
-  this.extent = extent;
+  changed() {
+    this.dispatchEvent(EventType.CHANGE);
+  }
 
   /**
-   * @private
-   * @type {number}
+   * @return {import("./extent.js").Extent} Extent.
    */
-  this.pixelRatio_ = pixelRatio;
+  getExtent() {
+    return this.extent;
+  }
 
   /**
-   * @protected
-   * @type {number|undefined}
+   * @abstract
+   * @return {HTMLCanvasElement|HTMLImageElement|HTMLVideoElement} Image.
    */
-  this.resolution = resolution;
+  getImage() {
+    return abstract();
+  }
 
   /**
-   * @protected
-   * @type {module:ol/ImageState}
+   * @return {number} PixelRatio.
    */
-  this.state = state;
+  getPixelRatio() {
+    return this.pixelRatio_;
+  }
 
-};
+  /**
+   * @return {number} Resolution.
+   */
+  getResolution() {
+    return /** @type {number} */ (this.resolution);
+  }
 
-inherits(ImageBase, EventTarget);
+  /**
+   * @return {import("./ImageState.js").default} State.
+   */
+  getState() {
+    return this.state;
+  }
 
+  /**
+   * Load not yet loaded URI.
+   * @abstract
+   */
+  load() {
+    abstract();
+  }
+}
 
-/**
- * @protected
- */
-ImageBase.prototype.changed = function() {
-  this.dispatchEvent(EventType.CHANGE);
-};
-
-
-/**
- * @return {module:ol/extent~Extent} Extent.
- */
-ImageBase.prototype.getExtent = function() {
-  return this.extent;
-};
-
-
-/**
- * @abstract
- * @return {HTMLCanvasElement|Image|HTMLVideoElement} Image.
- */
-ImageBase.prototype.getImage = function() {};
-
-
-/**
- * @return {number} PixelRatio.
- */
-ImageBase.prototype.getPixelRatio = function() {
-  return this.pixelRatio_;
-};
-
-
-/**
- * @return {number} Resolution.
- */
-ImageBase.prototype.getResolution = function() {
-  return /** @type {number} */ (this.resolution);
-};
-
-
-/**
- * @return {module:ol/ImageState} State.
- */
-ImageBase.prototype.getState = function() {
-  return this.state;
-};
-
-
-/**
- * Load not yet loaded URI.
- * @abstract
- */
-ImageBase.prototype.load = function() {};
 
 export default ImageBase;

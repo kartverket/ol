@@ -1,7 +1,6 @@
-import {inherits} from '../../../../src/ol/index.js';
 import View from '../../../../src/ol/View.js';
 import Event from '../../../../src/ol/events/Event.js';
-import EventTarget from '../../../../src/ol/events/EventTarget.js';
+import EventTarget from '../../../../src/ol/events/Target.js';
 import GeoJSON from '../../../../src/ol/format/GeoJSON.js';
 import DragAndDrop from '../../../../src/ol/interaction/DragAndDrop.js';
 import VectorSource from '../../../../src/ol/source/Vector.js';
@@ -94,14 +93,16 @@ where('FileReader').describe('ol.interaction.DragAndDrop', function() {
     beforeEach(function() {
       OrigFileReader = FileReader;
 
-      FileReader = function() {
-        EventTarget.apply(this, arguments);
-        this.readAsText = function(file) {
+      class MockFileReader extends EventTarget {
+        constructor() {
+          super(...arguments);
+        }
+        readAsText(file) {
           this.result = file;
           this.dispatchEvent('load');
-        };
-      };
-      inherits(FileReader, EventTarget);
+        }
+      }
+      FileReader = MockFileReader;
     });
 
     afterEach(function() {

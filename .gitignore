@@ -1,5 +1,4 @@
 /build/
 /coverage/
 /dist/
-/node_modules/
-src/index.js
+node_modules/

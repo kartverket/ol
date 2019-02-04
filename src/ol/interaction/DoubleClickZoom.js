@@ -1,9 +1,8 @@
 /**
  * @module ol/interaction/DoubleClickZoom
  */
-import {inherits} from '../index.js';
 import MapBrowserEventType from '../MapBrowserEventType.js';
-import Interaction, {zoomByDelta} from '../interaction/Interaction.js';
+import Interaction, {zoomByDelta} from './Interaction.js';
 
 
 /**
@@ -16,48 +15,48 @@ import Interaction, {zoomByDelta} from '../interaction/Interaction.js';
 /**
  * @classdesc
  * Allows the user to zoom by double-clicking on the map.
- *
- * @constructor
- * @extends {module:ol/interaction/Interaction}
- * @param {module:ol/interaction/DoubleClickZoom~Options=} opt_options Options.
  * @api
  */
-const DoubleClickZoom = function(opt_options) {
-
-  const options = opt_options ? opt_options : {};
+class DoubleClickZoom extends Interaction {
 
   /**
-   * @private
-   * @type {number}
+   * @param {Options=} opt_options Options.
    */
-  this.delta_ = options.delta ? options.delta : 1;
+  constructor(opt_options) {
+    super({
+      handleEvent: handleEvent
+    });
 
-  Interaction.call(this, {
-    handleEvent: handleEvent
-  });
+    const options = opt_options ? opt_options : {};
 
-  /**
-   * @private
-   * @type {number}
-   */
-  this.duration_ = options.duration !== undefined ? options.duration : 250;
+    /**
+     * @private
+     * @type {number}
+     */
+    this.delta_ = options.delta ? options.delta : 1;
 
-};
+    /**
+     * @private
+     * @type {number}
+     */
+    this.duration_ = options.duration !== undefined ? options.duration : 250;
 
-inherits(DoubleClickZoom, Interaction);
+  }
+
+}
 
 
 /**
  * Handles the {@link module:ol/MapBrowserEvent map browser event} (if it was a
  * doubleclick) and eventually zooms the map.
- * @param {module:ol/MapBrowserEvent} mapBrowserEvent Map browser event.
+ * @param {import("../MapBrowserEvent.js").default} mapBrowserEvent Map browser event.
  * @return {boolean} `false` to stop event propagation.
- * @this {module:ol/interaction/DoubleClickZoom}
+ * @this {DoubleClickZoom}
  */
 function handleEvent(mapBrowserEvent) {
   let stopEvent = false;
-  const browserEvent = mapBrowserEvent.originalEvent;
   if (mapBrowserEvent.type == MapBrowserEventType.DBLCLICK) {
+    const browserEvent = /** @type {MouseEvent} */ (mapBrowserEvent.originalEvent);
     const map = mapBrowserEvent.map;
     const anchor = mapBrowserEvent.coordinate;
     const delta = browserEvent.shiftKey ? -this.delta_ : this.delta_;

@@ -1,6 +1,7 @@
 /**
  * @module ol/pointer/PointerEvent
  */
+
 // Based on https://github.com/Polymer/PointerEvents
 
 // Copyright (c) 2013 The Polymer Authors. All rights reserved.
@@ -31,168 +32,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import {inherits} from '../index.js';
-import Event from '../events/Event.js';
-
-/**
- * A class for pointer events.
- *
- * This class is used as an abstraction for mouse events,
- * touch events and even native pointer events.
- *
- * @constructor
- * @extends {module:ol/events/Event}
- * @param {string} type The type of the event to create.
- * @param {Event} originalEvent The event.
- * @param {Object.<string, ?>=} opt_eventDict An optional dictionary of
- *    initial event properties.
- */
-const PointerEvent = function(type, originalEvent, opt_eventDict) {
-  Event.call(this, type);
-
-  /**
-   * @const
-   * @type {Event}
-   */
-  this.originalEvent = originalEvent;
-
-  const eventDict = opt_eventDict ? opt_eventDict : {};
-
-  /**
-   * @type {number}
-   */
-  this.buttons = this.getButtons_(eventDict);
-
-  /**
-   * @type {number}
-   */
-  this.pressure = this.getPressure_(eventDict, this.buttons);
-
-  // MouseEvent related properties
-
-  /**
-   * @type {boolean}
-   */
-  this.bubbles = 'bubbles' in eventDict ? eventDict['bubbles'] : false;
-
-  /**
-   * @type {boolean}
-   */
-  this.cancelable = 'cancelable' in eventDict ? eventDict['cancelable'] : false;
-
-  /**
-   * @type {Object}
-   */
-  this.view = 'view' in eventDict ? eventDict['view'] : null;
-
-  /**
-   * @type {number}
-   */
-  this.detail = 'detail' in eventDict ? eventDict['detail'] : null;
-
-  /**
-   * @type {number}
-   */
-  this.screenX = 'screenX' in eventDict ? eventDict['screenX'] : 0;
-
-  /**
-   * @type {number}
-   */
-  this.screenY = 'screenY' in eventDict ? eventDict['screenY'] : 0;
-
-  /**
-   * @type {number}
-   */
-  this.clientX = 'clientX' in eventDict ? eventDict['clientX'] : 0;
-
-  /**
-   * @type {number}
-   */
-  this.clientY = 'clientY' in eventDict ? eventDict['clientY'] : 0;
-
-  /**
-   * @type {boolean}
-   */
-  this.ctrlKey = 'ctrlKey' in eventDict ? eventDict['ctrlKey'] : false;
-
-  /**
-   * @type {boolean}
-   */
-  this.altKey = 'altKey' in eventDict ? eventDict['altKey'] : false;
-
-  /**
-   * @type {boolean}
-   */
-  this.shiftKey = 'shiftKey' in eventDict ? eventDict['shiftKey'] : false;
-
-  /**
-   * @type {boolean}
-   */
-  this.metaKey = 'metaKey' in eventDict ? eventDict['metaKey'] : false;
-
-  /**
-   * @type {number}
-   */
-  this.button = 'button' in eventDict ? eventDict['button'] : 0;
-
-  /**
-   * @type {Node}
-   */
-  this.relatedTarget = 'relatedTarget' in eventDict ?
-    eventDict['relatedTarget'] : null;
-
-  // PointerEvent related properties
-
-  /**
-   * @const
-   * @type {number}
-   */
-  this.pointerId = 'pointerId' in eventDict ? eventDict['pointerId'] : 0;
-
-  /**
-   * @type {number}
-   */
-  this.width = 'width' in eventDict ? eventDict['width'] : 0;
-
-  /**
-   * @type {number}
-   */
-  this.height = 'height' in eventDict ? eventDict['height'] : 0;
-
-  /**
-   * @type {number}
-   */
-  this.tiltX = 'tiltX' in eventDict ? eventDict['tiltX'] : 0;
-
-  /**
-   * @type {number}
-   */
-  this.tiltY = 'tiltY' in eventDict ? eventDict['tiltY'] : 0;
-
-  /**
-   * @type {string}
-   */
-  this.pointerType = 'pointerType' in eventDict ? eventDict['pointerType'] : '';
-
-  /**
-   * @type {number}
-   */
-  this.hwTimestamp = 'hwTimestamp' in eventDict ? eventDict['hwTimestamp'] : 0;
-
-  /**
-   * @type {boolean}
-   */
-  this.isPrimary = 'isPrimary' in eventDict ? eventDict['isPrimary'] : false;
-
-  // keep the semantics of preventDefault
-  if (originalEvent.preventDefault) {
-    this.preventDefault = function() {
-      originalEvent.preventDefault();
-    };
-  }
-};
-
-inherits(PointerEvent, Event);
+import _Event from '../events/Event.js';
 
 
 /**
@@ -202,12 +42,172 @@ inherits(PointerEvent, Event);
 let HAS_BUTTONS = false;
 
 
+class PointerEvent extends _Event {
+
+  /**
+   * A class for pointer events.
+   *
+   * This class is used as an abstraction for mouse events,
+   * touch events and even native pointer events.
+   *
+   * @param {string} type The type of the event to create.
+   * @param {Event} originalEvent The event.
+   * @param {Object<string, ?>=} opt_eventDict An optional dictionary of
+   *    initial event properties.
+   */
+  constructor(type, originalEvent, opt_eventDict) {
+    super(type);
+
+    /**
+     * @const
+     * @type {Event}
+     */
+    this.originalEvent = originalEvent;
+
+    const eventDict = opt_eventDict ? opt_eventDict : {};
+
+    /**
+     * @type {number}
+     */
+    this.buttons = getButtons(eventDict);
+
+    /**
+     * @type {number}
+     */
+    this.pressure = getPressure(eventDict, this.buttons);
+
+    // MouseEvent related properties
+
+    /**
+     * @type {boolean}
+     */
+    this.bubbles = 'bubbles' in eventDict ? eventDict['bubbles'] : false;
+
+    /**
+     * @type {boolean}
+     */
+    this.cancelable = 'cancelable' in eventDict ? eventDict['cancelable'] : false;
+
+    /**
+     * @type {Object}
+     */
+    this.view = 'view' in eventDict ? eventDict['view'] : null;
+
+    /**
+     * @type {number}
+     */
+    this.detail = 'detail' in eventDict ? eventDict['detail'] : null;
+
+    /**
+     * @type {number}
+     */
+    this.screenX = 'screenX' in eventDict ? eventDict['screenX'] : 0;
+
+    /**
+     * @type {number}
+     */
+    this.screenY = 'screenY' in eventDict ? eventDict['screenY'] : 0;
+
+    /**
+     * @type {number}
+     */
+    this.clientX = 'clientX' in eventDict ? eventDict['clientX'] : 0;
+
+    /**
+     * @type {number}
+     */
+    this.clientY = 'clientY' in eventDict ? eventDict['clientY'] : 0;
+
+    /**
+     * @type {boolean}
+     */
+    this.ctrlKey = 'ctrlKey' in eventDict ? eventDict['ctrlKey'] : false;
+
+    /**
+     * @type {boolean}
+     */
+    this.altKey = 'altKey' in eventDict ? eventDict['altKey'] : false;
+
+    /**
+     * @type {boolean}
+     */
+    this.shiftKey = 'shiftKey' in eventDict ? eventDict['shiftKey'] : false;
+
+    /**
+     * @type {boolean}
+     */
+    this.metaKey = 'metaKey' in eventDict ? eventDict['metaKey'] : false;
+
+    /**
+     * @type {number}
+     */
+    this.button = 'button' in eventDict ? eventDict['button'] : 0;
+
+    /**
+     * @type {Node}
+     */
+    this.relatedTarget = 'relatedTarget' in eventDict ?
+      eventDict['relatedTarget'] : null;
+
+    // PointerEvent related properties
+
+    /**
+     * @const
+     * @type {number}
+     */
+    this.pointerId = 'pointerId' in eventDict ? eventDict['pointerId'] : 0;
+
+    /**
+     * @type {number}
+     */
+    this.width = 'width' in eventDict ? eventDict['width'] : 0;
+
+    /**
+     * @type {number}
+     */
+    this.height = 'height' in eventDict ? eventDict['height'] : 0;
+
+    /**
+     * @type {number}
+     */
+    this.tiltX = 'tiltX' in eventDict ? eventDict['tiltX'] : 0;
+
+    /**
+     * @type {number}
+     */
+    this.tiltY = 'tiltY' in eventDict ? eventDict['tiltY'] : 0;
+
+    /**
+     * @type {string}
+     */
+    this.pointerType = 'pointerType' in eventDict ? eventDict['pointerType'] : '';
+
+    /**
+     * @type {number}
+     */
+    this.hwTimestamp = 'hwTimestamp' in eventDict ? eventDict['hwTimestamp'] : 0;
+
+    /**
+     * @type {boolean}
+     */
+    this.isPrimary = 'isPrimary' in eventDict ? eventDict['isPrimary'] : false;
+
+    // keep the semantics of preventDefault
+    if (originalEvent.preventDefault) {
+      this.preventDefault = function() {
+        originalEvent.preventDefault();
+      };
+    }
+  }
+
+}
+
+
 /**
- * @private
- * @param {Object.<string, ?>} eventDict The event dictionary.
+ * @param {Object<string, ?>} eventDict The event dictionary.
  * @return {number} Button indicator.
  */
-PointerEvent.prototype.getButtons_ = function(eventDict) {
+function getButtons(eventDict) {
   // According to the w3c spec,
   // http://www.w3.org/TR/DOM-Level-3-Events/#events-MouseEvent-button
   // MouseEvent.button == 0 can mean either no mouse button depressed, or the
@@ -241,16 +241,15 @@ PointerEvent.prototype.getButtons_ = function(eventDict) {
     }
   }
   return buttons;
-};
+}
 
 
 /**
- * @private
- * @param {Object.<string, ?>} eventDict The event dictionary.
+ * @param {Object<string, ?>} eventDict The event dictionary.
  * @param {number} buttons Button indicator.
  * @return {number} The pressure.
  */
-PointerEvent.prototype.getPressure_ = function(eventDict, buttons) {
+function getPressure(eventDict, buttons) {
   // Spec requires that pointers without pressure specified use 0.5 for down
   // state and 0 for up state.
   let pressure = 0;
@@ -260,7 +259,7 @@ PointerEvent.prototype.getPressure_ = function(eventDict, buttons) {
     pressure = buttons ? 0.5 : 0;
   }
   return pressure;
-};
+}
 
 
 /**
@@ -274,4 +273,5 @@ PointerEvent.prototype.getPressure_ = function(eventDict, buttons) {
     // pass
   }
 })();
+
 export default PointerEvent;

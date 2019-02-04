@@ -1,50 +1,27 @@
 /**
  * @module ol/control/FullScreen
  */
-import {inherits} from '../index.js';
-import Control from '../control/Control.js';
+import Control from './Control.js';
 import {CLASS_CONTROL, CLASS_UNSELECTABLE, CLASS_UNSUPPORTED} from '../css.js';
 import {replaceNode} from '../dom.js';
 import {listen} from '../events.js';
 import EventType from '../events/EventType.js';
 
-
-/**
- * @return {string} Change type.
- */
-const getChangeType = (function() {
-  let changeType;
-  return function() {
-    if (!changeType) {
-      const body = document.body;
-      if (body.webkitRequestFullscreen) {
-        changeType = 'webkitfullscreenchange';
-      } else if (body.mozRequestFullScreen) {
-        changeType = 'mozfullscreenchange';
-      } else if (body.msRequestFullscreen) {
-        changeType = 'MSFullscreenChange';
-      } else if (body.requestFullscreen) {
-        changeType = 'fullscreenchange';
-      }
-    }
-    return changeType;
-  };
-})();
-
+const events = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
 
 /**
  * @typedef {Object} Options
  * @property {string} [className='ol-full-screen'] CSS class name.
- * @property {string|Element} [label='\u2922'] Text label to use for the button.
+ * @property {string|Text} [label='\u2922'] Text label to use for the button.
  * Instead of text, also an element (e.g. a `span` element) can be used.
- * @property {string|Element} [labelActive='\u00d7'] Text label to use for the
+ * @property {string|Text} [labelActive='\u00d7'] Text label to use for the
  * button when full-screen is active.
  * Instead of text, also an element (e.g. a `span` element) can be used.
  * @property {string} [tipLabel='Toggle full-screen'] Text label to use for the button tip.
  * @property {boolean} [keys=false] Full keyboard access.
- * @property {Element|string} [target] Specify a target if you want the
+ * @property {HTMLElement|string} [target] Specify a target if you want the
  * control to be rendered outside of the map's viewport.
- * @property {Element|string} [source] The element to be displayed
+ * @property {HTMLElement|string} [source] The element to be displayed
  * fullscreen. When not provided, the element containing the map viewport will
  * be displayed fullscreen.
  */
@@ -61,154 +38,169 @@ const getChangeType = (function() {
  * The [Fullscreen API](http://www.w3.org/TR/fullscreen/) is used to
  * toggle the map in full screen mode.
  *
- *
- * @constructor
- * @extends {module:ol/control/Control}
- * @param {module:ol/control/FullScreen~Options=} opt_options Options.
  * @api
  */
-const FullScreen = function(opt_options) {
-
-  const options = opt_options ? opt_options : {};
+class FullScreen extends Control {
 
   /**
-   * @private
-   * @type {string}
+   * @param {Options=} opt_options Options.
    */
-  this.cssClassName_ = options.className !== undefined ? options.className :
-    'ol-full-screen';
+  constructor(opt_options) {
 
-  const label = options.label !== undefined ? options.label : '\u2922';
+    const options = opt_options ? opt_options : {};
 
-  /**
-   * @private
-   * @type {Element}
-   */
-  this.labelNode_ = typeof label === 'string' ?
-    document.createTextNode(label) : label;
+    super({
+      element: document.createElement('div'),
+      target: options.target
+    });
 
-  const labelActive = options.labelActive !== undefined ? options.labelActive : '\u00d7';
+    /**
+     * @private
+     * @type {string}
+     */
+    this.cssClassName_ = options.className !== undefined ? options.className :
+      'ol-full-screen';
 
-  /**
-   * @private
-   * @type {Element}
-   */
-  this.labelActiveNode_ = typeof labelActive === 'string' ?
-    document.createTextNode(labelActive) : labelActive;
+    const label = options.label !== undefined ? options.label : '\u2922';
 
-  const tipLabel = options.tipLabel ? options.tipLabel : 'Toggle full-screen';
-  const button = document.createElement('button');
-  button.className = this.cssClassName_ + '-' + isFullScreen();
-  button.setAttribute('type', 'button');
-  button.title = tipLabel;
-  button.appendChild(this.labelNode_);
+    /**
+     * @private
+     * @type {Text}
+     */
+    this.labelNode_ = typeof label === 'string' ?
+      document.createTextNode(label) : label;
 
-  listen(button, EventType.CLICK,
-    this.handleClick_, this);
+    const labelActive = options.labelActive !== undefined ? options.labelActive : '\u00d7';
 
-  const cssClasses = this.cssClassName_ + ' ' + CLASS_UNSELECTABLE +
-      ' ' + CLASS_CONTROL + ' ' +
-      (!isFullScreenSupported() ? CLASS_UNSUPPORTED : '');
-  const element = document.createElement('div');
-  element.className = cssClasses;
-  element.appendChild(button);
+    /**
+     * @private
+     * @type {Text}
+     */
+    this.labelActiveNode_ = typeof labelActive === 'string' ?
+      document.createTextNode(labelActive) : labelActive;
 
-  Control.call(this, {
-    element: element,
-    target: options.target
-  });
+    /**
+     * @private
+     * @type {HTMLElement}
+     */
+    this.button_ = document.createElement('button');
 
-  /**
-   * @private
-   * @type {boolean}
-   */
-  this.keys_ = options.keys !== undefined ? options.keys : false;
+    const tipLabel = options.tipLabel ? options.tipLabel : 'Toggle full-screen';
+    this.setClassName_(this.button_, isFullScreen());
+    this.button_.setAttribute('type', 'button');
+    this.button_.title = tipLabel;
+    this.button_.appendChild(this.labelNode_);
 
-  /**
-   * @private
-   * @type {Element|string|undefined}
-   */
-  this.source_ = options.source;
+    listen(this.button_, EventType.CLICK,
+      this.handleClick_, this);
 
-};
+    const cssClasses = this.cssClassName_ + ' ' + CLASS_UNSELECTABLE +
+        ' ' + CLASS_CONTROL + ' ' +
+        (!isFullScreenSupported() ? CLASS_UNSUPPORTED : '');
+    const element = this.element;
+    element.className = cssClasses;
+    element.appendChild(this.button_);
 
-inherits(FullScreen, Control);
+    /**
+     * @private
+     * @type {boolean}
+     */
+    this.keys_ = options.keys !== undefined ? options.keys : false;
 
+    /**
+     * @private
+     * @type {HTMLElement|string|undefined}
+     */
+    this.source_ = options.source;
 
-/**
- * @param {Event} event The event to handle
- * @private
- */
-FullScreen.prototype.handleClick_ = function(event) {
-  event.preventDefault();
-  this.handleFullScreen_();
-};
-
-
-/**
- * @private
- */
-FullScreen.prototype.handleFullScreen_ = function() {
-  if (!isFullScreenSupported()) {
-    return;
   }
-  const map = this.getMap();
-  if (!map) {
-    return;
+
+  /**
+   * @param {MouseEvent} event The event to handle
+   * @private
+   */
+  handleClick_(event) {
+    event.preventDefault();
+    this.handleFullScreen_();
   }
-  if (isFullScreen()) {
-    exitFullScreen();
-  } else {
-    let element;
-    if (this.source_) {
-      element = typeof this.source_ === 'string' ?
-        document.getElementById(this.source_) :
-        this.source_;
-    } else {
-      element = map.getTargetElement();
+
+  /**
+   * @private
+   */
+  handleFullScreen_() {
+    if (!isFullScreenSupported()) {
+      return;
     }
-    if (this.keys_) {
-      requestFullScreenWithKeys(element);
-
+    const map = this.getMap();
+    if (!map) {
+      return;
+    }
+    if (isFullScreen()) {
+      exitFullScreen();
     } else {
-      requestFullScreen(element);
+      let element;
+      if (this.source_) {
+        element = typeof this.source_ === 'string' ?
+          document.getElementById(this.source_) :
+          this.source_;
+      } else {
+        element = map.getTargetElement();
+      }
+      if (this.keys_) {
+        requestFullScreenWithKeys(element);
+
+      } else {
+        requestFullScreen(element);
+      }
     }
   }
-};
 
-
-/**
- * @private
- */
-FullScreen.prototype.handleFullScreenChange_ = function() {
-  const button = this.element.firstElementChild;
-  const map = this.getMap();
-  if (isFullScreen()) {
-    button.className = this.cssClassName_ + '-true';
-    replaceNode(this.labelActiveNode_, this.labelNode_);
-  } else {
-    button.className = this.cssClassName_ + '-false';
-    replaceNode(this.labelNode_, this.labelActiveNode_);
+  /**
+   * @private
+   */
+  handleFullScreenChange_() {
+    const map = this.getMap();
+    if (isFullScreen()) {
+      this.setClassName_(this.button_, true);
+      replaceNode(this.labelActiveNode_, this.labelNode_);
+    } else {
+      this.setClassName_(this.button_, false);
+      replaceNode(this.labelNode_, this.labelActiveNode_);
+    }
+    if (map) {
+      map.updateSize();
+    }
   }
-  if (map) {
-    map.updateSize();
-  }
-};
 
-
-/**
- * @inheritDoc
- * @api
- */
-FullScreen.prototype.setMap = function(map) {
-  Control.prototype.setMap.call(this, map);
-  if (map) {
-    this.listenerKeys.push(listen(document,
-      getChangeType(),
-      this.handleFullScreenChange_, this)
-    );
+  /**
+   * @param {HTMLElement} element Target element
+   * @param {boolean} fullscreen True if fullscreen class name should be active
+   * @private
+   */
+  setClassName_(element, fullscreen) {
+    const activeClassName = this.cssClassName_ + '-true';
+    const inactiveClassName = this.cssClassName_ + '-false';
+    const nextClassName = fullscreen ? activeClassName : inactiveClassName;
+    element.classList.remove(activeClassName);
+    element.classList.remove(inactiveClassName);
+    element.classList.add(nextClassName);
   }
-};
+
+  /**
+   * @inheritDoc
+   * @api
+   */
+  setMap(map) {
+    super.setMap(map);
+    if (map) {
+      for (let i = 0, ii = events.length; i < ii; ++i) {
+        this.listenerKeys.push(
+          listen(document, events[i], this.handleFullScreenChange_, this));
+      }
+    }
+  }
+}
+
 
 /**
  * @return {boolean} Fullscreen is supported by the current platform.
@@ -235,7 +227,7 @@ function isFullScreen() {
 
 /**
  * Request to fullscreen an element.
- * @param {Element} element Element to request fullscreen
+ * @param {HTMLElement} element Element to request fullscreen
  */
 function requestFullScreen(element) {
   if (element.requestFullscreen) {
@@ -251,13 +243,13 @@ function requestFullScreen(element) {
 
 /**
  * Request to fullscreen an element with keyboard input.
- * @param {Element} element Element to request fullscreen
+ * @param {HTMLElement} element Element to request fullscreen
  */
 function requestFullScreenWithKeys(element) {
   if (element.mozRequestFullScreenWithKeys) {
     element.mozRequestFullScreenWithKeys();
   } else if (element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+    element.webkitRequestFullscreen();
   } else {
     requestFullScreen(element);
   }

@@ -5,10 +5,10 @@ import MultiLineString from '../../../../src/ol/geom/MultiLineString.js';
 
 describe('ol.geom.MultiLineString', function() {
 
-  it('can be constructed with a null geometry', function() {
+  it('cannot be constructed with a null geometry', function() {
     expect(function() {
       return new MultiLineString(null);
-    }).not.to.throwException();
+    }).to.throwException();
   });
 
   describe('construct empty', function() {
@@ -343,10 +343,9 @@ describe('ol.geom.MultiLineString', function() {
   describe('#setLineStrings', function() {
 
     it('sets the line strings', function() {
-      const multiLineString = new MultiLineString(null);
       const lineString1 = new LineString([[1, 2], [3, 4]]);
       const lineString2 = new LineString([[5, 6], [7, 8]]);
-      multiLineString.setLineStrings([lineString1, lineString2]);
+      const multiLineString = new MultiLineString([lineString1, lineString2]);
       expect(multiLineString.getFlatCoordinates()).to.eql(
         [1, 2, 3, 4, 5, 6, 7, 8]);
       expect(multiLineString.getEnds()).to.eql([4, 8]);
@@ -354,6 +353,32 @@ describe('ol.geom.MultiLineString', function() {
       expect(coordinates[0]).to.eql(lineString1.getCoordinates());
       expect(coordinates[1]).to.eql(lineString2.getCoordinates());
     });
+  });
+
+  describe('#containsXY()', function() {
+
+    let multiLineString;
+    beforeEach(function() {
+      multiLineString = new MultiLineString(
+        [[[1, 2, 3], [4, 5, 6]], [[-1, -1, 9], [2, 2, 12]]]);
+    });
+
+    it('does contain XY', function() {
+      expect(multiLineString.containsXY(1, 2)).to.be(true);
+      expect(multiLineString.containsXY(4, 5)).to.be(true);
+      expect(multiLineString.containsXY(3, 4)).to.be(true);
+
+      expect(multiLineString.containsXY(-1, -1)).to.be(true);
+      expect(multiLineString.containsXY(2, 2)).to.be(true);
+      expect(multiLineString.containsXY(0, 0)).to.be(true);
+    });
+
+    it('does not contain XY', function() {
+      expect(multiLineString.containsXY(1, 3)).to.be(false);
+      expect(multiLineString.containsXY(2, 11)).to.be(false);
+      expect(multiLineString.containsXY(-2, 3)).to.be(false);
+    });
+
   });
 
 });

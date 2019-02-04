@@ -1,4 +1,3 @@
-import {inherits} from '../../../../src/ol/index.js';
 import Tile from '../../../../src/ol/Tile.js';
 import TileRange from '../../../../src/ol/TileRange.js';
 import {get as getProjection} from '../../../../src/ol/proj.js';
@@ -13,29 +12,27 @@ import TileGrid from '../../../../src/ol/tilegrid/TileGrid.js';
  * Tile source for tests that uses a EPSG:4326 based grid with 4 resolutions and
  * 256x256 tiles.
  *
- * @constructor
- * @extends {ol.source.Tile}
- * @param {Object.<string, ol.TileState>} tileStates Lookup of tile key to
+ * @param {Object<string, ol.TileState>} tileStates Lookup of tile key to
  *     tile state.
  */
-const MockTile = function(tileStates) {
-  const tileGrid = new TileGrid({
-    resolutions: [360 / 256, 180 / 256, 90 / 256, 45 / 256],
-    origin: [-180, -180],
-    tileSize: 256
-  });
+class MockTile extends TileSource {
+  constructor(tileStates) {
+    const tileGrid = new TileGrid({
+      resolutions: [360 / 256, 180 / 256, 90 / 256, 45 / 256],
+      origin: [-180, -180],
+      tileSize: 256
+    });
 
-  TileSource.call(this, {
-    projection: getProjection('EPSG:4326'),
-    tileGrid: tileGrid
-  });
+    super({
+      projection: getProjection('EPSG:4326'),
+      tileGrid: tileGrid
+    });
 
-  for (const key in tileStates) {
-    this.tileCache.set(key, new Tile(key.split('/'), tileStates[key]));
+    for (const key in tileStates) {
+      this.tileCache.set(key, new Tile(key.split('/'), tileStates[key]));
+    }
   }
-
-};
-inherits(MockTile, TileSource);
+}
 
 
 /**
@@ -230,14 +227,14 @@ describe('ol.source.Tile', function() {
         wrapX: true
       });
 
-      let tileCoord = tileSource.getTileCoordForTileUrlFunction([6, -31, -23]);
-      expect(tileCoord).to.eql([6, 33, -23]);
+      let tileCoord = tileSource.getTileCoordForTileUrlFunction([6, -31, 22]);
+      expect(tileCoord).to.eql([6, 33, 22]);
 
-      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 33, -23]);
-      expect(tileCoord).to.eql([6, 33, -23]);
+      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 33, 22]);
+      expect(tileCoord).to.eql([6, 33, 22]);
 
-      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 97, -23]);
-      expect(tileCoord).to.eql([6, 33, -23]);
+      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 97, 22]);
+      expect(tileCoord).to.eql([6, 33, 22]);
     });
 
     it('returns the expected tile coordinate - {wrapX: false}', function() {
@@ -246,13 +243,13 @@ describe('ol.source.Tile', function() {
         wrapX: false
       });
 
-      let tileCoord = tileSource.getTileCoordForTileUrlFunction([6, -31, -23]);
+      let tileCoord = tileSource.getTileCoordForTileUrlFunction([6, -31, 22]);
       expect(tileCoord).to.eql(null);
 
-      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 33, -23]);
-      expect(tileCoord).to.eql([6, 33, -23]);
+      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 33, 22]);
+      expect(tileCoord).to.eql([6, 33, 22]);
 
-      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 97, -23]);
+      tileCoord = tileSource.getTileCoordForTileUrlFunction([6, 97, 22]);
       expect(tileCoord).to.eql(null);
     });
 
@@ -266,8 +263,8 @@ describe('ol.source.Tile', function() {
         wrapX: true
       });
 
-      const tileCoord = tileSource.getTileCoordForTileUrlFunction([6, -31, -23]);
-      expect(tileCoord).to.eql([6, 33, -23]);
+      const tileCoord = tileSource.getTileCoordForTileUrlFunction([6, -31, 22]);
+      expect(tileCoord).to.eql([6, 33, 22]);
     });
   });
 
