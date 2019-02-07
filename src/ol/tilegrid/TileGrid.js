@@ -239,6 +239,7 @@ class TileGrid {
   /**
    * Get the extent for this tile grid, if it was configured.
    * @return {import("../extent.js").Extent} Extent.
+   * @api
    */
   getExtent() {
     return this.extent_;

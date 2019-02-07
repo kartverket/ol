@@ -4,7 +4,7 @@ module.exports = {
   devtool: 'source-map',
   mode: 'production',
   output: {
-    path: path.resolve('./build/legacy'),
+    path: path.resolve('./dist'),
     filename: 'ol.js',
     library: 'ol',
     libraryTarget: 'umd',
