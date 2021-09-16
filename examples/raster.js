@@ -5,7 +5,7 @@ import XYZ from '../src/ol/source/XYZ.js';
 import {Image as ImageLayer, Tile as TileLayer} from '../src/ol/layer.js';
 
 const minVgi = 0;
-const maxVgi = 0.25;
+const maxVgi = 0.5;
 const bins = 10;
 
 /**
@@ -87,7 +87,7 @@ const raster = new RasterSource({
     summarize: summarize,
   },
 });
-raster.set('threshold', 0.1);
+raster.set('threshold', 0.25);
 
 function createCounts(min, max, num) {
   const values = new Array(num);
@@ -180,7 +180,8 @@ function plot(resolution, counts, threshold) {
     })
     .attr('height', yScale);
 
-  bar.on('mousemove', function (count, index) {
+  bar.on('mousemove', function () {
+    const index = bar.nodes().indexOf(this);
     const threshold = counts.min + index * counts.delta;
     if (raster.get('threshold') !== threshold) {
       raster.set('threshold', threshold);
@@ -188,25 +189,26 @@ function plot(resolution, counts, threshold) {
     }
   });
 
-  bar.on('mouseover', function (count, index) {
+  bar.on('mouseover', function (event) {
+    const index = bar.nodes().indexOf(this);
     let area = 0;
     for (let i = counts.values.length - 1; i >= index; --i) {
       area += resolution * resolution * counts.values[i];
     }
     tip.html(message(counts.min + index * counts.delta, area));
     tip.style('display', 'block');
-    tip.transition().style({
-      left: chartRect.left + index * barWidth + barWidth / 2 + 'px',
-      top: d3.event.y - 60 + 'px',
-      opacity: 1,
-    });
+    tip
+      .transition()
+      .style('left', chartRect.left + index * barWidth + barWidth / 2 + 'px')
+      .style('top', event.y - 60 + 'px')
+      .style('opacity', 1);
   });
 
   bar.on('mouseout', function () {
     tip
       .transition()
       .style('opacity', 0)
-      .each('end', function () {
+      .on('end', function () {
         tip.style('display', 'none');
       });
   });

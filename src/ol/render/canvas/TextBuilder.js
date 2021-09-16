@@ -54,12 +54,6 @@ class CanvasTextBuilder extends CanvasBuilder {
 
     /**
      * @private
-     * @type {import("../canvas.js").DeclutterGroups}
-     */
-    this.declutterGroups_;
-
-    /**
-     * @private
      * @type {Array<HTMLCanvasElement>}
      */
     this.labels_ = null;
@@ -144,10 +138,17 @@ class CanvasTextBuilder extends CanvasBuilder {
      * @type {string}
      */
     this.strokeKey_ = '';
+
+    /**
+     * Data shared with an image builder for combined decluttering.
+     * @private
+     * @type {import("../canvas.js").DeclutterImageWithText}
+     */
+    this.declutterImageWithText_ = undefined;
   }
 
   /**
-   * @return {import("./Builder.js").SerializableInstructions} the serializable instructions.
+   * @return {import("../canvas.js").SerializableInstructions} the serializable instructions.
    */
   finish() {
     const instructions = super.finish();
@@ -191,13 +192,18 @@ class CanvasTextBuilder extends CanvasBuilder {
       if (geometryType == GeometryType.LINE_STRING) {
         ends = [flatCoordinates.length];
       } else if (geometryType == GeometryType.MULTI_LINE_STRING) {
-        ends = /** @type {import("../../geom/MultiLineString.js").default} */ (geometry).getEnds();
+        ends = /** @type {import("../../geom/MultiLineString.js").default} */ (
+          geometry
+        ).getEnds();
       } else if (geometryType == GeometryType.POLYGON) {
         ends = /** @type {import("../../geom/Polygon.js").default} */ (geometry)
           .getEnds()
           .slice(0, 1);
       } else if (geometryType == GeometryType.MULTI_POLYGON) {
-        const endss = /** @type {import("../../geom/MultiPolygon.js").default} */ (geometry).getEndss();
+        const endss =
+          /** @type {import("../../geom/MultiPolygon.js").default} */ (
+            geometry
+          ).getEndss();
         ends = [];
         for (let i = 0, ii = endss.length; i < ii; ++i) {
           ends.push(endss[i][0]);
@@ -226,41 +232,54 @@ class CanvasTextBuilder extends CanvasBuilder {
         }
         const end = coordinates.length;
         flatOffset = ends[o];
-        const declutterGroup = this.declutterGroups_
-          ? o === 0
-            ? this.declutterGroups_[0]
-            : [].concat(this.declutterGroups_[0])
-          : null;
-        this.drawChars_(begin, end, declutterGroup);
+        this.drawChars_(begin, end);
         begin = end;
       }
       this.endGeometry(feature);
     } else {
-      const geometryWidths = textState.overflow ? null : [];
+      let geometryWidths = textState.overflow ? null : [];
       switch (geometryType) {
         case GeometryType.POINT:
         case GeometryType.MULTI_POINT:
-          flatCoordinates = /** @type {import("../../geom/MultiPoint.js").default} */ (geometry).getFlatCoordinates();
+          flatCoordinates =
+            /** @type {import("../../geom/MultiPoint.js").default} */ (
+              geometry
+            ).getFlatCoordinates();
           break;
         case GeometryType.LINE_STRING:
-          flatCoordinates = /** @type {import("../../geom/LineString.js").default} */ (geometry).getFlatMidpoint();
+          flatCoordinates =
+            /** @type {import("../../geom/LineString.js").default} */ (
+              geometry
+            ).getFlatMidpoint();
           break;
         case GeometryType.CIRCLE:
-          flatCoordinates = /** @type {import("../../geom/Circle.js").default} */ (geometry).getCenter();
+          flatCoordinates =
+            /** @type {import("../../geom/Circle.js").default} */ (
+              geometry
+            ).getCenter();
           break;
         case GeometryType.MULTI_LINE_STRING:
-          flatCoordinates = /** @type {import("../../geom/MultiLineString.js").default} */ (geometry).getFlatMidpoints();
+          flatCoordinates =
+            /** @type {import("../../geom/MultiLineString.js").default} */ (
+              geometry
+            ).getFlatMidpoints();
           stride = 2;
           break;
         case GeometryType.POLYGON:
-          flatCoordinates = /** @type {import("../../geom/Polygon.js").default} */ (geometry).getFlatInteriorPoint();
+          flatCoordinates =
+            /** @type {import("../../geom/Polygon.js").default} */ (
+              geometry
+            ).getFlatInteriorPoint();
           if (!textState.overflow) {
             geometryWidths.push(flatCoordinates[2] / this.resolution);
           }
           stride = 3;
           break;
         case GeometryType.MULTI_POLYGON:
-          const interiorPoints = /** @type {import("../../geom/MultiPolygon.js").default} */ (geometry).getFlatInteriorPoints();
+          const interiorPoints =
+            /** @type {import("../../geom/MultiPolygon.js").default} */ (
+              geometry
+            ).getFlatInteriorPoints();
           flatCoordinates = [];
           for (let i = 0, ii = interiorPoints.length; i < ii; i += 3) {
             if (!textState.overflow) {
@@ -278,6 +297,21 @@ class CanvasTextBuilder extends CanvasBuilder {
       const end = this.appendFlatPointCoordinates(flatCoordinates, stride);
       if (end === begin) {
         return;
+      }
+      if (
+        geometryWidths &&
+        (end - begin) / 2 !== flatCoordinates.length / stride
+      ) {
+        let beg = begin / 2;
+        geometryWidths = geometryWidths.filter((w, i) => {
+          const keep =
+            coordinates[(beg + i) * 2] === flatCoordinates[i * stride] &&
+            coordinates[(beg + i) * 2 + 1] === flatCoordinates[i * stride + 1];
+          if (!keep) {
+            --beg;
+          }
+          return keep;
+        });
       }
 
       this.saveTextStates_();
@@ -331,7 +365,6 @@ class CanvasTextBuilder extends CanvasBuilder {
         null,
         NaN,
         NaN,
-        this.declutterGroups_,
         NaN,
         1,
         0,
@@ -340,6 +373,7 @@ class CanvasTextBuilder extends CanvasBuilder {
         this.textRotation_,
         [1, 1],
         NaN,
+        this.declutterImageWithText_,
         padding == defaultPadding
           ? defaultPadding
           : padding.map(function (p) {
@@ -363,7 +397,6 @@ class CanvasTextBuilder extends CanvasBuilder {
         null,
         NaN,
         NaN,
-        this.declutterGroups_,
         NaN,
         1,
         0,
@@ -372,6 +405,7 @@ class CanvasTextBuilder extends CanvasBuilder {
         this.textRotation_,
         [scale, scale],
         NaN,
+        this.declutterImageWithText_,
         padding,
         !!textState.backgroundFill,
         !!textState.backgroundStroke,
@@ -433,9 +467,8 @@ class CanvasTextBuilder extends CanvasBuilder {
    * @private
    * @param {number} begin Begin.
    * @param {number} end End.
-   * @param {import("../canvas.js").DeclutterGroup} declutterGroup Declutter group.
    */
-  drawChars_(begin, end, declutterGroup) {
+  drawChars_(begin, end) {
     const strokeState = this.textStrokeState_;
     const textState = this.textState_;
 
@@ -458,7 +491,6 @@ class CanvasTextBuilder extends CanvasBuilder {
       begin,
       end,
       baseline,
-      declutterGroup,
       textState.overflow,
       fillKey,
       textState.maxAngle,
@@ -475,7 +507,6 @@ class CanvasTextBuilder extends CanvasBuilder {
       begin,
       end,
       baseline,
-      declutterGroup,
       textState.overflow,
       fillKey,
       textState.maxAngle,
@@ -491,15 +522,13 @@ class CanvasTextBuilder extends CanvasBuilder {
 
   /**
    * @param {import("../../style/Text.js").default} textStyle Text style.
-   * @param {import("../canvas.js").DeclutterGroups} declutterGroups Declutter.
+   * @param {Object} [opt_sharedData] Shared data.
    */
-  setTextStyle(textStyle, declutterGroups) {
+  setTextStyle(textStyle, opt_sharedData) {
     let textState, fillState, strokeState;
     if (!textStyle) {
       this.text_ = '';
     } else {
-      this.declutterGroups_ = declutterGroups;
-
       const textFillStyle = textStyle.getFill();
       if (!textFillStyle) {
         fillState = null;
@@ -595,6 +624,7 @@ class CanvasTextBuilder extends CanvasBuilder {
           : '|' + getUid(fillState.fillStyle)
         : '';
     }
+    this.declutterImageWithText_ = opt_sharedData;
   }
 }
 

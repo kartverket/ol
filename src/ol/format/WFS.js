@@ -19,13 +19,13 @@ import {
   pushParseAndPop,
   pushSerializeAndPop,
 } from '../xml.js';
-import {and as andFilter, bbox as bboxFilter} from './filter.js';
+import {and as andFilterFn, bbox as bboxFilterFn} from './filter.js';
 import {assert} from '../asserts.js';
 import {assign} from '../obj.js';
 import {get as getProjection} from '../proj.js';
 import {
-  readNonNegativeInteger,
   readNonNegativeIntegerString,
+  readPositiveInteger,
   writeStringTextNode,
 } from './xsd.js';
 
@@ -51,14 +51,14 @@ const FEATURE_COLLECTION_PARSERS = {
  */
 const TRANSACTION_SUMMARY_PARSERS = {
   'http://www.opengis.net/wfs': {
-    'totalInserted': makeObjectPropertySetter(readNonNegativeInteger),
-    'totalUpdated': makeObjectPropertySetter(readNonNegativeInteger),
-    'totalDeleted': makeObjectPropertySetter(readNonNegativeInteger),
+    'totalInserted': makeObjectPropertySetter(readPositiveInteger),
+    'totalUpdated': makeObjectPropertySetter(readPositiveInteger),
+    'totalDeleted': makeObjectPropertySetter(readPositiveInteger),
   },
   'http://www.opengis.net/wfs/2.0': {
-    'totalInserted': makeObjectPropertySetter(readNonNegativeInteger),
-    'totalUpdated': makeObjectPropertySetter(readNonNegativeInteger),
-    'totalDeleted': makeObjectPropertySetter(readNonNegativeInteger),
+    'totalInserted': makeObjectPropertySetter(readPositiveInteger),
+    'totalUpdated': makeObjectPropertySetter(readPositiveInteger),
+    'totalDeleted': makeObjectPropertySetter(readPositiveInteger),
   },
 };
 
@@ -129,7 +129,9 @@ const TRANSACTION_SERIALIZERS = {
  * @typedef {Object} WriteGetFeatureOptions
  * @property {string} featureNS The namespace URI used for features.
  * @property {string} featurePrefix The prefix for the feature namespace.
- * @property {Array<string>} featureTypes The feature type names.
+ * @property {Array<string|FeatureType>} featureTypes The feature type names or FeatureType objects to
+ * define a unique bbox filter per feature type name (in this case, options `bbox` and `geometryName` are
+ * ignored.).
  * @property {string} [srsName] SRS name. No srsName attribute will be set on
  * geometries when this is not provided.
  * @property {string} [handle] Handle.
@@ -143,11 +145,19 @@ const TRANSACTION_SERIALIZERS = {
  * @property {number} [count] Number of features to retrieve when paging. This is a
  * WFS 2.0 feature backported to WFS 1.1.0 by some Web Feature Services. Please note that some
  * Web Feature Services have repurposed `maxfeatures` instead.
- * @property {import("../extent.js").Extent} [bbox] Extent to use for the BBOX filter.
+ * @property {import("../extent.js").Extent} [bbox] Extent to use for the BBOX filter. The `geometryName`
+ * option must be set.
  * @property {import("./filter/Filter.js").default} [filter] Filter condition. See
  * {@link module:ol/format/Filter} for more information.
  * @property {string} [resultType] Indicates what response should be returned,
  * E.g. `hits` only includes the `numberOfFeatures` attribute in the response and no features.
+ */
+
+/**
+ * @typedef {Object} FeatureType
+ * @property {!string} name The feature type name.
+ * @property {!import("../extent.js").Extent} bbox Extent to use for the BBOX filter.
+ * @property {!string} geometryName Geometry name to use in the BBOX filter.
  */
 
 /**
@@ -168,17 +178,17 @@ const TRANSACTION_SERIALIZERS = {
 /**
  * Number of features; bounds/extent.
  * @typedef {Object} FeatureCollectionMetadata
- * @property {number} numberOfFeatures
- * @property {import("../extent.js").Extent} bounds
+ * @property {number} numberOfFeatures NumberOfFeatures.
+ * @property {import("../extent.js").Extent} bounds Bounds.
  */
 
 /**
  * Total deleted; total inserted; total updated; array of insert ids.
  * @typedef {Object} TransactionResponse
- * @property {number} totalDeleted
- * @property {number} totalInserted
- * @property {number} totalUpdated
- * @property {Array<string>} insertIds
+ * @property {number} totalDeleted TotalDeleted.
+ * @property {number} totalInserted TotalInserted.
+ * @property {number} totalUpdated TotalUpdated.
+ * @property {Array<string>} insertIds InsertIds.
  */
 
 /**
@@ -256,7 +266,7 @@ const DEFAULT_VERSION = '1.1.0';
  */
 class WFS extends XMLFeature {
   /**
-   * @param {Options=} opt_options Optional configuration object.
+   * @param {Options} [opt_options] Optional configuration object.
    */
   constructor(opt_options) {
     super();
@@ -315,7 +325,7 @@ class WFS extends XMLFeature {
   /**
    * @protected
    * @param {Element} node Node.
-   * @param {import("./Feature.js").ReadOptions=} opt_options Options.
+   * @param {import("./Feature.js").ReadOptions} [opt_options] Options.
    * @return {Array<import("../Feature.js").default>} Features.
    */
   readFeaturesFromNode(node, opt_options) {
@@ -471,44 +481,26 @@ class WFS extends XMLFeature {
     const node = createElementNS(WFSNS[this.version_], 'GetFeature');
     node.setAttribute('service', 'WFS');
     node.setAttribute('version', this.version_);
-    let filter;
-    if (options) {
-      if (options.handle) {
-        node.setAttribute('handle', options.handle);
-      }
-      if (options.outputFormat) {
-        node.setAttribute('outputFormat', options.outputFormat);
-      }
-      if (options.maxFeatures !== undefined) {
-        node.setAttribute('maxFeatures', String(options.maxFeatures));
-      }
-      if (options.resultType) {
-        node.setAttribute('resultType', options.resultType);
-      }
-      if (options.startIndex !== undefined) {
-        node.setAttribute('startIndex', String(options.startIndex));
-      }
-      if (options.count !== undefined) {
-        node.setAttribute('count', String(options.count));
-      }
-      if (options.viewParams !== undefined) {
-        node.setAttribute('viewParams', options.viewParams);
-      }
-      filter = options.filter;
-      if (options.bbox) {
-        assert(options.geometryName, 12); // `options.geometryName` must also be provided when `options.bbox` is set
-        const bbox = bboxFilter(
-          /** @type {string} */ (options.geometryName),
-          options.bbox,
-          options.srsName
-        );
-        if (filter) {
-          // if bbox and filter are both set, combine the two into a single filter
-          filter = andFilter(filter, bbox);
-        } else {
-          filter = bbox;
-        }
-      }
+    if (options.handle) {
+      node.setAttribute('handle', options.handle);
+    }
+    if (options.outputFormat) {
+      node.setAttribute('outputFormat', options.outputFormat);
+    }
+    if (options.maxFeatures !== undefined) {
+      node.setAttribute('maxFeatures', String(options.maxFeatures));
+    }
+    if (options.resultType) {
+      node.setAttribute('resultType', options.resultType);
+    }
+    if (options.startIndex !== undefined) {
+      node.setAttribute('startIndex', String(options.startIndex));
+    }
+    if (options.count !== undefined) {
+      node.setAttribute('count', String(options.count));
+    }
+    if (options.viewParams !== undefined) {
+      node.setAttribute('viewParams', options.viewParams);
     }
     node.setAttributeNS(
       XML_SCHEMA_INSTANCE_URI,
@@ -524,18 +516,65 @@ class WFS extends XMLFeature {
       'srsName': options.srsName,
       'featureNS': options.featureNS ? options.featureNS : this.featureNS_,
       'featurePrefix': options.featurePrefix,
-      'geometryName': options.geometryName,
-      'filter': filter,
       'propertyNames': options.propertyNames ? options.propertyNames : [],
     });
-
-    assert(Array.isArray(options.featureTypes), 11); // `options.featureTypes` should be an Array
-    writeGetFeature(
-      node,
-      /** @type {!Array<string>} */ (options.featureTypes),
-      [context]
-    );
+    assert(Array.isArray(options.featureTypes), 11); // `options.featureTypes` must be an Array
+    if (typeof options.featureTypes[0] === 'string') {
+      let filter = options.filter;
+      if (options.bbox) {
+        assert(options.geometryName, 12); // `options.geometryName` must also be provided when `options.bbox` is set
+        filter = this.combineBboxAndFilter(
+          options.geometryName,
+          options.bbox,
+          options.srsName,
+          filter
+        );
+      }
+      assign(context, {
+        'geometryName': options.geometryName,
+        'filter': filter,
+      });
+      writeGetFeature(
+        node,
+        /** @type {!Array<string>} */ (options.featureTypes),
+        [context]
+      );
+    } else {
+      // Write one query node per element in featuresType.
+      options.featureTypes.forEach((/** @type {FeatureType} */ featureType) => {
+        const completeFilter = this.combineBboxAndFilter(
+          featureType.geometryName,
+          featureType.bbox,
+          options.srsName,
+          options.filter
+        );
+        assign(context, {
+          'geometryName': featureType.geometryName,
+          'filter': completeFilter,
+        });
+        writeGetFeature(node, [featureType.name], [context]);
+      });
+    }
     return node;
+  }
+
+  /**
+   * Create a bbox filter and combine it with another optional filter.
+   *
+   * @param {!string} geometryName Geometry name to use.
+   * @param {!import("../extent.js").Extent} extent Extent.
+   * @param {string} [opt_srsName] SRS name. No srsName attribute will be
+   *    set on geometries when this is not provided.
+   * @param {import("./filter/Filter.js").default} [opt_filter] Filter condition.
+   * @return {import("./filter/Filter.js").default} The filter.
+   */
+  combineBboxAndFilter(geometryName, extent, opt_srsName, opt_filter) {
+    const bboxFilter = bboxFilterFn(geometryName, extent, opt_srsName);
+    if (opt_filter) {
+      // if bbox and filter are both set, combine the two into a single filter
+      return andFilterFn(opt_filter, bboxFilter);
+    }
+    return bboxFilter;
   }
 
   /**
@@ -775,7 +814,7 @@ function writeOgcFidFilter(node, fid, objectStack) {
 /**
  * @param {string|undefined} featurePrefix The prefix of the feature.
  * @param {string} featureType The type of the feature.
- * @returns {string} The value of the typeName property.
+ * @return {string} The value of the typeName property.
  */
 function getTypeName(featurePrefix, featureType) {
   featurePrefix = featurePrefix ? featurePrefix : FEATURE_PREFIX;
@@ -925,9 +964,10 @@ const GETFEATURE_SERIALIZERS = {
     'Or': makeChildAppender(writeLogicalFilter),
     'Not': makeChildAppender(writeNotFilter),
     'BBOX': makeChildAppender(writeBboxFilter),
-    'Contains': makeChildAppender(writeContainsFilter),
-    'Intersects': makeChildAppender(writeIntersectsFilter),
-    'Within': makeChildAppender(writeWithinFilter),
+    'Contains': makeChildAppender(writeSpatialFilter),
+    'Intersects': makeChildAppender(writeSpatialFilter),
+    'Within': makeChildAppender(writeSpatialFilter),
+    'DWithin': makeChildAppender(writeDWithinFilter),
     'PropertyIsEqualTo': makeChildAppender(writeComparisonFilter),
     'PropertyIsNotEqualTo': makeChildAppender(writeComparisonFilter),
     'PropertyIsLessThan': makeChildAppender(writeComparisonFilter),
@@ -944,11 +984,12 @@ const GETFEATURE_SERIALIZERS = {
     'Or': makeChildAppender(writeLogicalFilter),
     'Not': makeChildAppender(writeNotFilter),
     'BBOX': makeChildAppender(writeBboxFilter),
-    'Contains': makeChildAppender(writeContainsFilter),
-    'Disjoint': makeChildAppender(writeDisjointFilter),
-    'Intersects': makeChildAppender(writeIntersectsFilter),
+    'Contains': makeChildAppender(writeSpatialFilter),
+    'Disjoint': makeChildAppender(writeSpatialFilter),
+    'Intersects': makeChildAppender(writeSpatialFilter),
     'ResourceId': makeChildAppender(writeResourceIdFilter),
-    'Within': makeChildAppender(writeWithinFilter),
+    'Within': makeChildAppender(writeSpatialFilter),
+    'DWithin': makeChildAppender(writeDWithinFilter),
     'PropertyIsEqualTo': makeChildAppender(writeComparisonFilter),
     'PropertyIsNotEqualTo': makeChildAppender(writeComparisonFilter),
     'PropertyIsLessThan': makeChildAppender(writeComparisonFilter),
@@ -993,10 +1034,9 @@ function writeQuery(node, featureType, objectStack) {
   if (featureNS) {
     node.setAttributeNS(XMLNS, 'xmlns:' + featurePrefix, featureNS);
   }
-  const item = /** @type {import("../xml.js").NodeStackItem} */ (assign(
-    {},
-    context
-  ));
+  const item = /** @type {import("../xml.js").NodeStackItem} */ (
+    assign({}, context)
+  );
   item.node = node;
   pushSerializeAndPop(
     item,
@@ -1049,54 +1089,6 @@ function writeBboxFilter(node, filter, objectStack) {
 }
 
 /**
- * @param {Node} node Node.
- * @param {import("./filter/Contains.js").default} filter Filter.
- * @param {Array<*>} objectStack Node stack.
- */
-function writeContainsFilter(node, filter, objectStack) {
-  const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
-  const context = parent['context'];
-  const version = context['version'];
-  parent['srsName'] = filter.srsName;
-  const format = GML_FORMATS[version];
-
-  writePropertyName(version, node, filter.geometryName);
-  format.prototype.writeGeometryElement(node, filter.geometry, objectStack);
-}
-
-/**
- * @param {Node} node Node.
- * @param {import("./filter/Intersects.js").default} filter Filter.
- * @param {Array<*>} objectStack Node stack.
- */
-function writeIntersectsFilter(node, filter, objectStack) {
-  const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
-  const context = parent['context'];
-  const version = context['version'];
-  parent['srsName'] = filter.srsName;
-  const format = GML_FORMATS[version];
-
-  writePropertyName(version, node, filter.geometryName);
-  format.prototype.writeGeometryElement(node, filter.geometry, objectStack);
-}
-
-/**
- * @param {Node} node Node.
- * @param {import("./filter/Disjoint.js").default} filter Filter.
- * @param {Array<*>} objectStack Node stack.
- */
-function writeDisjointFilter(node, filter, objectStack) {
-  const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
-  const context = parent['context'];
-  const version = context['version'];
-  parent['srsName'] = filter.srsName;
-  const format = GML_FORMATS[version];
-
-  writePropertyName(version, node, filter.geometryName);
-  format.prototype.writeGeometryElement(node, filter.geometry, objectStack);
-}
-
-/**
  * @param {Element} node Element.
  * @param {import("./filter/ResourceId.js").default} filter Filter.
  * @param {Array<*>} objectStack Node stack.
@@ -1107,10 +1099,10 @@ function writeResourceIdFilter(node, filter, objectStack) {
 
 /**
  * @param {Node} node Node.
- * @param {import("./filter/Within.js").default} filter Filter.
+ * @param {import("./filter/Spatial.js").default} filter Filter.
  * @param {Array<*>} objectStack Node stack.
  */
-function writeWithinFilter(node, filter, objectStack) {
+function writeSpatialFilter(node, filter, objectStack) {
   const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
   const context = parent['context'];
   const version = context['version'];
@@ -1119,6 +1111,26 @@ function writeWithinFilter(node, filter, objectStack) {
 
   writePropertyName(version, node, filter.geometryName);
   format.prototype.writeGeometryElement(node, filter.geometry, objectStack);
+}
+
+/**
+ * @param {Node} node Node.
+ * @param {import("./filter/DWithin.js").default} filter Filter.
+ * @param {Array<*>} objectStack Node stack.
+ */
+function writeDWithinFilter(node, filter, objectStack) {
+  const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
+  const context = parent['context'];
+  const version = context['version'];
+  writeSpatialFilter(node, filter, objectStack);
+  const distance = createElementNS(getFilterNS(version), 'Distance');
+  writeStringTextNode(distance, filter.distance.toString());
+  if (version === '2.0.0') {
+    distance.setAttribute('uom', filter.unit);
+  } else {
+    distance.setAttribute('units', filter.unit);
+  }
+  node.appendChild(distance);
 }
 
 /**
@@ -1130,11 +1142,8 @@ function writeDuringFilter(node, filter, objectStack) {
   const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
   const context = parent['context'];
   const version = context['version'];
-  const ns = FESNS[version];
-  const valueReference = createElementNS(ns, 'ValueReference');
-  writeStringTextNode(valueReference, filter.propertyName);
-  node.appendChild(valueReference);
 
+  writeExpression(FESNS[version], 'ValueReference', node, filter.propertyName);
   const timePeriod = createElementNS(GMLNS, 'TimePeriod');
 
   node.appendChild(timePeriod);
@@ -1202,12 +1211,11 @@ function writeComparisonFilter(node, filter, objectStack) {
   const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
   const context = parent['context'];
   const version = context['version'];
-  const ns = OGCNS[context['version']];
   if (filter.matchCase !== undefined) {
     node.setAttribute('matchCase', filter.matchCase.toString());
   }
   writePropertyName(version, node, filter.propertyName);
-  writeOgcLiteral(ns, node, '' + filter.expression);
+  writeLiteral(version, node, '' + filter.expression);
 }
 
 /**
@@ -1231,17 +1239,17 @@ function writeIsBetweenFilter(node, filter, objectStack) {
   const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
   const context = parent['context'];
   const version = context['version'];
-  const ns = OGCNS[context['version']];
+  const ns = getFilterNS(version);
 
   writePropertyName(version, node, filter.propertyName);
 
   const lowerBoundary = createElementNS(ns, 'LowerBoundary');
   node.appendChild(lowerBoundary);
-  writeOgcLiteral(ns, lowerBoundary, '' + filter.lowerBoundary);
+  writeLiteral(version, lowerBoundary, '' + filter.lowerBoundary);
 
   const upperBoundary = createElementNS(ns, 'UpperBoundary');
   node.appendChild(upperBoundary);
-  writeOgcLiteral(ns, upperBoundary, '' + filter.upperBoundary);
+  writeLiteral(version, upperBoundary, '' + filter.upperBoundary);
 }
 
 /**
@@ -1253,7 +1261,6 @@ function writeIsLikeFilter(node, filter, objectStack) {
   const parent = /** @type {Object} */ (objectStack[objectStack.length - 1]);
   const context = parent['context'];
   const version = context['version'];
-  const ns = OGCNS[version];
   node.setAttribute('wildCard', filter.wildCard);
   node.setAttribute('singleChar', filter.singleChar);
   node.setAttribute('escapeChar', filter.escapeChar);
@@ -1261,7 +1268,7 @@ function writeIsLikeFilter(node, filter, objectStack) {
     node.setAttribute('matchCase', filter.matchCase.toString());
   }
   writePropertyName(version, node, filter.propertyName);
-  writeOgcLiteral(ns, node, '' + filter.pattern);
+  writeLiteral(version, node, '' + filter.pattern);
 }
 
 /**
@@ -1270,7 +1277,7 @@ function writeIsLikeFilter(node, filter, objectStack) {
  * @param {Node} node Node.
  * @param {string} value Value.
  */
-function writeOgcExpression(ns, tagName, node, value) {
+function writeExpression(ns, tagName, node, value) {
   const property = createElementNS(ns, tagName);
   writeStringTextNode(property, value);
   node.appendChild(property);
@@ -1281,30 +1288,21 @@ function writeOgcExpression(ns, tagName, node, value) {
  * @param {Node} node Node.
  * @param {string} value PropertyName value.
  */
+function writeLiteral(version, node, value) {
+  writeExpression(getFilterNS(version), 'Literal', node, value);
+}
+
+/**
+ * @param {string} version Version.
+ * @param {Node} node Node.
+ * @param {string} value PropertyName value.
+ */
 function writePropertyName(version, node, value) {
   if (version === '2.0.0') {
-    writeFesValueReference(FESNS[version], node, value);
+    writeExpression(FESNS[version], 'ValueReference', node, value);
   } else {
-    writeOgcExpression(OGCNS[version], 'PropertyName', node, value);
+    writeExpression(OGCNS[version], 'PropertyName', node, value);
   }
-}
-
-/**
- * @param {string} ns Namespace.
- * @param {Node} node Node.
- * @param {string} value PropertyName value.
- */
-function writeFesValueReference(ns, node, value) {
-  writeOgcExpression(ns, 'ValueReference', node, value);
-}
-
-/**
- * @param {string} ns Namespace.
- * @param {Node} node Node.
- * @param {string} value PropertyName value.
- */
-function writeOgcLiteral(ns, node, value) {
-  writeOgcExpression(ns, 'Literal', node, value);
 }
 
 /**
@@ -1324,12 +1322,13 @@ function writeTimeInstant(node, time) {
  * Encode filter as WFS `Filter` and return the Node.
  *
  * @param {import("./filter/Filter.js").default} filter Filter.
- * @param {string} version Version.
+ * @param {string} opt_version WFS version. If not provided defaults to '1.1.0'
  * @return {Node} Result.
  * @api
  */
-export function writeFilter(filter, version) {
-  const child = createElementNS(OGCNS[version], 'Filter');
+export function writeFilter(filter, opt_version) {
+  const version = opt_version || '1.1.0';
+  const child = createElementNS(getFilterNS(version), 'Filter');
   const context = {
     node: child,
   };
@@ -1348,10 +1347,9 @@ export function writeFilter(filter, version) {
  */
 function writeGetFeature(node, featureTypes, objectStack) {
   const context = /** @type {Object} */ (objectStack[objectStack.length - 1]);
-  const item = /** @type {import("../xml.js").NodeStackItem} */ (assign(
-    {},
-    context
-  ));
+  const item = /** @type {import("../xml.js").NodeStackItem} */ (
+    assign({}, context)
+  );
   item.node = node;
   pushSerializeAndPop(
     item,
