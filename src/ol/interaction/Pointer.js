@@ -3,7 +3,6 @@
  */
 import Interaction from './Interaction.js';
 import MapBrowserEventType from '../MapBrowserEventType.js';
-import {getValues} from '../obj.js';
 
 /**
  * @typedef {Object} Options
@@ -45,10 +44,10 @@ import {getValues} from '../obj.js';
  */
 class PointerInteraction extends Interaction {
   /**
-   * @param {Options} [opt_options] Options.
+   * @param {Options} [options] Options.
    */
-  constructor(opt_options) {
-    const options = opt_options ? opt_options : {};
+  constructor(options) {
+    options = options ? options : {};
 
     super(
       /** @type {import("./Interaction.js").InteractionOptions} */ (options)
@@ -79,12 +78,6 @@ class PointerInteraction extends Interaction {
      * @protected
      */
     this.handlingDownUpSequence = false;
-
-    /**
-     * @type {!Object<string, PointerEvent>}
-     * @private
-     */
-    this.trackedPointers_ = {};
 
     /**
      * @type {Array<PointerEvent>}
@@ -121,7 +114,7 @@ class PointerInteraction extends Interaction {
   handleDragEvent(mapBrowserEvent) {}
 
   /**
-   * Handles the {@link module:ol/MapBrowserEvent map browser event} and may call into
+   * Handles the {@link module:ol/MapBrowserEvent~MapBrowserEvent map browser event} and may call into
    * other functions, if event sequences like e.g. 'drag' or 'down-up' etc. are
    * detected.
    * @param {import("../MapBrowserEvent.js").default} mapBrowserEvent Map browser event.
@@ -189,19 +182,8 @@ class PointerInteraction extends Interaction {
    * @private
    */
   updateTrackedPointers_(mapBrowserEvent) {
-    if (isPointerDraggingEvent(mapBrowserEvent)) {
-      const event = mapBrowserEvent.originalEvent;
-
-      const id = event.pointerId.toString();
-      if (mapBrowserEvent.type == MapBrowserEventType.POINTERUP) {
-        delete this.trackedPointers_[id];
-      } else if (mapBrowserEvent.type == MapBrowserEventType.POINTERDOWN) {
-        this.trackedPointers_[id] = event;
-      } else if (id in this.trackedPointers_) {
-        // update only when there was a pointerdown event for this pointer
-        this.trackedPointers_[id] = event;
-      }
-      this.targetPointers = getValues(this.trackedPointers_);
+    if (mapBrowserEvent.activePointers) {
+      this.targetPointers = mapBrowserEvent.activePointers;
     }
   }
 }
@@ -219,20 +201,6 @@ export function centroid(pointerEvents) {
     clientY += pointerEvents[i].clientY;
   }
   return [clientX / length, clientY / length];
-}
-
-/**
- * @param {import("../MapBrowserEvent.js").default} mapBrowserEvent Event.
- * @return {boolean} Whether the event is a pointerdown, pointerdrag
- *     or pointerup event.
- */
-function isPointerDraggingEvent(mapBrowserEvent) {
-  const type = mapBrowserEvent.type;
-  return (
-    type === MapBrowserEventType.POINTERDOWN ||
-    type === MapBrowserEventType.POINTERDRAG ||
-    type === MapBrowserEventType.POINTERUP
-  );
 }
 
 export default PointerInteraction;

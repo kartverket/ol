@@ -9,11 +9,13 @@ import TileState from '../TileState.js';
 import Triangulation from './Triangulation.js';
 import {
   calculateSourceExtentResolution,
+  canvasPool,
   render as renderReprojected,
 } from '../reproj.js';
 import {clamp} from '../math.js';
 import {getArea, getIntersection} from '../extent.js';
 import {listen, unlistenByKey} from '../events.js';
+import {releaseCanvas} from '../dom.js';
 
 /**
  * @typedef {function(number, number, number, number) : import("../Tile.js").default} FunctionType
@@ -37,9 +39,9 @@ class ReprojTile extends Tile {
    * @param {number} gutter Gutter of the source tiles.
    * @param {FunctionType} getTileFunction
    *     Function returning source tiles (z, x, y, pixelRatio).
-   * @param {number} [opt_errorThreshold] Acceptable reprojection error (in px).
-   * @param {boolean} [opt_renderEdges] Render reprojection edges.
-   * @param {object} [opt_contextOptions] Properties to set on the canvas context.
+   * @param {number} [errorThreshold] Acceptable reprojection error (in px).
+   * @param {boolean} [renderEdges] Render reprojection edges.
+   * @param {boolean} [interpolate] Use linear interpolation when resampling.
    */
   constructor(
     sourceProj,
@@ -51,23 +53,17 @@ class ReprojTile extends Tile {
     pixelRatio,
     gutter,
     getTileFunction,
-    opt_errorThreshold,
-    opt_renderEdges,
-    opt_contextOptions
+    errorThreshold,
+    renderEdges,
+    interpolate
   ) {
-    super(tileCoord, TileState.IDLE);
+    super(tileCoord, TileState.IDLE, {interpolate: !!interpolate});
 
     /**
      * @private
      * @type {boolean}
      */
-    this.renderEdges_ = opt_renderEdges !== undefined ? opt_renderEdges : false;
-
-    /**
-     * @private
-     * @type {object}
-     */
-    this.contextOptions_ = opt_contextOptions;
+    this.renderEdges_ = renderEdges !== undefined ? renderEdges : false;
 
     /**
      * @private
@@ -168,7 +164,7 @@ class ReprojTile extends Tile {
     }
 
     const errorThresholdInPixels =
-      opt_errorThreshold !== undefined ? opt_errorThreshold : ERROR_THRESHOLD;
+      errorThreshold !== undefined ? errorThreshold : ERROR_THRESHOLD;
 
     /**
      * @private
@@ -272,6 +268,7 @@ class ReprojTile extends Tile {
       const targetExtent = this.targetTileGrid_.getTileCoordExtent(
         this.wrappedTileCoord_
       );
+
       this.canvas_ = renderReprojected(
         width,
         height,
@@ -284,7 +281,7 @@ class ReprojTile extends Tile {
         sources,
         this.gutter_,
         this.renderEdges_,
-        this.contextOptions_
+        this.interpolate
       );
 
       this.state = TileState.LOADED;
@@ -353,6 +350,18 @@ class ReprojTile extends Tile {
   unlistenSources_() {
     this.sourcesListenerKeys_.forEach(unlistenByKey);
     this.sourcesListenerKeys_ = null;
+  }
+
+  /**
+   * Remove from the cache due to expiry
+   */
+  release() {
+    if (this.canvas_) {
+      releaseCanvas(this.canvas_.getContext('2d'));
+      canvasPool.push(this.canvas_);
+      this.canvas_ = null;
+    }
+    super.release();
   }
 }
 

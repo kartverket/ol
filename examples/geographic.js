@@ -1,4 +1,3 @@
-import {Circle, Fill, Style} from '../src/ol/style.js';
 import {Feature, Map, Overlay, View} from '../src/ol/index.js';
 import {OSM, Vector as VectorSource} from '../src/ol/source.js';
 import {Point} from '../src/ol/geom.js';
@@ -25,12 +24,10 @@ const map = new Map({
       source: new VectorSource({
         features: [new Feature(point)],
       }),
-      style: new Style({
-        image: new Circle({
-          radius: 9,
-          fill: new Fill({color: 'red'}),
-        }),
-      }),
+      style: {
+        'circle-radius': 9,
+        'circle-fill-color': 'red',
+      },
     }),
   ],
 });
@@ -63,10 +60,15 @@ map.on('moveend', function () {
 });
 
 map.on('click', function (event) {
+  $(element).popover('dispose');
+
   const feature = map.getFeaturesAtPixel(event.pixel)[0];
   if (feature) {
     const coordinate = feature.getGeometry().getCoordinates();
-    popup.setPosition(coordinate);
+    popup.setPosition([
+      coordinate[0] + Math.round(event.coordinate[0] / 360) * 360,
+      coordinate[1],
+    ]);
     $(element).popover({
       container: element.parentElement,
       html: true,
@@ -75,8 +77,6 @@ map.on('click', function (event) {
       placement: 'top',
     });
     $(element).popover('show');
-  } else {
-    $(element).popover('dispose');
   }
 });
 

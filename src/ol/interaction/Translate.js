@@ -7,7 +7,6 @@ import InteractionProperty from './Property.js';
 import PointerInteraction from './Pointer.js';
 import {TRUE} from '../functions.js';
 import {always} from '../events/condition.js';
-import {includes} from '../array.js';
 
 /**
  * @enum {string}
@@ -34,9 +33,9 @@ const TranslateEventType = {
 };
 
 /**
- * A function that takes an {@link module:ol/Feature} or
- * {@link module:ol/render/Feature} and an
- * {@link module:ol/layer/Layer} and returns `true` if the feature may be
+ * A function that takes an {@link module:ol/Feature~Feature} or
+ * {@link module:ol/render/Feature~RenderFeature} and an
+ * {@link module:ol/layer/Layer~Layer} and returns `true` if the feature may be
  * translated or `false` otherwise.
  * @typedef {function(import("../Feature.js").FeatureLike, import("../layer/Layer.js").default<import("../source/Source").default>):boolean} FilterFunction
  */
@@ -55,8 +54,8 @@ const TranslateEventType = {
  * absent, all visible layers will be considered translatable.
  * Not used if `features` is provided.
  * @property {FilterFunction} [filter] A function
- * that takes an {@link module:ol/Feature} and an
- * {@link module:ol/layer/Layer} and returns `true` if the feature may be
+ * that takes an {@link module:ol/Feature~Feature} and an
+ * {@link module:ol/layer/Layer~Layer} and returns `true` if the feature may be
  * translated or `false` otherwise. Not used if `features` is provided.
  * @property {number} [hitTolerance=0] Hit-detection tolerance. Pixels inside the radius around the given position
  * will be checked for features.
@@ -102,7 +101,7 @@ export class TranslateEvent extends Event {
     this.startCoordinate = startCoordinate;
 
     /**
-     * Associated {@link module:ol/MapBrowserEvent}.
+     * Associated {@link module:ol/MapBrowserEvent~MapBrowserEvent}.
      * @type {import("../MapBrowserEvent.js").default}
      * @api
      */
@@ -132,10 +131,10 @@ export class TranslateEvent extends Event {
  */
 class Translate extends PointerInteraction {
   /**
-   * @param {Options} [opt_options] Options.
+   * @param {Options} [options] Options.
    */
-  constructor(opt_options) {
-    const options = opt_options ? opt_options : {};
+  constructor(options) {
+    options = options ? options : {};
 
     super(/** @type {import("./Pointer.js").Options} */ (options));
 
@@ -169,7 +168,7 @@ class Translate extends PointerInteraction {
     this.startCoordinate_ = null;
 
     /**
-     * @type {Collection<import("../Feature.js").default>}
+     * @type {Collection<import("../Feature.js").default>|null}
      * @private
      */
     this.features_ = options.features !== undefined ? options.features : null;
@@ -182,7 +181,7 @@ class Translate extends PointerInteraction {
       } else {
         const layers = options.layers;
         layerFilter = function (layer) {
-          return includes(layers, layer);
+          return layers.includes(layer);
         };
       }
     } else {
@@ -337,7 +336,7 @@ class Translate extends PointerInteraction {
    * Tests to see if the given coordinates intersects any of our selected
    * features.
    * @param {import("../pixel.js").Pixel} pixel Pixel coordinate to test for intersection.
-   * @param {import("../PluggableMap.js").default} map Map to test the intersection on.
+   * @param {import("../Map.js").default} map Map to test the intersection on.
    * @return {import("../Feature.js").default} Returns the feature found at the specified pixel
    * coordinates.
    * @private
@@ -347,7 +346,7 @@ class Translate extends PointerInteraction {
       pixel,
       function (feature, layer) {
         if (this.filter_(feature, layer)) {
-          if (!this.features_ || includes(this.features_.getArray(), feature)) {
+          if (!this.features_ || this.features_.getArray().includes(feature)) {
             return feature;
           }
         }
@@ -382,7 +381,7 @@ class Translate extends PointerInteraction {
    * Remove the interaction from its current map and attach it to the new map.
    * Subclasses may set up event handlers to get notified about changes to
    * the map here.
-   * @param {import("../PluggableMap.js").default} map Map.
+   * @param {import("../Map.js").default} map Map.
    */
   setMap(map) {
     const oldMap = this.getMap();
@@ -398,7 +397,7 @@ class Translate extends PointerInteraction {
   }
 
   /**
-   * @param {import("../PluggableMap.js").default} oldMap Old map.
+   * @param {import("../Map.js").default} oldMap Old map.
    * @private
    */
   updateState_(oldMap) {

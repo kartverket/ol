@@ -14,12 +14,8 @@ import {getCenter} from '../extent.js';
 import {toSize} from '../size.js';
 
 /**
- * @enum {string}
+ * @typedef {'default' | 'truncated'} TierSizeCalculation
  */
-const TierSizeCalculation = {
-  DEFAULT: 'default',
-  TRUNCATED: 'truncated',
-};
 
 export class CustomTile extends ImageTile {
   /**
@@ -29,7 +25,7 @@ export class CustomTile extends ImageTile {
    * @param {string} src Image source URI.
    * @param {?string} crossOrigin Cross origin.
    * @param {import("../Tile.js").LoadFunction} tileLoadFunction Tile load function.
-   * @param {import("../Tile.js").Options} [opt_options] Tile options.
+   * @param {import("../Tile.js").Options} [options] Tile options.
    */
   constructor(
     tileSize,
@@ -38,9 +34,9 @@ export class CustomTile extends ImageTile {
     src,
     crossOrigin,
     tileLoadFunction,
-    opt_options
+    options
   ) {
-    super(tileCoord, state, src, crossOrigin, tileLoadFunction, opt_options);
+    super(tileCoord, state, src, crossOrigin, tileLoadFunction, options);
 
     /**
      * @private
@@ -87,7 +83,8 @@ export class CustomTile extends ImageTile {
  * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images.  Note that
  * you must provide a `crossOrigin` value  you want to access pixel data with the Canvas renderer.
  * See https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image for more detail.
- * @property {boolean} [imageSmoothing=true] Enable image smoothing.
+ * @property {boolean} [interpolate=true] Use interpolated values when resampling.  By default,
+ * linear interpolation is used when resampling.  Set to false to use the nearest neighbor instead.
  * @property {import("../proj.js").ProjectionLike} [projection] Projection.
  * @property {number} [tilePixelRatio] The pixel ratio used by the tile service. For example, if the tile service advertizes 256px by 256px tiles but actually sends 512px by 512px images (for retina/hidpi devices) then `tilePixelRatio` should be set to `2`
  * @property {number} [reprojectionErrorThreshold=0.5] Maximum allowed reprojection error (in pixels).
@@ -103,7 +100,7 @@ export class CustomTile extends ImageTile {
  * `http://my.zoomify.info?FIF=IMAGE.TIF&JTL={z},{tileIndex}`.
  * A `{?-?}` template pattern, for example `subdomain{a-f}.domain.com`, may be
  * used instead of defining each one separately in the `urls` option.
- * @property {string} [tierSizeCalculation] Tier size calculation method: `default` or `truncated`.
+ * @property {TierSizeCalculation} [tierSizeCalculation] Tier size calculation method: `default` or `truncated`.
  * @property {import("../size.js").Size} size Size.
  * @property {import("../extent.js").Extent} [extent] Extent for the TileGrid that is created.
  * Default sets the TileGrid in the
@@ -126,16 +123,14 @@ export class CustomTile extends ImageTile {
  */
 class Zoomify extends TileImage {
   /**
-   * @param {Options} opt_options Options.
+   * @param {Options} options Options.
    */
-  constructor(opt_options) {
-    const options = opt_options;
-
+  constructor(options) {
     const size = options.size;
     const tierSizeCalculation =
       options.tierSizeCalculation !== undefined
         ? options.tierSizeCalculation
-        : TierSizeCalculation.DEFAULT;
+        : 'default';
 
     const tilePixelRatio = options.tilePixelRatio || 1;
     const imageWidth = size[0];
@@ -145,7 +140,7 @@ class Zoomify extends TileImage {
     let tileSizeForTierSizeCalculation = tileSize * tilePixelRatio;
 
     switch (tierSizeCalculation) {
-      case TierSizeCalculation.DEFAULT:
+      case 'default':
         while (
           imageWidth > tileSizeForTierSizeCalculation ||
           imageHeight > tileSizeForTierSizeCalculation
@@ -157,7 +152,7 @@ class Zoomify extends TileImage {
           tileSizeForTierSizeCalculation += tileSizeForTierSizeCalculation;
         }
         break;
-      case TierSizeCalculation.TRUNCATED:
+      case 'truncated':
         let width = imageWidth;
         let height = imageHeight;
         while (
@@ -172,8 +167,8 @@ class Zoomify extends TileImage {
           height >>= 1;
         }
         break;
-      default:
-        assert(false, 53); // Unknown `tierSizeCalculation` configured
+      default: // Unknown `tierSizeCalculation` configured
+        assert(false, 53);
         break;
     }
 
@@ -198,11 +193,7 @@ class Zoomify extends TileImage {
     });
 
     let url = options.url;
-    if (
-      url &&
-      url.indexOf('{TileGroup}') == -1 &&
-      url.indexOf('{tileIndex}') == -1
-    ) {
+    if (url && !url.includes('{TileGroup}') && !url.includes('{tileIndex}')) {
       url += '{TileGroup}/{z}-{x}-{y}.jpg';
     }
     const urls = expandUrl(url);
@@ -260,7 +251,7 @@ class Zoomify extends TileImage {
       attributions: options.attributions,
       cacheSize: options.cacheSize,
       crossOrigin: options.crossOrigin,
-      imageSmoothing: options.imageSmoothing,
+      interpolate: options.interpolate,
       projection: options.projection,
       tilePixelRatio: tilePixelRatio,
       reprojectionErrorThreshold: options.reprojectionErrorThreshold,

@@ -28,7 +28,7 @@ async function build(input, {minify = true} = {}) {
           '@babel/preset-env',
           {
             'modules': false,
-            'targets': 'last 2 versions, not dead',
+            'targets': '> 1%, last 2 versions, not dead',
           },
         ],
       ],
@@ -43,17 +43,21 @@ async function build(input, {minify = true} = {}) {
     name: 'serialize worker and export create function',
     renderChunk(code) {
       return `
-        const source = ${JSON.stringify(code)};
-        const blob = new Blob([source], {type: 'application/javascript'});
-        const url = URL.createObjectURL(blob);
         export function create() {
-          return new Worker(url);
+          const source = ${JSON.stringify(code)};
+          return new Worker(typeof Blob === 'undefined'
+            ? 'data:application/javascript;base64,' + Buffer.from(source, 'binary').toString('base64')
+            : URL.createObjectURL(new Blob([source], {type: 'application/javascript'})));
         }
       `;
     },
   });
 
-  const bundle = await rollup.rollup({input, plugins});
+  const bundle = await rollup.rollup({
+    input,
+    plugins,
+    inlineDynamicImports: true,
+  });
   const {output} = await bundle.generate({format: 'es'});
 
   if (output.length !== 1) {
@@ -76,7 +80,7 @@ exports.build = build;
  */
 async function main() {
   const inputDir = path.join(__dirname, '../src/ol/worker');
-  const outputDir = path.join(__dirname, '../build/ol/src/worker');
+  const outputDir = path.join(__dirname, '../build/ol/worker');
 
   await fse.ensureDir(outputDir);
 

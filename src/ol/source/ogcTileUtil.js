@@ -3,7 +3,6 @@
  */
 
 import TileGrid from '../tilegrid/TileGrid.js';
-import {assign} from '../obj.js';
 import {getJSON, resolveUrl} from '../net.js';
 import {get as getProjection} from '../proj.js';
 import {getIntersection as intersectExtents} from '../extent.js';
@@ -115,7 +114,7 @@ export function getMapTileUrlTemplate(links, mediaType) {
       }
       if (knownMapMediaTypes[link.type]) {
         fallbackUrlTemplate = link.href;
-      } else if (!fallbackUrlTemplate && link.type.indexOf('image/') === 0) {
+      } else if (!fallbackUrlTemplate && link.type.startsWith('image/')) {
         fallbackUrlTemplate = link.href;
       }
     }
@@ -324,7 +323,7 @@ function parseTileMatrixSet(
       }
     }
 
-    assign(localContext, context);
+    Object.assign(localContext, context);
 
     const url = tileUrlTemplate.replace(/\{(\w+?)\}/g, function (m, p) {
       return localContext[p];
@@ -373,11 +372,18 @@ function parseTileSetMetadata(sourceInfo, tileSet) {
     );
   }
 
-  if (!tileSet.tileMatrixSetDefinition) {
-    throw new Error('Expected tileMatrixSetDefinition or tileMatrixSet');
+  const tileMatrixSetLink = tileSet.links.find(
+    (link) =>
+      link.rel === 'http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme'
+  );
+  if (!tileMatrixSetLink) {
+    throw new Error(
+      'Expected http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme link or tileMatrixSet'
+    );
   }
+  const tileMatrixSetDefinition = tileMatrixSetLink.href;
 
-  const url = resolveUrl(sourceInfo.url, tileSet.tileMatrixSetDefinition);
+  const url = resolveUrl(sourceInfo.url, tileMatrixSetDefinition);
   return getJSON(url).then(function (tileMatrixSet) {
     return parseTileMatrixSet(
       sourceInfo,

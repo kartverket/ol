@@ -50,7 +50,6 @@ const shadedRelief = new TileLayer({
   opacity: 0.3,
   source: new XYZ({
     url: 'https://{a-d}.tiles.mapbox.com/v3/aj.sf-dem/{z}/{x}/{y}.png',
-    crossOrigin: 'anonymous',
   }),
   style: {
     variables: variables,
@@ -67,12 +66,10 @@ controlIds.forEach(function (id) {
     variables[id] = Number(control.value);
   }
   updateValues();
-  const listener = function () {
+  control.addEventListener('input', function () {
     updateValues();
     shadedRelief.updateStyleVariables(variables);
-  };
-  control.addEventListener('input', listener);
-  control.addEventListener('change', listener);
+  });
 });
 
 const map = new Map({

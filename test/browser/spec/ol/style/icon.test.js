@@ -11,6 +11,9 @@ describe('ol.style.Icon', function () {
     'data:image/gif;base64,' +
     'R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=';
 
+  beforeEach(function () {
+    iconImageCache.clear();
+  });
   describe('constructor', function () {
     it('caches canvas images with a uid as src', function () {
       const canvas = document.createElement('canvas');
@@ -47,7 +50,7 @@ describe('ol.style.Icon', function () {
       expect(clone).to.not.be(original);
     });
 
-    it('copies all values ', function () {
+    it('copies all values with img', function () {
       const canvas = document.createElement('canvas');
       const original = new Icon({
         anchor: [1, 0],
@@ -64,6 +67,8 @@ describe('ol.style.Icon', function () {
         scale: 2,
         rotation: 4,
         size: [10, 12],
+        displacement: [5, 6],
+        declutterMode: 'obstacle',
       });
 
       const clone = original.clone();
@@ -75,21 +80,55 @@ describe('ol.style.Icon', function () {
       expect(original.anchorYUnits_).to.eql(clone.anchorYUnits_);
       expect(original.crossOrigin_).to.eql(clone.crossOrigin_);
       expect(original.getColor()).to.eql(clone.getColor());
+      expect(original.imgSize_).to.eql(clone.imgSize_);
       expect(original.offset_).to.eql(clone.offset_);
       expect(original.offsetOrigin_).to.eql(clone.offsetOrigin_);
+      expect(original.getScale()).to.eql(clone.getScale());
       expect(original.getSize()).to.eql(clone.getSize());
       expect(original.getSrc()).to.eql(clone.getSrc());
       expect(original.getOpacity()).to.eql(clone.getOpacity());
       expect(original.getRotation()).to.eql(clone.getRotation());
       expect(original.getRotateWithView()).to.eql(clone.getRotateWithView());
-
-      const original2 = new Icon({
+      expect(original.getDisplacement()).to.eql(clone.getDisplacement());
+      expect(original.getDeclutterMode()).to.eql(clone.getDeclutterMode());
+    });
+    it('copies all values with src', function () {
+      const original = new Icon({
         src: src,
       });
-      const clone2 = original2.clone();
-      expect(original2.getImage(1)).to.be(clone2.getImage(1));
-      expect(original2.iconImage_).to.be(clone2.iconImage_);
-      expect(original2.getSrc()).to.eql(clone2.getSrc());
+      const clone = original.clone();
+      expect(original.getImage(1)).to.be(clone.getImage(1));
+      expect(original.iconImage_).to.be(clone.iconImage_);
+      expect(original.getSrc()).to.be(clone.getSrc());
+    });
+    it('copies all values with src without shared IconImageCache', function (done) {
+      const imgSize = [11, 13];
+      const original = new Icon({
+        src: src,
+        imgSize: imgSize.slice(),
+      });
+      iconImageCache.clear();
+
+      const clone = original.clone();
+
+      original.load();
+      clone.load();
+      Promise.all([
+        new Promise(function (resolve) {
+          original.iconImage_.addEventListener('change', resolve);
+        }),
+        new Promise(function (resolve) {
+          clone.iconImage_.addEventListener('change', resolve);
+        }),
+      ]).then(function () {
+        expect(original.getSrc()).to.be(clone.getSrc());
+        expect(original.iconImage_).to.not.be(clone.iconImage_);
+        expect(original.getImage(1).width).to.be(imgSize[0]);
+        expect(original.getImage(1).height).to.be(imgSize[1]);
+        expect(original.getImage(1).width).to.be(clone.getImage(1).width);
+        expect(original.getImage(1).height).to.be(clone.getImage(1).height);
+        done();
+      });
     });
 
     it('the clone does not reference the same objects as the original', function () {
@@ -198,6 +237,37 @@ describe('ol.style.Icon', function () {
         size[0] / 2 - 20,
         size[1] / 2 + 10,
       ]);
+      iconStyle.setDisplacement([10, 20]);
+      expect(iconStyle.getAnchor()).to.eql([
+        size[0] / 2 - 10,
+        size[1] / 2 + 20,
+      ]);
+    });
+
+    it('scale applies to image size, not offset', function () {
+      const scale = 4;
+      let anchorScaled, anchorBig;
+
+      const iconStyleScaled = new Icon({
+        src: 'test.png',
+        size: size,
+        displacement: [20, 10],
+        scale: scale,
+      });
+      const iconStyleBig = new Icon({
+        src: 'test.png',
+        size: [size[0] * scale, size[1] * scale],
+        displacement: [20, 10],
+      });
+      anchorScaled = iconStyleScaled.getAnchor();
+      anchorBig = iconStyleBig.getAnchor();
+      expect(anchorScaled).to.eql([anchorBig[0] / scale, anchorBig[1] / scale]);
+
+      iconStyleScaled.setDisplacement([10, 20]);
+      iconStyleBig.setDisplacement([10, 20]);
+      anchorScaled = iconStyleScaled.getAnchor();
+      anchorBig = iconStyleBig.getAnchor();
+      expect(anchorScaled).to.eql([anchorBig[0] / scale, anchorBig[1] / scale]);
     });
   });
 

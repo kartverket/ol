@@ -11,7 +11,7 @@ import {listen, unlistenByKey} from './events.js';
  */
 
 /**
- * @typedef {Feature<import("./geom/Geometry.js").default>|import("./render/Feature.js").default} FeatureLike
+ * @typedef {Feature|import("./render/Feature.js").default} FeatureLike
  */
 
 /***
@@ -36,7 +36,7 @@ import {listen, unlistenByKey} from './events.js';
  * Features can be styled individually with `setStyle`; otherwise they use the
  * style of their vector layer.
  *
- * Note that attribute properties are set as {@link module:ol/Object} properties on
+ * Note that attribute properties are set as {@link module:ol/Object~BaseObject} properties on
  * the feature object, so they are observable, and have get/set accessors.
  *
  * Typically, a feature has a single geometry property. You can set the
@@ -53,33 +53,33 @@ import {listen, unlistenByKey} from './events.js';
  * import Polygon from 'ol/geom/Polygon';
  * import Point from 'ol/geom/Point';
  *
- * var feature = new Feature({
+ * const feature = new Feature({
  *   geometry: new Polygon(polyCoords),
  *   labelPoint: new Point(labelCoords),
- *   name: 'My Polygon'
+ *   name: 'My Polygon',
  * });
  *
  * // get the polygon geometry
- * var poly = feature.getGeometry();
+ * const poly = feature.getGeometry();
  *
  * // Render the feature as a point using the coordinates from labelPoint
  * feature.setGeometryName('labelPoint');
  *
  * // get the point geometry
- * var point = feature.getGeometry();
+ * const point = feature.getGeometry();
  * ```
  *
  * @api
- * @template {import("./geom/Geometry.js").default} Geometry
+ * @template {import("./geom/Geometry.js").default} [Geometry=import("./geom/Geometry.js").default]
  */
 class Feature extends BaseObject {
   /**
-   * @param {Geometry|ObjectWithGeometry<Geometry>} [opt_geometryOrProperties]
+   * @param {Geometry|ObjectWithGeometry<Geometry>} [geometryOrProperties]
    *     You may pass a Geometry object directly, or an object literal containing
    *     properties. If you pass an object literal, you may include a Geometry
    *     associated with a `geometry` key.
    */
-  constructor(opt_geometryOrProperties) {
+  constructor(geometryOrProperties) {
     super();
 
     /***
@@ -130,17 +130,17 @@ class Feature extends BaseObject {
 
     this.addChangeListener(this.geometryName_, this.handleGeometryChanged_);
 
-    if (opt_geometryOrProperties) {
+    if (geometryOrProperties) {
       if (
         typeof (
-          /** @type {?} */ (opt_geometryOrProperties).getSimplifiedGeometry
+          /** @type {?} */ (geometryOrProperties).getSimplifiedGeometry
         ) === 'function'
       ) {
-        const geometry = /** @type {Geometry} */ (opt_geometryOrProperties);
+        const geometry = /** @type {Geometry} */ (geometryOrProperties);
         this.setGeometry(geometry);
       } else {
         /** @type {Object<string, *>} */
-        const properties = opt_geometryOrProperties;
+        const properties = geometryOrProperties;
         this.setProperties(properties);
       }
     }
@@ -265,15 +265,13 @@ class Feature extends BaseObject {
    * single style object, an array of styles, or a function that takes a
    * resolution and returns an array of styles. To unset the feature style, call
    * `setStyle()` without arguments or a falsey value.
-   * @param {import("./style/Style.js").StyleLike} [opt_style] Style for this feature.
+   * @param {import("./style/Style.js").StyleLike} [style] Style for this feature.
    * @api
    * @fires module:ol/events/Event~BaseEvent#event:change
    */
-  setStyle(opt_style) {
-    this.style_ = opt_style;
-    this.styleFunction_ = !opt_style
-      ? undefined
-      : createStyleFunction(opt_style);
+  setStyle(style) {
+    this.style_ = style;
+    this.styleFunction_ = !style ? undefined : createStyleFunction(style);
     this.changed();
   }
 

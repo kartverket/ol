@@ -26,17 +26,14 @@ const attributions =
   '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> ' +
   '<a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>';
 
-const elevation = new TileLayer({
-  source: new XYZ({
-    url:
-      'https://api.maptiler.com/tiles/terrain-rgb/{z}/{x}/{y}.png?key=' + key,
-    maxZoom: 10,
-    crossOrigin: '',
-  }),
-});
-elevation.on('prerender', function (evt) {
-  evt.context.imageSmoothingEnabled = false;
-  evt.context.msImageSmoothingEnabled = false;
+const elevation = new XYZ({
+  // The RGB values in the source collectively represent elevation.
+  // Interpolation of individual colors would produce incorrect evelations and is disabled.
+  url: 'https://api.maptiler.com/tiles/terrain-rgb/{z}/{x}/{y}.png?key=' + key,
+  tileSize: 512,
+  maxZoom: 12,
+  crossOrigin: '',
+  interpolate: false,
 });
 
 const raster = new RasterSource({
@@ -52,6 +49,7 @@ const map = new Map({
         attributions: attributions,
         url: 'https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=' + key,
         tileSize: 512,
+        maxZoom: 22,
       }),
     }),
     new ImageLayer({
@@ -67,12 +65,10 @@ const map = new Map({
 
 const control = document.getElementById('level');
 const output = document.getElementById('output');
-const listener = function () {
+control.addEventListener('input', function () {
   output.innerText = control.value;
   raster.changed();
-};
-control.addEventListener('input', listener);
-control.addEventListener('change', listener);
+});
 output.innerText = control.value;
 
 raster.on('beforeoperations', function (event) {

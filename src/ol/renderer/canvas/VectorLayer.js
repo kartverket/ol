@@ -2,7 +2,7 @@
  * @module ol/renderer/canvas/VectorLayer
  */
 import CanvasBuilderGroup from '../../render/canvas/BuilderGroup.js';
-import CanvasLayerRenderer from './Layer.js';
+import CanvasLayerRenderer, {canvasPool} from './Layer.js';
 import ExecutorGroup from '../../render/canvas/ExecutorGroup.js';
 import ViewHint from '../../ViewHint.js';
 import {
@@ -24,6 +24,7 @@ import {
   intersects as intersectsExtent,
   wrapX as wrapExtentX,
 } from '../../extent.js';
+import {createCanvasContext2D, releaseCanvas} from '../../dom.js';
 import {
   defaultOrder as defaultRenderOrder,
   getTolerance as getRenderTolerance,
@@ -48,7 +49,7 @@ import {wrapX as wrapCoordinateX} from '../../coordinate.js';
  */
 class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
   /**
-   * @param {import("../../layer/Vector.js").default} vectorLayer Vector layer.
+   * @param {import("../../layer/BaseVector.js").default} vectorLayer Vector layer.
    */
   constructor(vectorLayer) {
     super(vectorLayer);
@@ -60,12 +61,6 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
      * @type {boolean}
      */
     this.animatingOrInteracting_;
-
-    /**
-     * @private
-     * @type {boolean}
-     */
-    this.dirty_ = false;
 
     /**
      * @type {ImageData}
@@ -147,27 +142,26 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
      * @type {boolean}
      */
     this.clipping = true;
-  }
 
-  /**
-   * Get a rendering container from an existing target, if compatible.
-   * @param {HTMLElement} target Potential render target.
-   * @param {string} transform CSS Transform.
-   * @param {number} opacity Opacity.
-   */
-  useContainer(target, transform, opacity) {
-    if (opacity < 1) {
-      target = null;
-    }
-    super.useContainer(target, transform, opacity);
+    /**
+     * @private
+     * @type {CanvasRenderingContext2D}
+     */
+    this.compositionContext_ = null;
+
+    /**
+     * @private
+     * @type {number}
+     */
+    this.opacity_ = 1;
   }
 
   /**
    * @param {ExecutorGroup} executorGroup Executor group.
-   * @param {import("../../PluggableMap.js").FrameState} frameState Frame state.
-   * @param {import("rbush").default} [opt_declutterTree] Declutter tree.
+   * @param {import("../../Map.js").FrameState} frameState Frame state.
+   * @param {import("rbush").default} [declutterTree] Declutter tree.
    */
-  renderWorlds(executorGroup, frameState, opt_declutterTree) {
+  renderWorlds(executorGroup, frameState, declutterTree) {
     const extent = frameState.extent;
     const viewState = frameState.viewState;
     const center = viewState.center;
@@ -181,7 +175,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     const snapToPixel = !(
       viewHints[ViewHint.ANIMATING] || viewHints[ViewHint.INTERACTING]
     );
-    const context = this.context;
+    const context = this.compositionContext_;
     const width = Math.round(frameState.size[0] * pixelRatio);
     const height = Math.round(frameState.size[1] * pixelRatio);
 
@@ -210,28 +204,55 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
         rotation,
         snapToPixel,
         undefined,
-        opt_declutterTree
+        declutterTree
       );
     } while (++world < endWorld);
   }
 
+  setupCompositionContext_() {
+    if (this.opacity_ !== 1) {
+      const compositionContext = createCanvasContext2D(
+        this.context.canvas.width,
+        this.context.canvas.height,
+        canvasPool
+      );
+      this.compositionContext_ = compositionContext;
+    } else {
+      this.compositionContext_ = this.context;
+    }
+  }
+
+  releaseCompositionContext_() {
+    if (this.opacity_ !== 1) {
+      const alpha = this.context.globalAlpha;
+      this.context.globalAlpha = this.opacity_;
+      this.context.drawImage(this.compositionContext_.canvas, 0, 0);
+      this.context.globalAlpha = alpha;
+      releaseCanvas(this.compositionContext_);
+      canvasPool.push(this.compositionContext_.canvas);
+      this.compositionContext_ = null;
+    }
+  }
+
   /**
    * Render declutter items for this layer
-   * @param {import("../../PluggableMap.js").FrameState} frameState Frame state.
+   * @param {import("../../Map.js").FrameState} frameState Frame state.
    */
   renderDeclutter(frameState) {
     if (this.declutterExecutorGroup) {
+      this.setupCompositionContext_();
       this.renderWorlds(
         this.declutterExecutorGroup,
         frameState,
         frameState.declutterTree
       );
+      this.releaseCompositionContext_();
     }
   }
 
   /**
    * Render the layer.
-   * @param {import("../../PluggableMap.js").FrameState} frameState Frame state.
+   * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @param {HTMLElement} target Target that may be used to render content to.
    * @return {HTMLElement} The rendered element.
    */
@@ -245,7 +266,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
 
     const canvasTransform = transformToString(this.pixelTransform);
 
-    this.useContainer(target, canvasTransform, layerState.opacity);
+    this.useContainer(target, canvasTransform, this.getBackground(frameState));
     const context = this.context;
     const canvas = context.canvas;
 
@@ -255,10 +276,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
       (!replayGroup || replayGroup.isEmpty()) &&
       (!declutterExecutorGroup || declutterExecutorGroup.isEmpty())
     ) {
-      if (!this.containerReused && canvas.width > 0) {
-        canvas.width = 0;
-      }
-      return this.container;
+      return null;
     }
 
     // resize and clear
@@ -279,6 +297,9 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     const viewState = frameState.viewState;
     const projection = viewState.projection;
 
+    this.opacity_ = layerState.opacity;
+    this.setupCompositionContext_();
+
     // clipped rendering if layer extent is set
     let clipped = false;
     let render = true;
@@ -287,7 +308,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
       render = intersectsExtent(layerExtent, frameState.extent);
       clipped = render && !containsExtent(layerExtent, frameState.extent);
       if (clipped) {
-        this.clipUnrotated(context, frameState, layerExtent);
+        this.clipUnrotated(this.compositionContext_, frameState, layerExtent);
       }
     }
 
@@ -296,16 +317,12 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     }
 
     if (clipped) {
-      context.restore();
+      this.compositionContext_.restore();
     }
+
+    this.releaseCompositionContext_();
 
     this.postRender(context, frameState);
-
-    const opacity = layerState.opacity;
-    const container = this.container;
-    if (opacity !== parseFloat(container.style.opacity)) {
-      container.style.opacity = opacity === 1 ? '' : String(opacity);
-    }
 
     if (this.renderedRotation_ !== viewState.rotation) {
       this.renderedRotation_ = viewState.rotation;
@@ -415,7 +432,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
 
   /**
    * @param {import("../../coordinate.js").Coordinate} coordinate Coordinate.
-   * @param {import("../../PluggableMap.js").FrameState} frameState Frame state.
+   * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @param {number} hitTolerance Hit tolerance in pixels.
    * @param {import("../vector.js").FeatureCallback<T>} callback Feature callback.
    * @param {Array<import("../Map.js").HitMatch<T>>} matches The hit detected matches with tolerance.
@@ -486,7 +503,8 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
         rotation,
         hitTolerance,
         featureCallback,
-        executorGroup === this.declutterExecutorGroup
+        executorGroup === this.declutterExecutorGroup &&
+          frameState.declutterTree
           ? frameState.declutterTree.all().map((item) => item.value)
           : null
       ));
@@ -516,7 +534,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
 
   /**
    * Determine whether render should be called.
-   * @param {import("../../PluggableMap.js").FrameState} frameState Frame state.
+   * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @return {boolean} Layer is ready to be rendered.
    */
   prepareFrame(frameState) {
@@ -532,7 +550,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     const updateWhileInteracting = vectorLayer.getUpdateWhileInteracting();
 
     if (
-      (!this.dirty_ && !updateWhileAnimating && animating) ||
+      (this.ready && !updateWhileAnimating && animating) ||
       (!updateWhileInteracting && interacting)
     ) {
       this.animatingOrInteracting_ = true;
@@ -603,7 +621,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     }
 
     if (
-      !this.dirty_ &&
+      this.ready &&
       this.renderedResolution_ == resolution &&
       this.renderedRevision_ == vectorLayerRevision &&
       this.renderedRenderOrder_ == vectorLayerRenderOrder &&
@@ -619,8 +637,6 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     }
 
     this.replayGroup_ = null;
-
-    this.dirty_ = false;
 
     const replayGroup = new CanvasBuilderGroup(
       getRenderTolerance(resolution, pixelRatio),
@@ -659,7 +675,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     }
 
     const squaredTolerance = getSquaredRenderTolerance(resolution, pixelRatio);
-
+    let ready = true;
     const render =
       /**
        * @param {import("../../Feature.js").default} feature Feature.
@@ -681,7 +697,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
             userTransform,
             declutterBuilderGroup
           );
-          this.dirty_ = this.dirty_ || dirty;
+          ready = ready && !dirty;
         }
       }.bind(this);
 
@@ -695,6 +711,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
       render(features[i]);
     }
     this.renderedFeatures_ = features;
+    this.ready = ready;
 
     const replayGroupInstructions = replayGroup.finish();
     const executorGroup = new ExecutorGroup(
@@ -736,8 +753,8 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
    * @param {number} squaredTolerance Squared render tolerance.
    * @param {import("../../style/Style.js").default|Array<import("../../style/Style.js").default>} styles The style or array of styles.
    * @param {import("../../render/canvas/BuilderGroup.js").default} builderGroup Builder group.
-   * @param {import("../../proj.js").TransformFunction} [opt_transform] Transform from user to view projection.
-   * @param {import("../../render/canvas/BuilderGroup.js").default} [opt_declutterBuilderGroup] Builder for decluttering.
+   * @param {import("../../proj.js").TransformFunction} [transform] Transform from user to view projection.
+   * @param {import("../../render/canvas/BuilderGroup.js").default} [declutterBuilderGroup] Builder for decluttering.
    * @return {boolean} `true` if an image is loading.
    */
   renderFeature(
@@ -745,8 +762,8 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     squaredTolerance,
     styles,
     builderGroup,
-    opt_transform,
-    opt_declutterBuilderGroup
+    transform,
+    declutterBuilderGroup
   ) {
     if (!styles) {
       return false;
@@ -761,8 +778,8 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
             styles[i],
             squaredTolerance,
             this.boundHandleStyleImageChange_,
-            opt_transform,
-            opt_declutterBuilderGroup
+            transform,
+            declutterBuilderGroup
           ) || loading;
       }
     } else {
@@ -772,8 +789,8 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
         styles,
         squaredTolerance,
         this.boundHandleStyleImageChange_,
-        opt_transform,
-        opt_declutterBuilderGroup
+        transform,
+        declutterBuilderGroup
       );
     }
     return loading;
