@@ -10,29 +10,3 @@ spec:
   lifecycle: "production"
   owner: "team_norgeskart_og_topo"
   system: "geonorge"
----
-apiVersion: "backstage.io/v1alpha1"
-kind: "Group"
-metadata:
-  name: "security_champion_ol"
-  title: "Security Champion ol"
-spec:
-  type: "security_champion"
-  parent: "land_security_champions"
-  members:
-  - "carsmie"
-  children:
-  - "resource:ol"
----
-apiVersion: "backstage.io/v1alpha1"
-kind: "Resource"
-metadata:
-  name: "ol"
-  links:
-  - url: "https://github.com/kartverket/ol"
-    title: "ol på GitHub"
-spec:
-  type: "repo"
-  owner: "security_champion_ol"
-  dependencyOf:
-  - "component:ol"
